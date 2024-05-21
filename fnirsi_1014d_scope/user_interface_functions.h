@@ -114,6 +114,54 @@ void ui_msm_print_value(char *buffer, int32 value, uint32 scale, char *designato
 char *ui_msm_print_decimal(char *buffer, int32 value, uint32 decimals, uint32 negative);
 
 //----------------------------------------------------------------------------------------------------------------------------------
+// File display functions
+//----------------------------------------------------------------------------------------------------------------------------------
+
+//These two functions are for save guarding the operational settings when switched to waveform view mode
+void ui_save_setup(PSCOPESETTINGS settings);
+void ui_restore_setup(PSCOPESETTINGS settings);
+
+//These two functions are for the system settings, preparing for and restoring from file
+void ui_prepare_setup_for_file(void);
+void ui_restore_setup_from_file(void);
+
+int32 ui_check_waveform_file(void);
+
+void ui_print_file_name(uint32 filenumber);
+
+int32 ui_load_thumbnail_file(void);
+int32 ui_save_thumbnail_file(void);
+
+void ui_save_view_item_file(int32 type);
+
+void ui_remove_item_from_thumbnails(uint32 delete);
+
+int32 ui_load_trace_data(void);
+
+int32 ui_load_bitmap_data(void);
+
+void ui_sync_thumbnail_files(void);
+
+void ui_initialize_and_display_thumbnails(void);
+
+void ui_display_thumbnails(void);
+
+void ui_display_thumbnail_data(uint32 xstart, uint32 xend, uint32 ypos, uint32 color, uint8 *buffer);
+
+void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata);
+
+void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer);
+void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, int32 yend);
+
+void ui_thumbnail_draw_pointer(uint32 xpos, uint32 ypos, uint32 direction, uint32 color);
+
+int32 ui_display_picture_item(void);
+
+void ui_display_selected_signs(void);
+
+void ui_display_file_status_message(int32 msgid, int32 alwayswait);
+
+//----------------------------------------------------------------------------------------------------------------------------------
 
 #endif /* USER_INTERFACE_FUNCTIONS_H */
 
