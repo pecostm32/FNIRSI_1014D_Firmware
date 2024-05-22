@@ -9,6 +9,9 @@ void ui_setup_display_lib(void);
 
 void ui_setup_main_screen(void);
 
+void ui_setup_view_screen(void);
+void ui_close_view_screen(void);
+
 void ui_setup_usb_screen(void);
 
 void ui_draw_outline(void);
@@ -25,8 +28,7 @@ void ui_draw_grid(void);
 void ui_draw_pointers(void);
 void ui_draw_time_cursors(void);
 void ui_draw_volt_cursors(void);
-
-void ui_display_selected_text(void);
+void ui_display_selected_text(void);              //Display the text "Selected" near the selected cursor
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -37,10 +39,8 @@ void ui_display_trigger_edge(void);
 void ui_display_trigger_y_position(void);
 void ui_display_trigger_x_position(void);
 
-
 void ui_display_time_per_division(void);
 void ui_display_waiting_triggered_text(void);
-
 
 void ui_display_channel_settings(PCHANNELSETTINGS settings);
 

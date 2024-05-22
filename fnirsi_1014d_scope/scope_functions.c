@@ -20,100 +20,6 @@
 #if 0
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void scope_setup_view_screen(void)
-{
-  //Switch to view mode so disallow saving of settings on power down
-  viewactive = VIEW_ACTIVE;
-
-  //Set scope run state to running to have it sample fresh data on exit
-  scopesettings.runstate = 0;
-
-  //Only needed for waveform view. Picture viewing does not change the scope settings
-  if(viewtype == VIEW_TYPE_WAVEFORM)
-  {
-    //Save the current settings
-    scope_save_setup(&savedscopesettings1);
-  }
-  
-  //Initialize the view mode variables
-  //Used for indicating if select all or select button is active
-  viewselectmode = 0;
-
-  //Start at first page
-  viewpage = 0;
-
-  //Clear the item selected flags
-  memset(viewitemselected, VIEW_ITEM_NOT_SELECTED, VIEW_ITEMS_PER_PAGE);
-
-  //Set storage buffer for screen capture under selected signs and messages
-  display_set_destination_buffer(displaybuffer2);
-  display_set_source_buffer(displaybuffer2);
-
-  //Display the file actions menu on the right side of the screen
-  scope_setup_right_file_menu();
-
-  //Load the thumbnail file for the current view type
-  if(scope_load_thumbnail_file() != 0)
-  {
-    //Restore the main screen
-    scope_setup_main_screen();
-    
-    //Loading the thumbnail file failed so no sense in going on
-    return;
-  }
-
-  //Display the available thumbnails for the current view type
-  scope_initialize_and_display_thumbnails();
-
-  //Handle touch for this part of the user interface
-  handle_view_mode_touch();
-
-  //This is only needed when an actual waveform has been viewed, but that needs an extra flag
-  //Only needed for waveform view. Picture viewing does not change the scope settings
-  if(viewtype == VIEW_TYPE_WAVEFORM)
-  {
-    //Restore the current settings
-    scope_restore_setup(&savedscopesettings1);
-
-    //Make sure view mode is normal
-    scopesettings.waveviewmode = 0;
-
-    //And resume with auto trigger mode
-    scopesettings.triggermode = 0;
-
-    //Need to restore the original scope data and fpga settings
-
-    //Is also part of startup, so could be done with a function
-    //Set the volts per div for each channel based on the loaded scope settings
-    fpga_set_channel_voltperdiv(&scopesettings.channel1);
-    fpga_set_channel_voltperdiv(&scopesettings.channel2);
-
-    //These are not done in the original code
-    //Set the channels AC or DC coupling based on the loaded scope settings
-    fpga_set_channel_coupling(&scopesettings.channel1);
-    fpga_set_channel_coupling(&scopesettings.channel2);
-
-    //Setup the trigger system in the FPGA based on the loaded scope settings
-    fpga_set_sample_rate(scopesettings.samplerate);
-    fpga_set_trigger_channel();
-    fpga_set_trigger_edge();
-    fpga_set_trigger_level();
-    fpga_set_trigger_mode();
-
-    //Set channel screen offsets
-    fpga_set_channel_offset(&scopesettings.channel1);
-    fpga_set_channel_offset(&scopesettings.channel2);
-  }
-
-  //Reset the screen to the normal scope screen
-  scope_setup_main_screen();
-
-  //Back to normal mode so allow saving of settings on power down
-  viewactive = VIEW_NOT_ACTIVE;
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
 void scope_setup_usb_screen(void)
 {
   //Clear the whole screen
@@ -5623,15 +5529,6 @@ char *scope_print_decimal(char *buffer, int32 value, uint32 decimals, uint32 neg
   return(&buffer[s]);
 }
 #endif
-//----------------------------------------------------------------------------------------------------------------------------------
-// File display functions
-//----------------------------------------------------------------------------------------------------------------------------------
-//Simplest setup here is to put all important data in a struct and make it such that a pointer is used to point to the active one
-//This way no memory needs to be copied
-//Needs a bit of a re write but might improve things a bit
-//Depends on how the pointer setup effects the main code
-
-
 //----------------------------------------------------------------------------------------------------------------------------------
 // Configuration data functions
 //----------------------------------------------------------------------------------------------------------------------------------

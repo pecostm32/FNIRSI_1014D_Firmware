@@ -99,11 +99,11 @@ NAVIGATIONFUNCTIONS bottomvolttimecursor =
 NAVIGATIONFUNCTIONS mainmenuactions[] =
 {
   {                                         //Picture browsing
-    0,                                      //left;
-    0,                                      //right;
+    sm_close_menu,                          //left;
+    sm_open_picture_view_screen,            //right;
     sm_select_main_menu_item,               //up;
     sm_select_main_menu_item,               //down;
-    0,                                      //ok;
+    sm_open_picture_view_screen,            //ok;
     sm_select_main_menu_item                //dial;
   },
   {                                         //Wave browsing
@@ -284,6 +284,9 @@ void sm_handle_user_input(void)
         break;
 
       default:
+        //Need handling of picture and wave file functions at this point
+//viewactive can be checked for handling things        
+        
         //When a basic command is received check if a menu is open
         if(scopesettings.menustate)
         {
@@ -322,6 +325,16 @@ void sm_handle_user_input(void)
       ui_display_main_menu();
       break;
       
+    case UIC_BUTTON_SAVE_PICTURE:
+      //Save the screen as bitmap on the SD card
+      ui_save_view_item_file(VIEW_TYPE_PICTURE);
+      break;
+
+    case UIC_BUTTON_SAVE_WAVE:
+      //Save the screen as bitmap on the SD card
+      ui_save_view_item_file(VIEW_TYPE_WAVEFORM);
+      break;
+
     case UIC_BUTTON_H_CUR:
       //Toggle the horizontal cursor state
       scopesettings.timecursorsenable ^= 1;
@@ -909,6 +922,17 @@ void sm_start_usb_export(void)
   
   //Signal cancel command has been processed
   userinterfacedata.command = 0;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_open_picture_view_screen(void)
+{
+  //Signal viewing of pictures
+  viewtype = VIEW_TYPE_PICTURE;
+
+  //Go and setup everything to view the available picture items
+  ui_setup_view_screen();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

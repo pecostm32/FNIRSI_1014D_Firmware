@@ -13,8 +13,8 @@
 #define UIC_BUTTON_RUN_STOP           1
 #define UIC_BUTTON_AUTO               2
 #define UIC_BUTTON_MENU               3
-#define UIC_BUTTON_S_PIC              4
-#define UIC_BUTTON_S_WAV              5
+#define UIC_BUTTON_SAVE_PICTURE       4
+#define UIC_BUTTON_SAVE_WAVE          5
 #define UIC_BUTTON_H_CUR              6
 #define UIC_BUTTON_V_CUR              7
 #define UIC_BUTTON_NAV_RIGHT          8
@@ -96,6 +96,9 @@ void sm_close_menu(void);
 void sm_select_main_menu_item(void);
 
 void sm_start_usb_export(void);
+
+void sm_open_picture_view_screen(void);
+void sm_open_wave_view_screen(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

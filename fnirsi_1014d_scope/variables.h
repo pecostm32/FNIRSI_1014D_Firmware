@@ -30,17 +30,17 @@
 #define VIEW_NOT_ACTIVE                   0
 #define VIEW_ACTIVE                       1
 
-#define VIEW_ITEM_XSTART                  2
+#define VIEW_ITEM_XSTART                  1
 #define VIEW_ITEM_YSTART                  0
-#define VIEW_ITEM_WIDTH                 182
+#define VIEW_ITEM_WIDTH                 199
 #define VIEW_ITEM_HEIGHT                120
 
 #define VIEW_ITEM_TRACE_POINTS          182
 
-#define VIEW_ITEM_XNEXT                 182
+#define VIEW_ITEM_XNEXT                 199
 #define VIEW_ITEM_YNEXT                 120
 
-#define VIEW_ITEM_XLAST                 720
+#define VIEW_ITEM_XLAST                 790
 
 #define VIEW_THUMBNAIL_DATA_SIZE     400000
 #define VIEW_FILE_NUMBER_DATA_SIZE     2000
@@ -98,6 +98,8 @@
 #define SETTING_SECTOR_VERSION_HIGH  0x0100
 #define SETTING_SECTOR_VERSION_LOW   0x0001
 
+#define WAVEFORM_FILE_ID1        0x4F434550    //PECO
+#define WAVEFORM_FILE_ID2        0x34313031    //1014
 #define WAVEFORM_FILE_VERSION    0x01000001    //Version 1.0.0.1
 
 #define WAVEFORM_FILE_ERROR             200
@@ -877,6 +879,9 @@ extern const uint8 channel_menu_AC_icon[];
 extern const uint8 channel_menu_DC_icon[];
 extern const uint8 channel_menu_ON_icon[];
 extern const uint8 channel_menu_OFF_icon[];
+
+extern const uint16 thumbnail_top_bar_icon[];
+extern const uint16 thumbnail_side_bar_icon[];
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

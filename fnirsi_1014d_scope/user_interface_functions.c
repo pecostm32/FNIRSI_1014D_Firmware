@@ -2,11 +2,13 @@
 
 #include "types.h"
 #include "display_lib.h"
+#include "timer.h"
 #include "variables.h"
 #include "uart.h"
 #include "usb_interface.h"
 #include "user_interface_functions.h"
 #include "scope_functions.h"
+#include "fpga_control.h"
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Simple non optimized function for string copy that returns a pointer to the terminator
@@ -56,6 +58,93 @@ void ui_setup_main_screen(void)
   display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_2);
   display_text(VERSION_STRING_XPOS, VERSION_STRING_YPOS, VERSION_STRING);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_setup_view_screen(void)
+{
+  //Load the thumbnail file for the current view type
+  if(ui_load_thumbnail_file() != 0)
+  {
+    //Loading the thumbnail file failed so no sense in going on
+    return;
+  }
+
+  //Switch to view mode so disallow saving of settings on power down
+  viewactive = VIEW_ACTIVE;
+
+  //Set scope run state to running to have it sample fresh data on exit
+  scopesettings.runstate = 0;
+
+  //Only needed for waveform view. Picture viewing does not change the scope settings
+  if(viewtype == VIEW_TYPE_WAVEFORM)
+  {
+    //Save the current settings
+    ui_save_setup(&savedscopesettings1);
+  }
+  
+  //Initialize the view mode variables
+  //Used for indicating if select all or select button is active
+  viewselectmode = 0;
+
+  //Start at first page
+  viewpage = 0;
+
+  //Clear the item selected flags
+  memset(viewitemselected, VIEW_ITEM_NOT_SELECTED, VIEW_ITEMS_PER_PAGE);
+
+  //Display the available thumbnails for the current view type
+  ui_initialize_and_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_close_view_screen(void)
+{
+  //This is only needed when an actual waveform has been viewed, but that needs an extra flag
+  //Only needed for waveform view. Picture viewing does not change the scope settings
+  if(viewtype == VIEW_TYPE_WAVEFORM)
+  {
+    //Restore the current settings
+    ui_restore_setup(&savedscopesettings1);
+
+    //Make sure view mode is normal
+    scopesettings.waveviewmode = 0;
+
+    //And resume with auto trigger mode
+    scopesettings.triggermode = 0;
+
+    //Need to restore the original scope data and fpga settings
+
+    //Is also part of startup, so could be done with a function
+    //Set the volts per div for each channel based on the loaded scope settings
+    fpga_set_channel_voltperdiv(&scopesettings.channel1);
+    fpga_set_channel_voltperdiv(&scopesettings.channel2);
+
+    //These are not done in the original code
+    //Set the channels AC or DC coupling based on the loaded scope settings
+    fpga_set_channel_coupling(&scopesettings.channel1);
+    fpga_set_channel_coupling(&scopesettings.channel2);
+
+    //Setup the trigger system in the FPGA based on the loaded scope settings
+    fpga_set_sample_rate(scopesettings.samplerate);
+    fpga_set_trigger_channel();
+    fpga_set_trigger_edge();
+    fpga_set_trigger_level();
+    fpga_set_trigger_mode();
+
+    //Set channel screen offsets
+    fpga_set_channel_offset(&scopesettings.channel1);
+    fpga_set_channel_offset(&scopesettings.channel2);
+  }
+
+  //Reset the screen to the normal scope screen
+  ui_setup_main_screen();
+  scope_display_trace_data();
+
+  //Back to normal mode so allow saving of settings on power down
+  viewactive = VIEW_NOT_ACTIVE;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2503,15 +2592,16 @@ void ui_prepare_setup_for_file(void)
 {
   uint32 *ptr = viewfilesetupdata;
   uint32 index = 0;
-//  uint32 channel;
-//  uint32 measurement;
+  uint32 measurement;
   uint32 checksum = 0;
 
   //Best to clear the buffer first since not all bytes are used
   memset((uint8 *)viewfilesetupdata, 0, sizeof(viewfilesetupdata));
 
   //Put in a version number for the waveform view file
-  ptr[1] = WAVEFORM_FILE_VERSION;
+  ptr[1] = WAVEFORM_FILE_ID1;
+  ptr[2] = WAVEFORM_FILE_ID2;
+  ptr[3] = WAVEFORM_FILE_VERSION;
   
   //Leave space for file version and checksum data
   index = CHANNEL1_SETTING_OFFSET;
@@ -2596,18 +2686,15 @@ void ui_prepare_setup_for_file(void)
   
   //Leave some space for other cursor settings changes
   index = MEASUREMENT_SETTING_OFFSET;
-#if 0  
-  //Copy the measurements enable states
-  for(channel=0;channel<2;channel++)
+  
+    //Save the measurement slots states
+  for(measurement=0;measurement<6;measurement++)
   {
-    //12 measurements per channel
-    for(measurement=0;measurement<12;measurement++)
-    {
-      //Copy the current measurement state and point to the next one
-       ptr[index++] = scopesettings.measuresstate[channel][measurement];
-    }
+    //Copy the current measurement channel and index
+    ptr[index++] = scopesettings.measurementitems[measurement].channel;
+    ptr[index++] = scopesettings.measurementitems[measurement].index;
   }
-#endif  
+
   //Calculate a checksum over the settings data
   for(index=1;index<VIEW_NUMBER_OF_SETTINGS;index++)
   {
@@ -2632,8 +2719,7 @@ void ui_restore_setup_from_file(void)
 {
   uint32 *ptr = viewfilesetupdata;
   uint32 index = 0;
-//  uint32 channel;
-//  uint32 measurement;
+  uint32 measurement;
 
   //Leave space for file version and checksum data
   index = CHANNEL1_SETTING_OFFSET;
@@ -2718,18 +2804,24 @@ void ui_restore_setup_from_file(void)
   
   //Leave some space for other cursor settings changes
   index = MEASUREMENT_SETTING_OFFSET;
-#if 0  
-  //Copy the measurements enable states
-  for(channel=0;channel<2;channel++)
+  
+  //Restore the measurement slots states
+  for(measurement=0;measurement<6;measurement++)
   {
-    //12 measurements per channel
-    for(measurement=0;measurement<12;measurement++)
+    //Copy the current measurement channel and index
+    scopesettings.measurementitems[measurement].channel = ptr[index++];
+    scopesettings.measurementitems[measurement].index   = ptr[index++];
+
+    //Set the pointer to the actual channel data based on the selected channel
+    if(scopesettings.measurementitems[measurement].channel == 0)
     {
-      //Copy the current measurement state and point to the next one
-      scopesettings.measuresstate[channel][measurement] = ptr[index++];
+      scopesettings.measurementitems[measurement].channelsettings = &scopesettings.channel1;
+    }
+    else
+    {
+      scopesettings.measurementitems[measurement].channelsettings = &scopesettings.channel2;
     }
   }
-#endif  
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3355,7 +3447,7 @@ int32 ui_load_trace_data(void)
       ui_restore_setup_from_file();
 
       //Check if the version of the file is wrong
-      if(viewfilesetupdata[1] != WAVEFORM_FILE_VERSION)
+      if((viewfilesetupdata[1] != WAVEFORM_FILE_ID1) || (viewfilesetupdata[2] != WAVEFORM_FILE_ID2) || (viewfilesetupdata[3] != WAVEFORM_FILE_VERSION))
       {
         //No need to load the rest of the data
         result = WAVEFORM_FILE_ERROR;
@@ -3420,7 +3512,7 @@ int32 ui_load_trace_data(void)
     return(VIEW_TRACE_LOAD_OK);
   }
 
-  //Remove the current item from the thumbnnails and delete the item from disk
+  //Remove the current item from the thumbnnails and delete the item from disk, since the file is faultyand thus no longer needed
   ui_remove_item_from_thumbnails(1);
 
   //Save the thumbnail file
@@ -3489,7 +3581,7 @@ int32 ui_load_bitmap_data(void)
     return(VIEW_BITMAP_LOAD_OK);
   }
 
-  //Remove the current item from the thumbnnails and delete the item from disk
+  //Remove the current item from the thumbnnails and delete the item from disk, since it is faulty no need to keep it
   ui_remove_item_from_thumbnails(1);
 
   //Save the thumbnail file
@@ -3586,13 +3678,13 @@ void ui_display_thumbnails(void)
   uint32 xpos = VIEW_ITEM_XSTART;
   uint32 ypos = VIEW_ITEM_YSTART;
 
-  uint32 button, x, y;
+  uint32 x, y;
 
   //Set black color for background
   display_set_fg_color(0x00000000);
 
-  //Clear the thumbnail display area
-  display_fill_rect(0, 0, 730, 480);
+  //Clear the screen
+  display_fill_rect(0, 0, 800, 480);
 
   //Check if there are items to display
   if(viewavailableitems)
@@ -3627,51 +3719,18 @@ void ui_display_thumbnails(void)
     //Draw the available items on the screen
     while(index < lastindex)
     {
-      //Create a nicer thumbnail by drawing the menu buttons and some extra lines
+      //Create a nicer thumbnail by drawing the top information bar and the measurements
       y = ypos + 1;
 
-      //Main menu button blue
-      display_set_fg_color(0x00000078);
-      display_fill_rect(xpos, y, 20, 8);
+      //Fill in the top bar
+      display_copy_icon_full_color(thumbnail_top_bar_icon, xpos, y, 169, 9);
 
-      //Speed text
-      display_fill_rect(xpos + 112, y, 10, 8);
-
-      //Channel 1 button
-      display_set_fg_color(CHANNEL1_COLOR);
-      display_fill_rect(xpos + 38, y, 8, 8);
-
-      //Channel 2 button
-      display_set_fg_color(CHANNEL1_COLOR);
-      display_fill_rect(xpos + 65, y, 8, 8);
-
-      //Acquisition button
-      display_set_fg_color(TRIGGER_COLOR);
-      display_fill_rect(xpos + 92, y, 8, 8);
-
-      //Trigger menu button
-      display_fill_rect(xpos + 132, y, 8, 8);
-
-      //Battery
-      display_fill_rect(xpos + 160, y, 8, 4);
-
-      //Light grey for the buttons
-      display_set_fg_color(0x00303030);
-
-      x = xpos + 173;
-      y = ypos + 3;
-
-      //Draw the right buttons
-      for(button=0;button<8;button++)
-      {
-        display_fill_rect(x, y, 8, 10);
-
-        y += 15;
-      }
-
+      //Fill in the side bar
+      display_copy_icon_full_color(thumbnail_side_bar_icon, xpos + 171, y, 26, 118);
+      
       //Set grey color for trace border
       display_set_fg_color(0x00909090);
-      display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 13, VIEW_ITEM_HEIGHT - 25);
+      display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 25);
 
       //Draw a grid
       display_set_fg_color(0x00606060);
@@ -3768,8 +3827,8 @@ void ui_display_thumbnails(void)
         }
       }
 
-      //Set white color for item border
-      display_set_fg_color(0x00808000);
+      //Set a nice color for item border
+      display_set_fg_color(0x00CC8947);
 
       //Draw the border
       display_draw_rect(xpos, ypos, VIEW_ITEM_WIDTH, VIEW_ITEM_HEIGHT);
@@ -3905,57 +3964,57 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   strcpy(thumbnaildata->filename, viewfilename);
 
   //Calculate and limit pointer position for channel 1
-  position = 441 - scopesettings.channel1.traceposition;
+  position = 458 - scopesettings.channel1.traceposition;
 
   //Limit on the top of the displayable region
-  if(position < 46)
+  if(position < 59)
   {
-    position = 46;
+    position = 59;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 441)
+  else if(position > 443)
   {
-    position = 441;
+    position = 443;
   }
 
   //Set the parameters for channel 1
   thumbnaildata->channel1enable        = scopesettings.channel1.enable;
-  thumbnaildata->channel1traceposition = (uint8)(((position - 46) * 10000) / 42210);
+  thumbnaildata->channel1traceposition = (uint8)(((position - 59) * 10000) / 42210);
 
   //Calculate and limit pointer position for channel 2
-  position = 441 - scopesettings.channel2.traceposition;
+  position = 458 - scopesettings.channel2.traceposition;
 
   //Limit on the top of the displayable region
-  if(position < 46)
+  if(position < 59)
   {
-    position = 46;
+    position = 59;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 441)
+  else if(position > 443)
   {
-    position = 441;
+    position = 443;
   }
 
   //Set the parameters for channel 2
   thumbnaildata->channel2enable      = scopesettings.channel2.enable;
-  thumbnaildata->channel2traceposition = (uint8)(((position - 46) * 10000) / 42210);
+  thumbnaildata->channel2traceposition = (uint8)(((position - 59) * 10000) / 42210);
 
   //Calculate and limit pointer position for trigger level
-  position = 441 - scopesettings.triggerverticalposition;
+  position = 458 - scopesettings.triggerverticalposition;
 
   //Limit on the top of the displayable region
-  if(position < 46)
+  if(position < 59)
   {
-    position = 46;
+    position = 59;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 441)
+  else if(position > 443)
   {
-    position = 441;
+    position = 443;
   }
 
   //Set trigger information
-  thumbnaildata->triggerverticalposition   = (uint8)(((position - 46) * 10000) / 42210);
+  thumbnaildata->triggerverticalposition   = (uint8)(((position - 59) * 10000) / 42210);
   thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * 10000) / 42899;
 
   //Set the xy display mode
@@ -3996,7 +4055,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
     {
       //Adjust the samples to fit the thumbnail screen. Channel 1 is x, channel 2 is y
       *buffer1++ = (scope_get_x_sample(&scopesettings.channel1, index) * 10000) / 42210;
-      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - 47) * 10000) / 42210;
+      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - 60) * 10000) / 42210;
     }
   }
 }
@@ -4027,8 +4086,8 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   //This yields a max of 182 points, which is more then is displayed on the thumbnail screen
   for(index=disp_xstart,pattern=0;index<=disp_xend;index+=4,pattern++)
   {
-    //Adjust the y point to fit the thumbnail screen. First trace y position on screen is 47. The available height on the thumbnail is 95 pixels so divide by 4,2210
-    *buffer++ = (uint8)(((thumbnailtracedata[index] - 47) * 10000) / 42210);
+    //Adjust the y point to fit the thumbnail screen. First trace y position on screen is 60. The available height on the thumbnail is 95 pixels so divide by 4,2210
+    *buffer++ = (uint8)(((thumbnailtracedata[index] - 60) * 10000) / 42210);
 
     //Skip one more sample every third loop
     if(pattern == 2)
@@ -4127,7 +4186,7 @@ void ui_thumbnail_draw_pointer(uint32 xpos, uint32 ypos, uint32 direction, uint3
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-#if 0
+
 int32 ui_display_picture_item(void)
 {
   //Display the new item
@@ -4138,11 +4197,11 @@ int32 ui_display_picture_item(void)
   }
 
   //And draw the bottom menu bar with a save of the background
-  ui_setup_bottom_file_menu(VIEW_BOTTON_MENU_INIT);
+//  ui_setup_bottom_file_menu(VIEW_BOTTON_MENU_INIT);
 
   return(VIEW_BITMAP_LOAD_OK);
 }
-#endif
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void ui_display_selected_signs(void)
@@ -4231,9 +4290,9 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
   display_set_fg_color(0x00303030);
   display_draw_rect(260, 210, 280, 60);
 
-  //White color for text and use font_3
+  //White color for text and use font_1
   display_set_fg_color(0x00FFFFFF);
-  display_set_font(&font_3);
+  display_set_font(&font_1);
 
   switch(msgid)
   {
@@ -4326,6 +4385,11 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
     timer0_delay(500);
   }
 #endif
+
+  //Display for half a second for now
+    //Wait for half a second
+    timer0_delay(500);
+
   
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);
