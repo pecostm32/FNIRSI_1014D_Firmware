@@ -41,9 +41,9 @@
 #define UIC_BUTTON_GEN               29
 #define UIC_BUTTON_NEXT              30
 #define UIC_BUTTON_LAST              31
-#define UIC_BUTTON_DEL               32
-#define UIC_BUTTON_SEE_ALL           33
-#define UIC_BUTTON_SEL               34
+#define UIC_BUTTON_DELETE            32
+#define UIC_BUTTON_SELECT_ALL        33
+#define UIC_BUTTON_SELECT            34
 
 #define UIC_ROTARY_SEL_ADD           35
 #define UIC_ROTARY_SEL_SUB           36
@@ -97,8 +97,29 @@ void sm_select_main_menu_item(void);
 
 void sm_start_usb_export(void);
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//Picture and waveform viewing handlers
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void sm_open_picture_view_screen(void);
 void sm_open_wave_view_screen(void);
+
+void sm_close_view_screen(void);
+
+void sm_view_open_item(void);
+void sm_view_select_item(void);
+
+void sm_view_delete_items(void);
+
+void sm_view_set_select_mode(void);
+void sm_view_set_select_all(void);
+
+void sm_view_goto_next_item(void);
+void sm_view_goto_previous_item(void);
+void sm_view_goto_next_row(void);
+void sm_view_goto_previous_row(void);
+void sm_view_goto_next_page(void);
+void sm_view_goto_previous_page(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

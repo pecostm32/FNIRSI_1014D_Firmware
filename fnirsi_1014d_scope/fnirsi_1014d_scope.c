@@ -163,8 +163,8 @@ int main(void)
   //Process and display trace data and handle user input until power is switched off
   while(1)
   {
-    //Only do sampling when no menu active
-    if(scopesettings.menustate == 0)
+    //Only do sampling when no menu active and not in a view state
+    if((scopesettings.menustate == 0) && (viewactive == VIEW_NOT_ACTIVE))
     {
       //Go through the trace data and make it ready for displaying
       scope_acquire_trace_data();

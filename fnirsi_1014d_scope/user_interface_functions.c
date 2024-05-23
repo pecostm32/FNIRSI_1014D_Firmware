@@ -42,6 +42,13 @@ void ui_setup_display_lib(void)
 
 void ui_setup_main_screen(void)
 {
+  //Set black color for background
+  display_set_fg_color(0x00000000);
+
+  //Clear the screen
+  display_fill_rect(0, 0, 800, 480);
+
+  //Fill in all the items on the screen
   ui_draw_outline();
   ui_draw_grid();
   ui_display_logo();
@@ -189,15 +196,7 @@ void ui_setup_usb_screen(void)
   usb_device_enable();
 
   //Wait for the user to push a button or rotate a dial on the front panel of the scope
-  while(1)
-  {
-    //Get the latest command to be processed
-    if(uart1_get_data() != 0)
-    {
-      //User gave input so quit the wait loop
-      break;
-    }
-  }
+  while(uart1_get_data() == 0);
 
   //Stop the USB interface
   usb_device_disable();
@@ -211,7 +210,7 @@ void ui_setup_usb_screen(void)
   scope_display_trace_data();
   
   //Re-sync the system files
-  //ui_sync_thumbnail_files();
+  ui_sync_thumbnail_files();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3680,6 +3679,9 @@ void ui_display_thumbnails(void)
 
   uint32 x, y;
 
+  //Use a separate buffer to clear the screen so it won't flicker when previous or next item is highlighted
+  display_set_screen_buffer(displaybuffer1);
+  
   //Set black color for background
   display_set_fg_color(0x00000000);
 
@@ -3732,6 +3734,13 @@ void ui_display_thumbnails(void)
       display_set_fg_color(0x00909090);
       display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 25);
 
+      //Check on highlighted item
+      if(index == viewcurrentindex)
+      {
+        display_set_fg_color(0x00787878);
+        display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 32, VIEW_ITEM_HEIGHT - 27);
+      }
+      
       //Draw a grid
       display_set_fg_color(0x00606060);
 
@@ -3827,12 +3836,6 @@ void ui_display_thumbnails(void)
         }
       }
 
-      //Set a nice color for item border
-      display_set_fg_color(0x00CC8947);
-
-      //Draw the border
-      display_draw_rect(xpos, ypos, VIEW_ITEM_WIDTH, VIEW_ITEM_HEIGHT);
-
       //Need to make a distinction between normal display and xy display mode for displaying the pointers
       if(thumbnaildata->xydisplaymode == 0)
       {
@@ -3902,6 +3905,12 @@ void ui_display_thumbnails(void)
       display_set_font(&font_2);
       display_text(xpos + 7, ypos + 105, thumbnaildata->filename);
 
+      //Set a nice color for item border
+      display_set_fg_color(FILE_BORDER_COLOR);  //0x00CC8947
+
+      //Draw the border
+      display_draw_rect(xpos, ypos, VIEW_ITEM_WIDTH, VIEW_ITEM_HEIGHT);
+      
       //Skip to next coordinates
       xpos += VIEW_ITEM_XNEXT;
 
@@ -3919,6 +3928,15 @@ void ui_display_thumbnails(void)
       index++;
     }
   }
+  else
+  {
+    //Display EMPTY !!! with font 4
+  }
+  
+  //Copy the new screen to the actual screen buffer
+  display_set_source_buffer(displaybuffer1);
+  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+  display_copy_rect_to_screen(0, 0, 800, 480);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

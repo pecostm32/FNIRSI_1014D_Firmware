@@ -47,6 +47,7 @@
 
 #define VIEW_MAX_ITEMS                 1000
 
+#define VIEW_ITEMS_PER_ROW                4
 #define VIEW_ITEMS_PER_PAGE              16
 
 #define VIEW_TYPE_MASK                    1
@@ -133,6 +134,9 @@
 
 #define MESSAGE_WAV_VERSION_MISMATCH     12
 #define MESSAGE_WAV_CHECKSUM_ERROR       13
+
+
+#define FILE_BORDER_COLOR                0x00CC8947
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Number of bits used for fixed point calculations on the voltages
@@ -237,7 +241,7 @@ typedef struct tagDisplayPoints         DISPLAYPOINTS,        *PDISPLAYPOINTS;
 
 typedef struct tagUserInterfaceData     USERINTERFACEDATA,    *PUSERINTERFACEDATA;
 typedef struct tagNavigationFunctions   NAVIGATIONFUNCTIONS,  *PNAVIGATIONFUNCTIONS;
-
+typedef struct tagFileViewFunctions     FILEVIEWFUNCTIONS,    *PFILEVIEWFUNCTIONS;
 
 typedef struct tagChannelSettings       CHANNELSETTINGS,      *PCHANNELSETTINGS;
 typedef struct tagScopeSettings         SCOPESETTINGS,        *PSCOPESETTINGS;
@@ -261,6 +265,7 @@ typedef struct tagMeasurementInfo       MEASUREMENTINFO,      *PMEASUREMENTINFO;
 //----------------------------------------------------------------------------------------------------------------------------------
 
 typedef void (*NAVIGATIONFUNCTION)(void);
+typedef void (*FILEVIEWFUNCTION)(void);
 typedef void (*MEASUREMENTFUNCTION)(uint32 ypos, PCHANNELSETTINGS settings);
 typedef void (*MSMITEMFUNCTION)(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings);
 
@@ -300,6 +305,7 @@ struct tagUserInterfaceData
   int16 setvalue;
   
   PNAVIGATIONFUNCTIONS navigationfunctions;
+  PFILEVIEWFUNCTIONS   fileviewfunctions;
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -313,6 +319,17 @@ struct tagNavigationFunctions
   NAVIGATIONFUNCTION ok;
   
   NAVIGATIONFUNCTION dial;
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+struct tagFileViewFunctions
+{
+  FILEVIEWFUNCTION select;
+  FILEVIEWFUNCTION selectall;
+  FILEVIEWFUNCTION delete;
+  FILEVIEWFUNCTION previous;             //Labeled LAST on the button
+  FILEVIEWFUNCTION next;
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -764,15 +781,15 @@ extern uint8 viewactive;
 extern uint8 viewtype;
 
 extern uint8 viewselectmode;
-extern uint8 viewpage;
-extern uint8 viewpages;
 extern uint8 viewitemsonpage;
 
-extern uint8 viewbottommenustate;
+extern int16 viewpage;
+extern int16 viewpages;
 
-extern uint16 viewcurrentindex;
 
-extern uint16 viewavailableitems;
+extern int16 viewcurrentindex;
+
+extern int16 viewavailableitems;
 
 extern uint8 viewitemselected[VIEW_ITEMS_PER_PAGE];
 

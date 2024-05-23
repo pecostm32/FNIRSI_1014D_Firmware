@@ -14,6 +14,10 @@
 //Navigation action structures for switching between different functionality
 //----------------------------------------------------------------------------------------------------------------------------------
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//Time and volt cursor handling function pointers
+//----------------------------------------------------------------------------------------------------------------------------------
+
 NAVIGATIONFUNCTIONS lefttimecursor =
 {
   sm_select_left_time_cursor,             //left;
@@ -94,6 +98,41 @@ NAVIGATIONFUNCTIONS bottomvolttimecursor =
   sm_move_bottom_volt_cursor_position     //dial;
 };
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//File viewing handling function pointers
+//----------------------------------------------------------------------------------------------------------------------------------
+
+NAVIGATIONFUNCTIONS fileviewopenitem =
+{
+  sm_view_goto_previous_item,             //left;
+  sm_view_goto_next_item,                 //right;
+  sm_view_goto_previous_row,              //up;
+  sm_view_goto_next_row,                  //down;
+  sm_view_open_item,                      //ok;
+  0                                       //dial;
+};
+
+NAVIGATIONFUNCTIONS fileviewselectitem =
+{
+  sm_view_goto_previous_item,             //left;
+  sm_view_goto_next_item,                 //right;
+  sm_view_goto_previous_row,              //up;
+  sm_view_goto_next_row,                  //down;
+  sm_view_select_item,                    //ok;
+  0                                       //dial;
+};
+
+FILEVIEWFUNCTIONS fileviewfunctions =
+{
+  sm_view_set_select_mode,                //Select
+  sm_view_set_select_all,                 //Select all
+  sm_view_delete_items,                   //Delete
+  sm_view_goto_previous_page,             //Previous page
+  sm_view_goto_next_page,                 //Next page
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Main menu handling function pointers
 //----------------------------------------------------------------------------------------------------------------------------------
 
 NAVIGATIONFUNCTIONS mainmenuactions[] =
@@ -187,7 +226,6 @@ NAVIGATIONFUNCTIONS mainmenuactions[] =
     sm_select_main_menu_item                //dial;
   },
 };
-
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //State machine handling functions
@@ -284,11 +322,8 @@ void sm_handle_user_input(void)
         break;
 
       default:
-        //Need handling of picture and wave file functions at this point
-//viewactive can be checked for handling things        
-        
-        //When a basic command is received check if a menu is open
-        if(scopesettings.menustate)
+        //When a basic command is received check if a menu is open and not in a view state
+        if((scopesettings.menustate) && (viewactive == VIEW_NOT_ACTIVE))
         {
           //If so close the menu and restore the previous functionality
           sm_close_menu();
@@ -298,6 +333,66 @@ void sm_handle_user_input(void)
         }
         break;
     }  
+  }
+  
+  //Check if handling of picture and wave file functions is enabled
+  if(viewactive == VIEW_ACTIVE)
+  {
+    if(userinterfacedata.fileviewfunctions)
+    {
+      switch(userinterfacedata.command)
+      {
+        case UIC_BUTTON_NEXT:
+          if(userinterfacedata.fileviewfunctions->next)
+          {
+            userinterfacedata.fileviewfunctions->next();
+          }
+          break;
+
+        case UIC_BUTTON_LAST:
+          if(userinterfacedata.fileviewfunctions->previous)
+          {
+            userinterfacedata.fileviewfunctions->previous();
+          }
+          break;
+
+        case UIC_BUTTON_DELETE:
+          if(userinterfacedata.fileviewfunctions->delete)
+          {
+            userinterfacedata.fileviewfunctions->delete();
+          }
+          break;
+
+        case UIC_BUTTON_SELECT_ALL:
+          if(userinterfacedata.fileviewfunctions->selectall)
+          {
+            userinterfacedata.fileviewfunctions->selectall();
+          }
+          break;
+
+        case UIC_BUTTON_SELECT:
+          if(userinterfacedata.fileviewfunctions->select)
+          {
+            userinterfacedata.fileviewfunctions->select();
+          }
+          break;
+      }
+    }
+    
+    //Check if the menu button is pressed to revert to previous state
+    if(userinterfacedata.command == UIC_BUTTON_MENU)
+    {
+      //Need to know if a view item is open or that item view is active
+      //When item open return to the view page else close the viewer
+      
+      sm_close_view_screen();
+    }
+    
+    //Signal command has been handled
+    userinterfacedata.command = 0;
+
+    //No need to continue
+    return;
   }
   
   //Handle the received command
@@ -543,15 +638,14 @@ void sm_handle_user_input(void)
     case UIC_ROTARY_TIME_SUB:
       sm_set_time_base();
       break;
-
-//    case :
-//      break;
   }
   
   //Signal the active command has been processed
   userinterfacedata.command = 0;
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//Handling functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_set_trigger_position(void)
@@ -925,14 +1019,323 @@ void sm_start_usb_export(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//Picture and wave file viewing handlers
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_open_picture_view_screen(void)
 {
   //Signal viewing of pictures
   viewtype = VIEW_TYPE_PICTURE;
+  
+  //No longer in menu state so clear it
+  scopesettings.menustate = 0;
 
+//Need different functions hooked in when no items available!!!!!!  
+  
+  //Hook in the needed navigation and file viewing actions
+  userinterfacedata.navigationfunctions = &fileviewopenitem;
+  userinterfacedata.fileviewfunctions   = &fileviewfunctions;
+
+  //Start with the first file highlighted
+  viewcurrentindex = 0;
+  viewpage = 0;
+  
   //Go and setup everything to view the available picture items
   ui_setup_view_screen();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_open_wave_view_screen(void)
+{
+  //Signal viewing of pictures
+  viewtype = VIEW_TYPE_WAVEFORM;
+  
+  //No longer in menu state so clear it
+  scopesettings.menustate = 0;
+  
+//Need different functions hooked in when no items available!!!!!!  
+  
+  //Hook in the needed navigation and file viewing actions
+  userinterfacedata.navigationfunctions = &fileviewopenitem;
+  userinterfacedata.fileviewfunctions   = &fileviewfunctions;
+
+  //Start with the first file highlighted
+  viewcurrentindex = 0;
+  viewpage = 0;
+  
+  //Go and setup everything to view the available picture items
+  ui_setup_view_screen();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+
+void sm_close_view_screen(void)
+{
+  //Need to check on cursors being active as to what functionality needs to be set
+  //Maybe add history for last selected cursor since it can be used in wave viewing
+  
+  //Clear the navigation and file viewing actions
+  userinterfacedata.navigationfunctions = 0;
+  userinterfacedata.fileviewfunctions   = 0;
+  
+  //Restore the normal scope screen
+  ui_close_view_screen();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_open_item(void)
+{
+  if(viewtype == VIEW_TYPE_PICTURE)
+  {
+    //Load the bitmap in the screen memory
+    if(ui_load_bitmap_data() == VIEW_BITMAP_LOAD_OK)
+    {
+    }
+  }
+  else
+  {
+    //Try to load the trace data for the file indicated by the current index and view type
+    if(ui_load_trace_data() == VIEW_TRACE_LOAD_OK)
+    {
+    }
+  }  
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_select_item(void)
+{
+  
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_delete_items(void)
+{
+  
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_set_select_mode(void)
+{
+  //Enable select mode and use cursor functionality to move around
+  //In the original it acts as deselect all after select all has been done because it disables the select mode
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_set_select_all(void)
+{
+  //Has it's own toggle. Selects all even when some are selected at first press and deselects all at second press
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_next_item(void)
+{
+  //Select the next item
+  viewcurrentindex++;
+  
+  //Check if in range of the available items
+  if(viewcurrentindex >= viewavailableitems)
+  {
+    //Fall back to the first item
+    viewcurrentindex = 0;
+    viewpage = 0;
+  }
+  //Check if overflow to next page
+  else if(viewcurrentindex >= ((viewpage * VIEW_ITEMS_PER_PAGE) + viewitemsonpage))
+  {
+    //Jump to the next page if so
+    viewpage++;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_previous_item(void)
+{
+  //Select the previous item
+  viewcurrentindex--;
+  
+  //Check if it underflows
+  if(viewcurrentindex < 0)
+  {
+    //If so roll over to the last item
+    viewcurrentindex = viewavailableitems - 1;
+    viewpage = viewpages;
+  }
+  //Check if underflow to previous page
+  else if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
+  {
+    //Jump to the previous page if so
+    viewpage--;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_next_row(void)
+{
+  //Select the next row
+  viewcurrentindex += VIEW_ITEMS_PER_ROW;
+  
+  //Check if in range of the available items
+  if(viewcurrentindex >= viewavailableitems)
+  {
+    //Fall back to the first item in the active row
+    viewcurrentindex = viewcurrentindex % VIEW_ITEMS_PER_ROW;
+    viewpage = 0;
+  }
+  //Check if overflow to next page
+  else if(viewcurrentindex >= ((viewpage * VIEW_ITEMS_PER_PAGE) + viewitemsonpage))
+  {
+    //Jump to the next page if so
+    viewpage++;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_previous_row(void)
+{
+  int16 activerow;
+  int16 newrow;
+  
+  //Get the row number of the current highlighted item
+  activerow = (viewcurrentindex % VIEW_ITEMS_PER_ROW);
+  
+  //Select the previous row
+  viewcurrentindex -= VIEW_ITEMS_PER_ROW;
+  
+  //Check if in range of the available items
+  if(viewcurrentindex < 0)
+  {
+    //Roll over to the last item in the active row. Remainder of a negative value is negative
+    viewcurrentindex = viewavailableitems - 1;
+    viewpage = viewpages;
+    
+    //Get the row number of the new item
+    newrow = viewcurrentindex % VIEW_ITEMS_PER_ROW;
+    
+    //Check if the new row is beyond the active row
+    if(newrow > activerow)
+    {
+      //If so take of the difference between the two to get into the right row
+      viewcurrentindex -= (newrow - activerow);
+    }
+    //If not check if it is before the active row
+    else if(newrow < activerow)
+    {
+      //If so skip to the required one by taking of a number based on the delta
+      viewcurrentindex -= (4 - (activerow - newrow));
+      
+      //Get the index of the first item on the last page to see if the new index is on the previous page
+      if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
+      {
+        //if so jump to the previous page
+        viewpage--;
+      }
+    }
+  }
+  //Check if underflow to previous page  
+  else if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
+  {
+    //Jump to the previous page if so
+    viewpage--;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_next_page(void)
+{
+  //Select the next page
+  viewcurrentindex += VIEW_ITEMS_PER_PAGE;
+  viewpage++;
+  
+  //Check if on the last page and beyond the last item on that page
+  if((viewpage == viewpages) && (viewcurrentindex >= viewavailableitems))
+  {
+    //If so use the last item on the page
+    viewcurrentindex = viewavailableitems - 1;
+  }
+  //Else check if page rolls over
+  else if(viewpage > viewpages)
+  {
+    //Fall back to the first page
+    viewcurrentindex = viewcurrentindex % VIEW_ITEMS_PER_PAGE;
+    viewpage = 0;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_view_goto_previous_page(void)
+{
+#if 0
+  Page select needs to walk through the available pages and when the last page comes but the index is beyond the last item
+  the last item on that page needs to be selected.
+    
+    When the page rolls over to the start the remiander needs to be selected on the first page
+  
+    Like to see it land on the same tile as on the page before, but only if it is there ofcourse
+  
+#endif
+  
+  
+  //Select the previous page
+  viewcurrentindex -= VIEW_ITEMS_PER_PAGE;
+  viewpage--;
+  
+  //Check if underflow through to last page
+  if(viewpage < 0)
+  {
+    //If so select item on the last page
+    viewcurrentindex = viewavailableitems - 1;
+    viewpage = viewpages;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+  
+  //Based on the viewselectmode the signs need to be displayed too
+  //For not selected items draw an empty box
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

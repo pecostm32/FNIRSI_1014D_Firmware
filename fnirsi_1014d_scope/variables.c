@@ -159,17 +159,18 @@ char viewfilename[32];              //The original code uses a large buffer to c
 
 uint8 viewactive;                   //Not in the original code. Used to avoid copying settings to the flash
 
-uint8 viewtype = VIEW_TYPE_PICTURE; //At 0x80192EE2 in original code
-uint8 viewselectmode;               //In original code this is at 0x8035A97E. Signals if either the select all or the select button is active
-uint8 viewpage;                     //In original code this is at 0x8035A97F. Is the page number of the current items on the screen. 16 items per page
-uint8 viewpages;                    //Not in original code, but when only calculated once code gets simpler
-uint8 viewitemsonpage;              //The original code works differently in validating the number of items on a page
+uint8 viewtype = VIEW_TYPE_PICTURE;
+uint8 viewselectmode;
 
-uint8 viewbottommenustate;          //At 0x80192EE4 in original code
+int16 viewpage;                     //Current page
+int16 viewpages;                    //Number of pages to scroll through
 
-uint16 viewcurrentindex;            //Used for selecting previous or next item when viewing an item
+uint8 viewitemsonpage;              //Max 16 or less when fewer items available
 
-uint16 viewavailableitems;          //Also done differently in the original code
+
+int16 viewcurrentindex;             //Used for selecting previous or next item when viewing an item
+
+int16 viewavailableitems;           //Total available items for the current view mode
 
 uint8 viewitemselected[VIEW_ITEMS_PER_PAGE];                 //Flags to signal if an item is selected or not
 
