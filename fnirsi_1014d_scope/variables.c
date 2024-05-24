@@ -56,6 +56,16 @@ uint8 screenbrightnessopen = 0;
 uint8 gridbrightnessopen = 0;
 uint8 calibrationopen = 0;
 
+
+uint8 navigationstate = 0;
+uint8 fileviewstate = 0;
+uint8 buttondialstate = 0;
+
+uint8 enablesampling = 1;
+uint8 enabletracedisplay = 1;
+
+NAVIGATIONFUNCTION mainmenustartaction = 0;
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //Display data
 //----------------------------------------------------------------------------------------------------------------------------------

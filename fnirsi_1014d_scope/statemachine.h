@@ -40,7 +40,7 @@
 #define UIC_BUTTON_F6                28
 #define UIC_BUTTON_GEN               29
 #define UIC_BUTTON_NEXT              30
-#define UIC_BUTTON_LAST              31
+#define UIC_BUTTON_PREVIOUS          31     //Marked LAST on the scope, but the action is previous
 #define UIC_BUTTON_DELETE            32
 #define UIC_BUTTON_SELECT_ALL        33
 #define UIC_BUTTON_SELECT            34
@@ -66,13 +66,106 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_handle_user_input(void);
+#define SAMPLING_NOT_ENABLED         0
+#define SAMPLING_ENABLED             1
+
+#define TRACE_DISPLAY_NOT_ENABLED    0
+#define TRACE_DISPLAY_ENABLED        1
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Navigation states
+//----------------------------------------------------------------------------------------------------------------------------------
+
+enum NavigationStates
+{
+  NAV_NO_ACTION = 0,
+  
+  NAV_LEFT_TIME_CURSOR,
+  NAV_RIGHT_TIME_CURSOR,
+  NAV_TOP_VOLT_CURSOR,
+  NAV_BOTTOM_VOLT_CURSOR,
+  NAV_LEFT_TIME_VOLT_CURSOR,
+  NAV_RIGHT_TIME_VOLT_CURSOR,
+  NAV_TOP_VOLT_TIME_CURSOR,
+  NAV_BOTTOM_VOLT_TIME_CURSOR,
+  
+  NAV_MAIN_MENU_HANDLING,
+  
+  NAV_FILE_VIEW_HANDLING,
+  
+  
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//File viewing handling states
+//----------------------------------------------------------------------------------------------------------------------------------
+
+enum FileViewHandlingStates
+{
+  FILE_VIEW_NO_ACTION,
+  FILE_VIEW_CONTROL
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Button and rotary dial handling states
+//----------------------------------------------------------------------------------------------------------------------------------
+
+enum ButtonDialHandlingStates
+{
+  BUTTON_DIAL_NO_ACTION,
+  BUTTON_DIAL_NORMAL_HANDLING,
+  BUTTON_DIAL_MENU_HANDLING,
+  BUTTON_DIAL_FILE_VIEW_HANDLING,
+  BUTTON_DIAL_WAVE_VIEW_HANDLING  
+};
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+void sm_init(void);
+
+void sm_handle_user_input(void);
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Navigation handling functions
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_left_time_cursor(void);
+void sm_handle_right_time_cursor(void);
+void sm_handle_top_volt_cursor(void);
+void sm_handle_bottom_volt_cursor(void);
+void sm_handle_left_time_volt_cursor(void);
+void sm_handle_right_time_volt_cursor(void);
+void sm_handle_top_volt_time_cursor(void);
+void sm_handle_bottom_volt_time_cursor(void);
+
+void sm_handle_main_menu_actions(void);
+
+void sm_handle_file_view_actions(void);
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//File view handling functions
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_file_view_control(void);
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Button and rotary dial handling functions
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_button_dial_normal_handling(void);
+void sm_button_dial_menu_handling(void);
+void sm_button_dial_file_view_handling(void);
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Functions to handle specific tasks
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_close_menu(void);
+void sm_restore_navigation_handling(void);
 
 void sm_set_trigger_position(void);
 void sm_set_trigger_level(void);
+
 void sm_set_time_base(void);
 
 void sm_set_channel_sensitivity(PCHANNELSETTINGS settings);
@@ -80,48 +173,23 @@ void sm_set_channel_position(PCHANNELSETTINGS settings);
 
 void sm_do_50_percent_trigger_setup(void);
 
-void sm_move_left_time_cursor_position(void);
-void sm_move_right_time_cursor_position(void);
-
-void sm_select_left_time_cursor(void);
-void sm_select_right_time_cursor(void);
-
-void sm_move_top_volt_cursor_position(void);
-void sm_move_bottom_volt_cursor_position(void);
-
-void sm_select_top_volt_cursor(void);
-void sm_select_bottom_volt_cursor(void);
-
-void sm_close_menu(void);
 void sm_select_main_menu_item(void);
 
-void sm_start_usb_export(void);
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Picture and waveform viewing handlers
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_open_picture_view_screen(void);
-void sm_open_wave_view_screen(void);
-
+void sm_open_file_view(void);
 void sm_close_view_screen(void);
-
-void sm_view_open_item(void);
-void sm_view_select_item(void);
-
-void sm_view_delete_items(void);
-
-void sm_view_set_select_mode(void);
-void sm_view_set_select_all(void);
 
 void sm_view_goto_next_item(void);
 void sm_view_goto_previous_item(void);
 void sm_view_goto_next_row(void);
 void sm_view_goto_previous_row(void);
-void sm_view_goto_next_page(void);
-void sm_view_goto_previous_page(void);
+
+
+void sm_open_picture_file_viewing(void);
+
+void sm_start_usb_export(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #endif /* STATEMACHINE_H */
 
+//----------------------------------------------------------------------------------------------------------------------------------

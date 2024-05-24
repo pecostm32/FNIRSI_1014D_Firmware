@@ -160,20 +160,27 @@ int main(void)
   //Discard the first response from the user interface controller
   uart1_get_data();
   
+  //Initialize the state machine
+  sm_init();
+  
   //Process and display trace data and handle user input until power is switched off
   while(1)
   {
-    //Only do sampling when no menu active and not in a view state
-    if((scopesettings.menustate == 0) && (viewactive == VIEW_NOT_ACTIVE))
+    //Only do sampling when enabled. Gets disabled when a menu is open or when file viewing
+    if(enablesampling)
     {
       //Go through the trace data and make it ready for displaying
       scope_acquire_trace_data();
+    }
 
+    //Only display trace data when enabled. Gets disabled when a menu is open or when file viewing, except when viewing a wave file
+    if(enabletracedisplay)
+    {
       //Display the trace data and the other enabled screen items
       scope_display_trace_data();
     }
     
-    //Check if the user provided input and handle it if so
+    //Check if the user provided input and handle it
     sm_handle_user_input();
   }
 }

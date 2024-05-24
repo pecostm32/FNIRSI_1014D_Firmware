@@ -54,6 +54,7 @@
 
 #define VIEW_TYPE_PICTURE                 0
 #define VIEW_TYPE_WAVEFORM                1
+#define VIEW_TYPE_OUTPUT                  2
 
 #define VIEW_MAX_TYPES                    2
 
@@ -625,6 +626,18 @@ extern uint8 systemsettingsmenuopen;
 extern uint8 screenbrightnessopen;
 extern uint8 gridbrightnessopen;
 extern uint8 calibrationopen;
+
+
+
+
+extern uint8 navigationstate;
+extern uint8 fileviewstate;
+extern uint8 buttondialstate;
+
+extern uint8 enablesampling;
+extern uint8 enabletracedisplay;
+
+extern NAVIGATIONFUNCTION mainmenustartaction;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope data

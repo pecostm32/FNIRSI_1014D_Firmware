@@ -3546,6 +3546,11 @@ int32 ui_load_bitmap_data(void)
       {
         //Load the bitmap data directly onto the screen
         result = f_read(&viewfp, (uint8 *)maindisplaybuffer, PICTURE_DATA_SIZE, 0);
+        
+        //Show the filename on the bottom of the picture
+        display_set_fg_color(0x00D8B70B);
+        display_set_font(&font_3);
+        display_text(330, 455, viewfilename);
       }
       else
       {
