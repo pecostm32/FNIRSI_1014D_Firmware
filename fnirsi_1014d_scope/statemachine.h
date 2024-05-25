@@ -79,21 +79,11 @@
 enum NavigationStates
 {
   NAV_NO_ACTION = 0,
-  
-  NAV_LEFT_TIME_CURSOR,
-  NAV_RIGHT_TIME_CURSOR,
-  NAV_TOP_VOLT_CURSOR,
-  NAV_BOTTOM_VOLT_CURSOR,
-  NAV_LEFT_TIME_VOLT_CURSOR,
-  NAV_RIGHT_TIME_VOLT_CURSOR,
-  NAV_TOP_VOLT_TIME_CURSOR,
-  NAV_BOTTOM_VOLT_TIME_CURSOR,
-  
+  NAV_TIME_VOLT_CURSOR_HANDLING,
   NAV_MAIN_MENU_HANDLING,
-  
   NAV_FILE_VIEW_HANDLING,
-  
-  
+  NAV_FILE_VIEW_SELECT_HANDLING,
+  NAV_PICTURE_VIEW_HANDLING,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -103,7 +93,9 @@ enum NavigationStates
 enum FileViewHandlingStates
 {
   FILE_VIEW_NO_ACTION,
-  FILE_VIEW_CONTROL
+  FILE_VIEW_DEFAULT_CONTROL,
+  FILE_VIEW_SELECT_CONTROL,
+  FILE_VIEW_PICTURE_CONTROL,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -116,6 +108,7 @@ enum ButtonDialHandlingStates
   BUTTON_DIAL_NORMAL_HANDLING,
   BUTTON_DIAL_MENU_HANDLING,
   BUTTON_DIAL_FILE_VIEW_HANDLING,
+  BUTTON_DIAL_PICTURE_VIEW_HANDLING,
   BUTTON_DIAL_WAVE_VIEW_HANDLING  
 };
 
@@ -127,34 +120,36 @@ void sm_handle_user_input(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Navigation handling functions
+//
+//Act on user input on the navigation buttons (left, right, up, down, ok) and the selection rotary dial
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_handle_left_time_cursor(void);
-void sm_handle_right_time_cursor(void);
-void sm_handle_top_volt_cursor(void);
-void sm_handle_bottom_volt_cursor(void);
-void sm_handle_left_time_volt_cursor(void);
-void sm_handle_right_time_volt_cursor(void);
-void sm_handle_top_volt_time_cursor(void);
-void sm_handle_bottom_volt_time_cursor(void);
-
+void sm_handle_time_volt_cursor(void);
 void sm_handle_main_menu_actions(void);
-
 void sm_handle_file_view_actions(void);
+void sm_handle_file_view_select_actions(void);
+void sm_handle_picture_view_actions(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //File view handling functions
+//
+//Act on user input on the 5 white buttons below the display
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_handle_file_view_control(void);
+void sm_handle_file_view_select_control(void);
+void sm_handle_picture_view_control(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Button and rotary dial handling functions
+//
+//Act on user input to the rest of the buttons and rotary dials
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_button_dial_normal_handling(void);
 void sm_button_dial_menu_handling(void);
 void sm_button_dial_file_view_handling(void);
+void sm_button_dial_picture_view_handling(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Functions to handle specific tasks
@@ -178,10 +173,22 @@ void sm_select_main_menu_item(void);
 void sm_open_file_view(void);
 void sm_close_view_screen(void);
 
-void sm_view_goto_next_item(void);
-void sm_view_goto_previous_item(void);
-void sm_view_goto_next_row(void);
-void sm_view_goto_previous_row(void);
+void sm_file_view_goto_next_item(void);
+void sm_file_view_goto_previous_item(void);
+void sm_file_view_goto_next_row(void);
+void sm_file_view_goto_previous_row(void);
+
+void sm_file_view_goto_next_item_on_page(void);
+void sm_file_view_goto_previous_item_on_page(void);
+void sm_file_view_goto_next_row_on_page(void);
+void sm_file_view_goto_previous_row_on_page(void);
+
+void sm_file_view_process_select(uint32 selectall);
+
+void sm_file_view_delete_selected(void);
+
+void sm_picture_view_goto_next_item(void);
+void sm_picture_view_goto_previous_item(void);
 
 
 void sm_open_picture_file_viewing(void);

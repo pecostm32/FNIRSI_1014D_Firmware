@@ -16,18 +16,20 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define CHANNEL1_COLOR         0x00FFFF00
-#define CHANNEL2_COLOR         0x0000FFFF
-#define TRIGGER_COLOR          0x0000FF00
+#define CHANNEL1_COLOR              0x00FFFF00
+#define CHANNEL2_COLOR              0x0000FFFF
+#define TRIGGER_COLOR               0x0000FF00
 
-#define CHANNEL1_TRIG_COLOR    0x00CCCC00
-#define CHANNEL2_TRIG_COLOR    0x0000CCCC
+#define CHANNEL1_TRIG_COLOR         0x00CCCC00
+#define CHANNEL2_TRIG_COLOR         0x0000CCCC
 
-#define XYMODE_COLOR           0x00FF00FF
+#define XYMODE_COLOR                0x00FF00FF
 
-#define CURSORS_COLOR          0x0000AA11
+#define CURSORS_COLOR               0x0000AA11
 
-#define ITEM_ACTIVE_COLOR      0x00EF9311
+#define ITEM_ACTIVE_COLOR           0x00EF9311
+
+#define FILE_NAME_HIGHLIGHT_COLOR   0x00D8B70B
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

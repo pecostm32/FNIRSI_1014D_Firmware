@@ -91,39 +91,10 @@ void sm_handle_user_input(void)
   //Handle the navigation state first
   switch(navigationstate)
   {
-    //Cursor handling states
-    case NAV_LEFT_TIME_CURSOR:
-      sm_handle_left_time_cursor();
+    //Time and volt cursor handling
+    case NAV_TIME_VOLT_CURSOR_HANDLING:
+      sm_handle_time_volt_cursor();
       break;
-      
-    case NAV_RIGHT_TIME_CURSOR:
-      sm_handle_right_time_cursor();
-      break;
-      
-    case NAV_TOP_VOLT_CURSOR:
-      sm_handle_top_volt_cursor();
-      break;
-      
-    case NAV_BOTTOM_VOLT_CURSOR:
-      sm_handle_bottom_volt_cursor();
-      break;
-      
-    case NAV_LEFT_TIME_VOLT_CURSOR:
-      sm_handle_left_time_volt_cursor();
-      break;
-      
-    case NAV_RIGHT_TIME_VOLT_CURSOR:
-      sm_handle_right_time_volt_cursor();
-      break;
-      
-    case NAV_TOP_VOLT_TIME_CURSOR:
-      sm_handle_top_volt_time_cursor();
-      break;
-      
-    case NAV_BOTTOM_VOLT_TIME_CURSOR:
-      sm_handle_bottom_volt_time_cursor();
-      break;
-      
       
     //Main menu handling
     case NAV_MAIN_MENU_HANDLING:
@@ -135,14 +106,31 @@ void sm_handle_user_input(void)
       sm_handle_file_view_actions();
       break;
       
+    //File view select state handling
+    case NAV_FILE_VIEW_SELECT_HANDLING:
+      sm_handle_file_view_select_actions();
+      break;
+      
+    //Picture view handling
+    case NAV_PICTURE_VIEW_HANDLING:
+      sm_handle_picture_view_actions();
+      break;
       
   }
   
   //Handle the file view actions second
   switch(fileviewstate)
   {
-    case FILE_VIEW_CONTROL:
+    case FILE_VIEW_DEFAULT_CONTROL:
       sm_handle_file_view_control();
+      break;
+      
+    case FILE_VIEW_SELECT_CONTROL:
+      sm_handle_file_view_select_control();
+      break;
+      
+    case FILE_VIEW_PICTURE_CONTROL:
+      sm_handle_picture_view_control();
       break;
   }
 
@@ -160,6 +148,10 @@ void sm_handle_user_input(void)
     case BUTTON_DIAL_FILE_VIEW_HANDLING:
       sm_button_dial_file_view_handling();
       break;
+
+    case BUTTON_DIAL_PICTURE_VIEW_HANDLING:
+      sm_button_dial_picture_view_handling();
+      break;
   }
   
   //Signal the active command has been processed
@@ -170,340 +162,114 @@ void sm_handle_user_input(void)
 //Navigation handling functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_handle_left_time_cursor(void)
+void sm_handle_time_volt_cursor(void)
 {
   //For the left time cursor navigation only the right button and the rotary dial are active
   switch(userinterfacedata.command)
   {
-    case UIC_BUTTON_NAV_RIGHT:
-      //Select the right time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
-      
-      //Switch over to handling the right time cursor
-      navigationstate = NAV_RIGHT_TIME_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.timecursor1position += userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the right time cursor
-      if(scopesettings.timecursor1position < 6)
-      {
-        //So not below the left side of the region
-        scopesettings.timecursor1position = 6;
-      }
-      else if(scopesettings.timecursor1position >= scopesettings.timecursor2position)
-      {
-        //And not right of the right cursor;
-        scopesettings.timecursor1position = scopesettings.timecursor2position - 1;
-      }
-      break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_right_time_cursor(void)
-{
-  //For the right time cursor navigation only the left button and the rotary dial are active
-  switch(userinterfacedata.command)
-  {
     case UIC_BUTTON_NAV_LEFT:
-      //Select the left time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+      //Select the left time cursor if enabled
+      if(scopesettings.timecursorsenable)
+      {
+        userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+      }
+      break;
       
-      //Switch over to handling the left time cursor
-      navigationstate = NAV_LEFT_TIME_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.timecursor2position += userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the left time cursor
-      if(scopesettings.timecursor2position <= scopesettings.timecursor1position)
+    case UIC_BUTTON_NAV_RIGHT:
+      //Select the right time cursor if enabled
+      if(scopesettings.timecursorsenable)
       {
-        //So not to the left of or on the left cursor
-        scopesettings.timecursor2position = scopesettings.timecursor1position + 1;
-      }
-      else if(scopesettings.timecursor2position > 704)
-      {
-        //And not beyond the edge of the screen;
-        scopesettings.timecursor2position = 704;
+        userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
       }
       break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_top_volt_cursor(void)
-{
-  //For the top volt cursor navigation only the down button and the rotary dial are active
-  switch(userinterfacedata.command)
-  {
-    case UIC_BUTTON_NAV_DOWN:
-      //Select the bottom volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
       
-      //Switch over to handling the bottom volt cursor
-      navigationstate = NAV_BOTTOM_VOLT_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.voltcursor1position -= userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the bottom volt cursor
-      if(scopesettings.voltcursor1position < 59)
-      {
-        //So not above the top side of the region
-        scopesettings.voltcursor1position = 59;
-      }
-      else if(scopesettings.voltcursor1position >= scopesettings.voltcursor2position)
-      {
-        //And not below or on the bottom cursor;
-        scopesettings.voltcursor1position = scopesettings.voltcursor2position - 1;
-      }
-      break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_bottom_volt_cursor(void)
-{
-  //For the bottom volt cursor navigation only the up button and the rotary dial are active
-  switch(userinterfacedata.command)
-  {
     case UIC_BUTTON_NAV_UP:
-      //Select the top volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-      
-      //Switch over to handling the top volt cursor
-      navigationstate = NAV_TOP_VOLT_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.voltcursor2position -= userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the top volt cursor
-      if(scopesettings.voltcursor2position <= scopesettings.voltcursor1position)
+      //Select the top volt cursor if enabled
+      if(scopesettings.voltcursorsenable)
       {
-        //And not above or on the top cursor;
-        scopesettings.voltcursor2position = scopesettings.voltcursor1position + 1;
+        userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
       }
-      else if(scopesettings.voltcursor2position > 457)
-      {
-        //So not below the bottom side of the region
-        scopesettings.voltcursor2position = 457;
-      }
-      break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_left_time_volt_cursor(void)
-{
-  //With both cursors enabled more buttons are active
-  switch(userinterfacedata.command)
-  {
-    case UIC_BUTTON_NAV_UP:
-      //Select the top volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-      
-      //Switch over to handling the top volt cursor with time select functions enabled
-      navigationstate = NAV_TOP_VOLT_TIME_CURSOR;
       break;
 
     case UIC_BUTTON_NAV_DOWN:
-      //Select the bottom volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
-      
-      //Switch over to handling the bottom volt cursor with time select functions enabled
-      navigationstate = NAV_BOTTOM_VOLT_TIME_CURSOR;
+      //Select the bottom volt cursor if enabled
+      if(scopesettings.voltcursorsenable)
+      {
+        userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
+      }
       break;
-
-    case UIC_BUTTON_NAV_RIGHT:
-      //Select the right time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
       
-      //Switch over to handling the right time cursor with volt select functions enabled
-      navigationstate = NAV_RIGHT_TIME_VOLT_CURSOR;
-      break;
-
     case UIC_ROTARY_SEL_ADD:
     case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.timecursor1position += userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the right time cursor
-      if(scopesettings.timecursor1position < 6)
+      switch(userinterfacedata.selectedcursor)
       {
-        //So not below the left side of the region
-        scopesettings.timecursor1position = 6;
-      }
-      else if(scopesettings.timecursor1position >= scopesettings.timecursor2position)
-      {
-        //And not right of the right cursor;
-        scopesettings.timecursor1position = scopesettings.timecursor2position - 1;
-      }
-      break;
-  }
-}
+        case CURSOR_TIME_LEFT:
+          //Adjust the setting based on the set speed value
+          scopesettings.timecursor1position += userinterfacedata.speedvalue;
 
-//----------------------------------------------------------------------------------------------------------------------------------
+          //Limit it on the trace portion of the screen and the right time cursor
+          if(scopesettings.timecursor1position < 6)
+          {
+            //So not below the left side of the region
+            scopesettings.timecursor1position = 6;
+          }
+          else if(scopesettings.timecursor1position >= scopesettings.timecursor2position)
+          {
+            //And not right of the right cursor;
+            scopesettings.timecursor1position = scopesettings.timecursor2position - 1;
+          }
+          break;
+          
+        case CURSOR_TIME_RIGHT:
+          //Adjust the setting based on the set speed value
+          scopesettings.timecursor2position += userinterfacedata.speedvalue;
 
-void sm_handle_right_time_volt_cursor(void)
-{
-  switch(userinterfacedata.command)
-  {
-    case UIC_BUTTON_NAV_LEFT:
-      //Select the left time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
-      
-      //Switch over to handling the left time cursor with volt select functions enabled
-      navigationstate = NAV_LEFT_TIME_VOLT_CURSOR;
-      break;
+          //Limit it on the trace portion of the screen and the left time cursor
+          if(scopesettings.timecursor2position <= scopesettings.timecursor1position)
+          {
+            //So not to the left of or on the left cursor
+            scopesettings.timecursor2position = scopesettings.timecursor1position + 1;
+          }
+          else if(scopesettings.timecursor2position > 704)
+          {
+            //And not beyond the edge of the screen;
+            scopesettings.timecursor2position = 704;
+          }
+          break;
+          
+        case CURSOR_VOLT_TOP:
+          //Adjust the setting based on the set speed value
+          scopesettings.voltcursor1position -= userinterfacedata.speedvalue;
 
-    case UIC_BUTTON_NAV_UP:
-      //Select the top volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-      
-      //Switch over to handling the top volt cursor with time select functions enabled
-      navigationstate = NAV_TOP_VOLT_TIME_CURSOR;
-      break;
+          //Limit it on the trace portion of the screen and the bottom volt cursor
+          if(scopesettings.voltcursor1position < 59)
+          {
+            //So not above the top side of the region
+            scopesettings.voltcursor1position = 59;
+          }
+          else if(scopesettings.voltcursor1position >= scopesettings.voltcursor2position)
+          {
+            //And not below or on the bottom cursor;
+            scopesettings.voltcursor1position = scopesettings.voltcursor2position - 1;
+          }
+          break;
+          
+        case CURSOR_VOLT_BOTTOM:
+          //Adjust the setting based on the set speed value
+         scopesettings.voltcursor2position -= userinterfacedata.speedvalue;
 
-    case UIC_BUTTON_NAV_DOWN:
-      //Select the bottom volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
-      
-      //Switch over to handling the bottom volt cursor with time select functions enabled
-      navigationstate = NAV_BOTTOM_VOLT_TIME_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.timecursor2position += userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the left time cursor
-      if(scopesettings.timecursor2position <= scopesettings.timecursor1position)
-      {
-        //So not to the left of or on the left cursor
-        scopesettings.timecursor2position = scopesettings.timecursor1position + 1;
-      }
-      else if(scopesettings.timecursor2position > 704)
-      {
-        //And not beyond the edge of the screen;
-        scopesettings.timecursor2position = 704;
-      }
-      break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_top_volt_time_cursor(void)
-{
-  switch(userinterfacedata.command)
-  {
-    case UIC_BUTTON_NAV_LEFT:
-      //Select the left time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
-      
-      //Switch over to handling the left time cursor with volt select functions enabled
-      navigationstate = NAV_LEFT_TIME_VOLT_CURSOR;
-      break;
-
-    case UIC_BUTTON_NAV_DOWN:
-      //Select the bottom volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
-      
-      //Switch over to handling the bottom volt cursor with time select functions enabled
-      navigationstate = NAV_BOTTOM_VOLT_TIME_CURSOR;
-      break;
-
-    case UIC_BUTTON_NAV_RIGHT:
-      //Select the right time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
-      
-      //Switch over to handling the right time cursor with volt select functions enabled
-      navigationstate = NAV_RIGHT_TIME_VOLT_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.voltcursor1position -= userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the bottom volt cursor
-      if(scopesettings.voltcursor1position < 59)
-      {
-        //So not above the top side of the region
-        scopesettings.voltcursor1position = 59;
-      }
-      else if(scopesettings.voltcursor1position >= scopesettings.voltcursor2position)
-      {
-        //And not below or on the bottom cursor;
-        scopesettings.voltcursor1position = scopesettings.voltcursor2position - 1;
-      }
-      break;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_handle_bottom_volt_time_cursor(void)
-{
-  switch(userinterfacedata.command)
-  {
-    case UIC_BUTTON_NAV_LEFT:
-      //Select the left time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
-      
-      //Switch over to handling the left time cursor with volt select functions enabled
-      navigationstate = NAV_LEFT_TIME_VOLT_CURSOR;
-      break;
-
-    case UIC_BUTTON_NAV_UP:
-      //Select the top volt cursor
-      userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-      
-      //Switch over to handling the top volt cursor with time select functions enabled
-      navigationstate = NAV_TOP_VOLT_TIME_CURSOR;
-      break;
-
-    case UIC_BUTTON_NAV_RIGHT:
-      //Select the right time cursor
-      userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
-      
-      //Switch over to handling the right time cursor with volt select functions enabled
-      navigationstate = NAV_RIGHT_TIME_VOLT_CURSOR;
-      break;
-
-    case UIC_ROTARY_SEL_ADD:
-    case UIC_ROTARY_SEL_SUB:
-      //Adjust the setting based on the set speed value
-      scopesettings.voltcursor2position -= userinterfacedata.speedvalue;
-
-      //Limit it on the trace portion of the screen and the top volt cursor
-      if(scopesettings.voltcursor2position <= scopesettings.voltcursor1position)
-      {
-        //And not above or on the top cursor;
-        scopesettings.voltcursor2position = scopesettings.voltcursor1position + 1;
-      }
-      else if(scopesettings.voltcursor2position > 457)
-      {
-        //So not below the bottom side of the region
-        scopesettings.voltcursor2position = 457;
+         //Limit it on the trace portion of the screen and the top volt cursor
+         if(scopesettings.voltcursor2position <= scopesettings.voltcursor1position)
+         {
+           //And not above or on the top cursor;
+           scopesettings.voltcursor2position = scopesettings.voltcursor1position + 1;
+         }
+         else if(scopesettings.voltcursor2position > 457)
+         {
+           //So not below the bottom side of the region
+           scopesettings.voltcursor2position = 457;
+         }
+         break;
       }
       break;
   }
@@ -545,25 +311,85 @@ void sm_handle_file_view_actions(void)
   {
     case UIC_BUTTON_NAV_OK:
       //For now just loading the bitmap, but this also needs some error handling!!!!
+      //Depends on the viewtype what to do here
       ui_load_bitmap_data();
+      
+      //Set the handling states for picture viewing
+      navigationstate = NAV_PICTURE_VIEW_HANDLING;
+      fileviewstate   = FILE_VIEW_PICTURE_CONTROL;
+      buttondialstate = BUTTON_DIAL_PICTURE_VIEW_HANDLING;
       break;
       
     case UIC_ROTARY_SEL_SUB:
     case UIC_BUTTON_NAV_LEFT:
-      sm_view_goto_previous_item();
+      sm_file_view_goto_previous_item();
       break;
 
     case UIC_ROTARY_SEL_ADD:
     case UIC_BUTTON_NAV_RIGHT:
-      sm_view_goto_next_item();
+      sm_file_view_goto_next_item();
       break;
 
     case UIC_BUTTON_NAV_UP:
-      sm_view_goto_previous_row();
+      sm_file_view_goto_previous_row();
       break;
       
     case UIC_BUTTON_NAV_DOWN:
-      sm_view_goto_next_row();
+      sm_file_view_goto_next_row();
+      break;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_file_view_select_actions(void)
+{
+  //With the navigation actions the item list can be traversed and the active item can be opened or selected
+  switch(userinterfacedata.command)
+  {
+    case UIC_BUTTON_NAV_OK:
+      //Toggle the selected state for this item
+      viewitemselected[viewcurrentindex % VIEW_ITEMS_PER_PAGE] ^= 1;
+      
+      //Go and show the item as selected
+      ui_display_thumbnails();
+      break;
+      
+    case UIC_ROTARY_SEL_SUB:
+    case UIC_BUTTON_NAV_LEFT:
+      sm_file_view_goto_previous_item_on_page();
+      break;
+
+    case UIC_ROTARY_SEL_ADD:
+    case UIC_BUTTON_NAV_RIGHT:
+      sm_file_view_goto_next_item_on_page();
+      break;
+
+    case UIC_BUTTON_NAV_UP:
+      sm_file_view_goto_previous_row_on_page();
+      break;
+      
+    case UIC_BUTTON_NAV_DOWN:
+      sm_file_view_goto_next_row_on_page();
+      break;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_picture_view_actions(void)
+{
+  //With the navigation actions the picture list can be traversed
+  switch(userinterfacedata.command)
+  {
+    case UIC_ROTARY_SEL_SUB:
+    case UIC_BUTTON_NAV_LEFT:
+      sm_picture_view_goto_previous_item();
+      break;
+
+    case UIC_ROTARY_SEL_ADD:
+    case UIC_BUTTON_NAV_RIGHT:
+      sm_picture_view_goto_next_item();
       break;
   }
 }
@@ -617,13 +443,54 @@ void sm_handle_file_view_control(void)
       ui_display_thumbnails();
       break;
 
-    case UIC_BUTTON_DELETE:
-      break;
-
     case UIC_BUTTON_SELECT_ALL:
+      sm_file_view_process_select(1);
       break;
 
     case UIC_BUTTON_SELECT:
+      sm_file_view_process_select(0);
+      break;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_file_view_select_control(void)
+{
+  //Check the buttons for the file view actions and handle them accordingly
+  switch(userinterfacedata.command)
+  {
+    case UIC_BUTTON_DELETE:
+      sm_file_view_delete_selected();
+      break;
+
+    case UIC_BUTTON_SELECT_ALL:
+      sm_file_view_process_select(1);
+      break;
+
+    case UIC_BUTTON_SELECT:
+      sm_file_view_process_select(0);
+      break;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_picture_view_control(void)
+{
+  //Check the buttons for the file view actions and handle them accordingly
+  switch(userinterfacedata.command)
+  {
+    case UIC_BUTTON_NEXT:
+      sm_picture_view_goto_next_item();
+      
+      break;
+
+    case UIC_BUTTON_PREVIOUS:
+      sm_picture_view_goto_previous_item();
+      break;
+
+    case UIC_BUTTON_DELETE:
       break;
   }
 }
@@ -679,46 +546,31 @@ void sm_button_dial_normal_handling(void)
     case UIC_BUTTON_H_CUR:
       //Toggle the horizontal cursor state
       scopesettings.timecursorsenable ^= 1;
+
+      //Enable the navigation state for the cursor handling
+      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
       
       //Take needed actions when the cursor is enabled
       if(scopesettings.timecursorsenable)
       {
-        //Select the left cursor
+        //Select the left cursor to start with
         userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
-      
-        //Set the needed navigation functions based on the enabled cursors
-        if(scopesettings.voltcursorsenable)
-        {
-          //Both cursor set enabled so state for both cursors and moving the left time cursor to start with
-          navigationstate = NAV_LEFT_TIME_VOLT_CURSOR;
-        }
-        else
-        {
-          //Single cursor set enabled so state for the left time cursor to start with
-          navigationstate = NAV_LEFT_TIME_CURSOR;
-        }
       }
       else
       {
         //When the time cursor gets disabled check if the voltage cursor is enabled
         if(scopesettings.voltcursorsenable)
         {
-          //Set the needed action set based on the selected cursor
-          if(userinterfacedata.selectedcursor == CURSOR_VOLT_BOTTOM)
+          //Select the top volt cursor if not on the bottom volt cursor 
+          if(userinterfacedata.selectedcursor != CURSOR_VOLT_BOTTOM)
           {
-            //Just set the navigation state for the bottom voltage cursor
-            navigationstate = NAV_BOTTOM_VOLT_CURSOR;
-          }
-          else
-          {
-            //Select the cursor and set the navigation functions for just the top voltage cursor
+            //Select the top volt cursor
             userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-            navigationstate = NAV_TOP_VOLT_CURSOR;
           }
         }
         else
         {
-          //No action in the navigation part
+          //No more cursor enabled so no more action in the navigation part
           navigationstate = NAV_NO_ACTION;
         }
       }
@@ -727,46 +579,31 @@ void sm_button_dial_normal_handling(void)
     case UIC_BUTTON_V_CUR:
       //Toggle the vertical cursor state
       scopesettings.voltcursorsenable ^= 1;
+
+      //Enable the navigation state for the cursor handling
+      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
       
       //Take needed actions when the cursor is enabled
       if(scopesettings.voltcursorsenable)
       {
-        //Select the left cursor
+        //Select the top volt cursor to start with
         userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
-      
-        //Set the needed navigation functions based on the enabled cursors
-        if(scopesettings.timecursorsenable)
-        {
-          //Both cursor set enabled so state for both cursors and moving the top volt cursor to start with
-          navigationstate = NAV_TOP_VOLT_TIME_CURSOR;
-        }
-        else
-        {
-          //Single cursor set enabled so state for the top volt cursor to start with
-          navigationstate = NAV_TOP_VOLT_CURSOR;
-        }
       }
       else
       {
         //When the volt cursor gets disabled check if the time cursor is enabled
         if(scopesettings.timecursorsenable)
         {
-          //Set the needed action based on the selected cursor
-          if(userinterfacedata.selectedcursor == CURSOR_TIME_RIGHT)
+          //Select the left time cursor if not on the right time cursor 
+          if(userinterfacedata.selectedcursor != CURSOR_TIME_RIGHT)
           {
-            //Just set the navigation state for the right time cursor
-            navigationstate = NAV_RIGHT_TIME_CURSOR;
-          }
-          else
-          {
-            //Select the cursor and set the navigation state for just the left time cursor
+            //Select the left time cursor
             userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
-            navigationstate = NAV_LEFT_TIME_CURSOR;
           }
         }
         else
         {
-          //No action in the navigation part
+          //No more cursor enabled so no more action in the navigation part
           navigationstate = NAV_NO_ACTION;
         }
       }
@@ -906,10 +743,24 @@ void sm_button_dial_file_view_handling(void)
   //Return to the previous mode when the menu button is pressed
   if(userinterfacedata.command == UIC_BUTTON_MENU)
   {
-    //Need to know if a view item is open or that item view is active
-    //When item open return to the view page else close the viewer
-      
     sm_close_view_screen();
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_button_dial_picture_view_handling(void)
+{
+  //Return to the previous mode when the menu button is pressed
+  if(userinterfacedata.command == UIC_BUTTON_MENU)
+  {
+    //Set the file viewing states
+    navigationstate = NAV_FILE_VIEW_HANDLING;
+    fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
+    buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
+    
+    //Display the thumbnail page with the current view item selected
+    ui_display_thumbnails();
   }
 }
 
@@ -941,59 +792,10 @@ void sm_close_menu(void)
 void sm_restore_navigation_handling(void)
 {
   //Set the navigation state based on enabled cursors
-  if((scopesettings.timecursorsenable) && (scopesettings.voltcursorsenable))
+  if((scopesettings.timecursorsenable) || (scopesettings.voltcursorsenable))
   {
-    //Both cursors enabled so it depends on the selected cursor as to which state is needed
-    switch(userinterfacedata.selectedcursor)
-    {
-      case CURSOR_TIME_LEFT:
-        //State for moving the left time cursor and select volt cursors
-        navigationstate = NAV_LEFT_TIME_VOLT_CURSOR;
-        break;
-
-      case CURSOR_TIME_RIGHT:
-        //State for moving the right time cursor and select volt cursors
-        navigationstate = NAV_RIGHT_TIME_VOLT_CURSOR;
-        break;
-
-      case CURSOR_VOLT_TOP:
-        //State for moving the top volt cursor and select time cursors
-        navigationstate = NAV_TOP_VOLT_TIME_CURSOR;
-        break;
-
-      case CURSOR_VOLT_BOTTOM:
-        //State for moving the bottom volt cursor and select time cursors
-        navigationstate = NAV_BOTTOM_VOLT_TIME_CURSOR;
-        break;
-    }
-  }
-  else if(scopesettings.timecursorsenable)
-  {
-    //Only the time cursor enabled, so it depends on the selected cursor as to which state is needed
-    if(userinterfacedata.selectedcursor == CURSOR_TIME_LEFT)
-    {
-      //State for moving the left time cursor
-      navigationstate = NAV_LEFT_TIME_CURSOR;
-    }
-    else
-    {
-      //State for moving the right time cursor
-      navigationstate = NAV_RIGHT_TIME_CURSOR;
-    }
-  }
-  else if(scopesettings.voltcursorsenable)
-  {
-    //Only the volt cursor enabled, so it depends on the selected cursor as to which state is needed
-    if(userinterfacedata.selectedcursor == CURSOR_VOLT_TOP)
-    {
-      //State for moving the top volt cursor
-      navigationstate = NAV_TOP_VOLT_CURSOR;
-    }
-    else
-    {
-      //State for moving the bottom volt cursor
-      navigationstate = NAV_BOTTOM_VOLT_CURSOR;
-    }
+    //At least one cursor is enabled so allow handling them
+    navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
   }
   else
   {
@@ -1002,6 +804,7 @@ void sm_restore_navigation_handling(void)
   }
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_set_trigger_position(void)
@@ -1147,6 +950,7 @@ void sm_do_50_percent_trigger_setup(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_select_main_menu_item(void)
 {
@@ -1177,11 +981,13 @@ void sm_select_main_menu_item(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//The next functions are for opening and closing the file viewing page
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_open_file_view(void)
 {
   //Enable the file view handling buttons
-  fileviewstate = FILE_VIEW_CONTROL;
+  fileviewstate = FILE_VIEW_DEFAULT_CONTROL;
 
   //Set specific handling for the general scope control buttons and dials
   buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
@@ -1223,8 +1029,10 @@ void sm_close_view_screen(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//The next set of functions browse through the view items across all the available pages
+//----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_view_goto_next_item(void)
+void sm_file_view_goto_next_item(void)
 {
   //Select the next item
   viewcurrentindex++;
@@ -1249,7 +1057,7 @@ void sm_view_goto_next_item(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_view_goto_previous_item(void)
+void sm_file_view_goto_previous_item(void)
 {
   //Select the previous item
   viewcurrentindex--;
@@ -1274,7 +1082,7 @@ void sm_view_goto_previous_item(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_view_goto_next_row(void)
+void sm_file_view_goto_next_row(void)
 {
   //Select the next row
   viewcurrentindex += VIEW_ITEMS_PER_ROW;
@@ -1299,7 +1107,7 @@ void sm_view_goto_next_row(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_view_goto_previous_row(void)
+void sm_file_view_goto_previous_row(void)
 {
   int16 activerow;
   int16 newrow;
@@ -1351,6 +1159,295 @@ void sm_view_goto_previous_row(void)
   ui_display_thumbnails();
 }
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//The next set of functions browse through the view items but stay on the current page
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_goto_next_item_on_page(void)
+{
+  int16 firstitemonpage = viewpage * VIEW_ITEMS_PER_PAGE;
+  int16 lastitemonpage = firstitemonpage + 16;
+  
+  //Last item needs to be limited to the available items
+  if(lastitemonpage > viewavailableitems)
+  {
+    lastitemonpage = viewavailableitems;
+  }
+    
+  //Select the next item
+  viewcurrentindex++;
+  
+  //Check if in range of the available items on the page
+  if(viewcurrentindex >= lastitemonpage)
+  {
+    //Fall back to the first item
+    viewcurrentindex = firstitemonpage;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_goto_previous_item_on_page(void)
+{
+  int16 firstitemonpage = viewpage * VIEW_ITEMS_PER_PAGE;
+  int16 lastitemonpage = firstitemonpage + 16;
+  
+  //Last item needs to be limited to the available items
+  if(lastitemonpage > viewavailableitems)
+  {
+    lastitemonpage = viewavailableitems;
+  }
+    
+  //Select the next item
+  viewcurrentindex--;
+  
+  //Check if in range of the available items on the page
+  if(viewcurrentindex < firstitemonpage)
+  {
+    //Fall back to the last item
+    viewcurrentindex = lastitemonpage - 1;
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_goto_next_row_on_page(void)
+{
+  int16 firstitemonpage = viewpage * VIEW_ITEMS_PER_PAGE;
+  int16 lastitemonpage = firstitemonpage + 16;
+  
+  //Last item needs to be limited to the available items
+  if(lastitemonpage > viewavailableitems)
+  {
+    lastitemonpage = viewavailableitems;
+  }
+
+  //Select the next row
+  viewcurrentindex += VIEW_ITEMS_PER_ROW;
+  
+  //Check if in range of the available items
+  if(viewcurrentindex >= lastitemonpage)
+  {
+    //Fall back to the first item in the active row
+    viewcurrentindex = firstitemonpage + (viewcurrentindex % VIEW_ITEMS_PER_ROW);
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_goto_previous_row_on_page(void)
+{
+  int16 activerow;
+  int16 newrow;
+  
+  int16 firstitemonpage = viewpage * VIEW_ITEMS_PER_PAGE;
+  int16 lastitemonpage = firstitemonpage + 16;
+  
+  //Last item needs to be limited to the available items
+  if(lastitemonpage > viewavailableitems)
+  {
+    lastitemonpage = viewavailableitems;
+  }
+
+  //Get the row number of the current highlighted item
+  activerow = (viewcurrentindex % VIEW_ITEMS_PER_ROW);
+  
+  //Select the previous row
+  viewcurrentindex -= VIEW_ITEMS_PER_ROW;
+  
+  //Check if in range of the available items
+  if(viewcurrentindex < firstitemonpage)
+  {
+    //Roll over to the last item in the active row. Remainder of a negative value is negative
+    viewcurrentindex = lastitemonpage - 1;
+    
+    //Get the row number of the new item
+    newrow = viewcurrentindex % VIEW_ITEMS_PER_ROW;
+    
+    //Check if the new row is beyond the active row
+    if(newrow > activerow)
+    {
+      //If so take of the difference between the two to get into the right row
+      viewcurrentindex -= (newrow - activerow);
+    }
+    //If not check if it is before the active row
+    else if(newrow < activerow)
+    {
+      //If so skip to the required one by taking of a number based on the delta
+      viewcurrentindex -= (4 - (activerow - newrow));
+    }
+  }
+  
+  //Go and highlight the indicated item
+  ui_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_process_select(uint32 selectall)
+{
+  //Depending on the current state take action
+  if((viewselectmode == VIEW_SELECT_NONE) || ((viewselectmode == VIEW_SELECT_INDIVIDUAL) && selectall))
+  {
+    //Check if select all needed
+    if(selectall)
+    {
+      //If so, set all items as selected
+      memset(viewitemselected, VIEW_ITEM_SELECTED, viewitemsonpage);
+
+      //Switch to all items select mode
+      viewselectmode = VIEW_SELECT_ALL;
+    }
+    else
+    {
+      //Switch to individual item select mode
+      viewselectmode = VIEW_SELECT_INDIVIDUAL;
+    }
+    
+    //Switch to handling the select state
+    navigationstate = NAV_FILE_VIEW_SELECT_HANDLING;
+    fileviewstate   = FILE_VIEW_SELECT_CONTROL;
+  }
+  else
+  {
+    //Switch to normal mode
+    viewselectmode = VIEW_SELECT_NONE;
+
+    //Not in a selected mode any more so clear the selected items
+    memset(viewitemselected, VIEW_ITEM_NOT_SELECTED, viewitemsonpage);
+    
+    //Switch back to handling the basic view state
+    navigationstate = NAV_FILE_VIEW_HANDLING;
+    fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
+  }
+      
+  //Update the page to show this
+  ui_display_thumbnails();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_delete_selected(void)
+{
+  uint32 index;
+  uint32 found;
+  
+  //Need to see if there are items selected for delete
+  if(viewselectmode)
+  {
+    //A select mode is active so check the list to see if there are items selected
+    //This is not done in the original code. Activate the single select mode and without selecting an item press delete. The confirm menu is shown
+    for(index=0,found=0;index<viewitemsonpage;index++)
+    {
+      //Check if the current item is selected
+      if(viewitemselected[index] == VIEW_ITEM_SELECTED)
+      {
+        //Signal there is at least one item to delete
+        found = 1;
+        break;
+      }
+    }
+
+    //Check if there is an item to delete
+    if(found)
+    {
+      //Ask the user if the items should be deleted
+      if(ui_handle_confirm_delete() == VIEW_CONFIRM_DELETE_YES)
+      {
+        //User opted for delete so do this for the selected items
+        //Start with the last item on the page to avoid problems with the file number list being modified
+        for(index=viewitemsonpage-1;index>=0;index--)
+        {
+          //Check if the current item is selected
+          if(viewitemselected[index] == VIEW_ITEM_SELECTED)
+          {
+            //Set the current index for this file
+            viewcurrentindex = index + (viewpage * VIEW_ITEMS_PER_PAGE);
+
+            //Remove the current item from the thumbnails and delete the item from disk
+            ui_remove_item_from_thumbnails(1);
+          }
+        }
+
+        //Save the thumbnail file
+        ui_save_thumbnail_file();
+
+        //Clear the select flags
+        memset(viewitemselected, VIEW_ITEM_NOT_SELECTED, viewitemsonpage);
+
+        //Clear the select state and the button highlights
+        viewselectmode = VIEW_SELECT_NONE;
+
+        //Redisplay the thumbnails
+        ui_initialize_and_display_thumbnails();
+      }
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Next functions are for browsing through the pictures one by one instead of on the overview pages
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_picture_view_goto_next_item(void)
+{
+  //Select the next picture
+  viewcurrentindex++;
+
+  //Check if in range of the available items
+  if(viewcurrentindex >= viewavailableitems)
+  {
+    //Fall back to the first item
+    viewcurrentindex = 0;
+    viewpage = 0;
+  }
+  //Check if overflow to next page
+  else if(viewcurrentindex >= ((viewpage * VIEW_ITEMS_PER_PAGE) + viewitemsonpage))
+  {
+    //Jump to the next page if so
+    viewpage++;
+  }
+
+  //For now just loading the bitmap, but this also needs some error handling!!!!
+  ui_load_bitmap_data();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_picture_view_goto_previous_item(void)
+{
+  //Select the previous picture
+  viewcurrentindex--;
+
+  //Check if it underflows
+  if(viewcurrentindex < 0)
+  {
+    //If so roll over to the last item
+    viewcurrentindex = viewavailableitems - 1;
+    viewpage = viewpages;
+  }
+  //Check if underflow to previous page
+  else if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
+  {
+    //Jump to the previous page if so
+    viewpage--;
+  }
+
+  //For now just loading the bitmap, but this also needs some error handling!!!!
+  ui_load_bitmap_data();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Next functions are for executing main menu items
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_open_picture_file_viewing(void)

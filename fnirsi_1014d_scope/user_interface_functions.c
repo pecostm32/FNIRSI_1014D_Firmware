@@ -7,6 +7,7 @@
 #include "uart.h"
 #include "usb_interface.h"
 #include "user_interface_functions.h"
+#include "statemachine.h"
 #include "scope_functions.h"
 #include "fpga_control.h"
 
@@ -3403,7 +3404,7 @@ void ui_remove_item_from_thumbnails(uint32 delete)
     //Delete the file from the SD card
     if(f_unlink(viewfilename) != FR_OK)
     {
-      //Signal unable to create the file
+      //Signal unable to delete the file
       ui_display_file_status_message(MESSAGE_FILE_DELETE_FAILED, 0);
     }
   }
@@ -3419,6 +3420,9 @@ void ui_remove_item_from_thumbnails(uint32 delete)
 
   //Clear the freed up slot
   viewfilenumberdata[viewavailableitems] = 0;
+  
+  //Clear the thumbnail slot too
+  memset(&viewthumbnaildata[nextindex], 0, sizeof(THUMBNAILDATA));
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3548,7 +3552,7 @@ int32 ui_load_bitmap_data(void)
         result = f_read(&viewfp, (uint8 *)maindisplaybuffer, PICTURE_DATA_SIZE, 0);
         
         //Show the filename on the bottom of the picture
-        display_set_fg_color(0x00D8B70B);
+        display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
         display_set_font(&font_3);
         display_text(330, 455, viewfilename);
       }
@@ -3658,6 +3662,13 @@ void ui_initialize_and_display_thumbnails(void)
     viewpages = (viewavailableitems - 1) / VIEW_ITEMS_PER_PAGE;
   }
 
+  //Check if the current item is still within range
+  if(viewcurrentindex >= viewavailableitems)
+  {
+    //Set it to the last one if out of range
+    viewcurrentindex = viewavailableitems - 1;
+  }
+  
   //Need to check if the current page is still valid
   if(viewpage > viewpages)
   {
@@ -3742,7 +3753,7 @@ void ui_display_thumbnails(void)
       //Check on highlighted item
       if(index == viewcurrentindex)
       {
-        display_set_fg_color(0x00787878);
+        display_set_fg_color(0x00707070);
         display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 32, VIEW_ITEM_HEIGHT - 27);
       }
       
@@ -3904,9 +3915,37 @@ void ui_display_thumbnails(void)
 //Draw the pointers here
 
       }
+      
+      //Check on select mode being enabled
+      if(viewselectmode)
+      {
+        //Set the colors for displaying the selected sign. White sign on blue background
+        display_set_fg_color(0x00FFFFFF);
+        display_set_bg_color(0x000000FF);
 
+        //Draw an empty box to indicate select mode
+        display_draw_rect(xpos + 71, ypos + 44, 32, 32);
+        display_draw_rect(xpos + 72, ypos + 45, 30, 30);
+        
+        //Check if the item is selected
+        if(viewitemselected[index % VIEW_ITEMS_PER_PAGE])
+        {
+          //Display the selected sign
+          display_copy_icon_use_colors(select_sign_icon, xpos + 72, ypos + 45, 30, 30);
+        }
+      }
+
+      //Highlight the filename of the selected item
+      if(index == viewcurrentindex)
+      {
+        display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
+      }
+      else
+      {
+        display_set_fg_color(0x00FFFFFF);
+      }
+      
       //Display the file name in the bottom left corner
-      display_set_fg_color(0x00FFFFFF);
       display_set_font(&font_2);
       display_text(xpos + 7, ypos + 105, thumbnaildata->filename);
 
@@ -4227,62 +4266,6 @@ int32 ui_display_picture_item(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_selected_signs(void)
-{
-  uint32 index = 0;
-  uint32 xpos = VIEW_ITEM_SELECTED_XSTART;
-  uint32 ypos = VIEW_ITEM_SELECTED_YSTART;
-
-  //Set the colors for displaying the selected sign. White sign on blue background
-  display_set_fg_color(0x00FFFFFF);
-  display_set_bg_color(0x000000FF);
-
-  //Can't have more selects than items on the page
-  while(index < viewitemsonpage)
-  {
-    //Handle the current item based on its state
-    switch(viewitemselected[index])
-    {
-      case VIEW_ITEM_SELECTED_NOT_DISPLAYED:
-        //Make a copy of the screen under the selected sign location
-        display_copy_rect_from_screen(xpos, ypos, 30, 30);
-
-        //Display the selected sign
-        display_copy_icon_use_colors(select_sign_icon, xpos, ypos, 30, 30);
-
-        //Switch to displayed state
-        viewitemselected[index] = VIEW_ITEM_SELECTED_DISPLAYED;
-        break;
-
-      case VIEW_ITEM_NOT_SELECTED_DISPLAYED:
-        //Restore the screen on the selected sign location
-        display_copy_rect_to_screen(xpos, ypos, 30, 30);
-
-        //Switch to not selected state
-        viewitemselected[index] = VIEW_ITEM_NOT_SELECTED;
-        break;
-    }
-
-    //Skip to next coordinates
-    xpos += VIEW_ITEM_XNEXT;
-
-    //Check if next row needs to be used
-    if(xpos > VIEW_ITEM_XLAST)
-    {
-      //Reset x position to beginning of selected row
-      xpos = VIEW_ITEM_SELECTED_XSTART;
-
-      //Bump y position to next row
-      ypos += VIEW_ITEM_YNEXT;
-    }
-
-    //Select next index
-    index++;
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
 void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 {
 #if 0
@@ -4420,6 +4403,64 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
   //Need to restore the screen buffer pointer
   display_restore_screen_buffer();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define HDC_XPOS   270
+#define HCD_YPOS   217
+#define HDC_WIDTH  260
+#define HDC_HEIGHT  40
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+int32 ui_handle_confirm_delete(void)
+{
+  int32 choice = 0;
+
+  //Save the screen rectangle where the menu will be displayed
+  display_copy_rect_from_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+
+  //display the confirm delete menu
+  //Draw the background in some shade of red
+  display_set_fg_color(0x00A04020);
+  display_fill_rect(HDC_XPOS, HCD_YPOS, HDC_WIDTH - 1, HDC_HEIGHT - 1);
+
+  //Draw the border in a lighter grey
+  display_set_fg_color(0x00404040);
+  display_draw_rect(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+
+  //White color for text and use a big font
+  display_set_fg_color(0x00000000);
+  display_set_font(&font_4);
+  display_text(HDC_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
+
+  //Make sure the last command is erased
+  userinterfacedata.command = 0;
+  
+  //Wait for the user to push a button or rotate a dial on the front panel of the scope
+  while(uart1_get_data() == 0);
+  
+  //Check if the user pressed the OK button
+  if(userinterfacedata.command == UIC_BUTTON_NAV_OK)
+  {
+    //If so, set the chosen option to yes
+    choice = VIEW_CONFIRM_DELETE_YES;
+  }
+  else
+  {
+    //Else set the chosen option to no
+    choice = VIEW_CONFIRM_DELETE_NO;
+  }
+
+  //Signal last command is handled
+  userinterfacedata.command = 0;
+  
+  //Restore the original screen
+  display_copy_rect_to_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+
+  //return the choice
+  return(choice);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

@@ -63,9 +63,7 @@
 
 //States for displaying the selected signs
 #define VIEW_ITEM_NOT_SELECTED            0
-#define VIEW_ITEM_SELECTED_NOT_DISPLAYED  1
-#define VIEW_ITEM_SELECTED_DISPLAYED      2
-#define VIEW_ITEM_NOT_SELECTED_DISPLAYED  3
+#define VIEW_ITEM_SELECTED                1
 
 //States for select mode
 #define VIEW_SELECT_NONE                  0
