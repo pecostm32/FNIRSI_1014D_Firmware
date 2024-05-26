@@ -157,11 +157,21 @@ int main(void)
   //Set screen brightness
   fpga_set_translated_brightness();
   
+  //Make sure the last command is erased
+  userinterfacedata.command = 0;
+
   //Discard the first response from the user interface controller
   uart1_get_data();
+
+  //Signal last command has been handled
+  userinterfacedata.command = 0;
   
   //Initialize the state machine
   sm_init();
+  
+  
+  //For testing use confirmation mode
+  scopesettings.confirmationmode = 1;
   
   //Process and display trace data and handle user input until power is switched off
   while(1)

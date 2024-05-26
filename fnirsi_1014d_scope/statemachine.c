@@ -1338,7 +1338,7 @@ void sm_file_view_process_select(uint32 selectall)
 
 void sm_file_view_delete_selected(void)
 {
-  uint32 index;
+  int32  index;
   uint32 found;
   
   //Need to see if there are items selected for delete

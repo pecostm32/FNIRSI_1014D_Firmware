@@ -3420,9 +3420,6 @@ void ui_remove_item_from_thumbnails(uint32 delete)
 
   //Clear the freed up slot
   viewfilenumberdata[viewavailableitems] = 0;
-  
-  //Clear the thumbnail slot too
-  memset(&viewthumbnaildata[nextindex], 0, sizeof(THUMBNAILDATA));
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -4268,7 +4265,6 @@ int32 ui_display_picture_item(void)
 
 void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 {
-#if 0
   uint32 checkconfirmation = scopesettings.confirmationmode;
 
   //Check if need to wait is requested
@@ -4277,7 +4273,6 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
     //If so override the setting
     checkconfirmation = 1;
   }
-#endif
   
   //Need to save the screen buffer pointer and set it to the actual screen
   //When displaying trace data to avoid flickering data is drawn in a different screen buffer
@@ -4306,7 +4301,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
       display_text(270, 220, "File saved successfully");
 
       //Don't wait for confirmation in case of success, unless requested
-//      checkconfirmation = alwayswait;
+      checkconfirmation = alwayswait;
       break;
 
     case MESSAGE_FILE_CREATE_FAILED:
@@ -4364,38 +4359,24 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
   //Display the file name in question
   display_text(270, 245, viewfilename);
-#if 0
+
   //Maybe wait for touch to continue in case of an error message
   if(checkconfirmation)
   {
-    //wait for touch
-    while(1)
-    {
-      //Read the touch panel status
-      tp_i2c_read_status();
+    //Make sure the last command is erased
+    userinterfacedata.command = 0;
 
-      //Check if the panel is touched
-      if(havetouch)
-      {
-        //Done so quit the loop
-        break;
-      }
-    }
-
-    //Need to wait for touch to release before returning
-    tp_i2c_wait_for_touch_release();
+    //Wait for the user to push a button or rotate a dial on the front panel of the scope
+    while(uart1_get_data() == 0);
+    
+    //Signal last command has been handled
+    userinterfacedata.command = 0;
   }
   else
   {
     //Wait for half a second
     timer0_delay(500);
   }
-#endif
-
-  //Display for half a second for now
-    //Wait for half a second
-    timer0_delay(500);
-
   
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);
@@ -4418,7 +4399,8 @@ int32 ui_handle_confirm_delete(void)
 {
   int32 choice = 0;
 
-  //Save the screen rectangle where the menu will be displayed
+  //Save the screen rectangle where the message will be displayed
+  display_set_destination_buffer(displaybuffer2);
   display_copy_rect_from_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
 
   //display the confirm delete menu
@@ -4457,8 +4439,9 @@ int32 ui_handle_confirm_delete(void)
   userinterfacedata.command = 0;
   
   //Restore the original screen
+  display_set_source_buffer(displaybuffer2);
   display_copy_rect_to_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
-
+  
   //return the choice
   return(choice);
 }
