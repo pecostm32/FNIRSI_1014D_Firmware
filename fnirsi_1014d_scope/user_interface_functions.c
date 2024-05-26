@@ -1291,6 +1291,11 @@ void ui_update_measurements(void)
     //Setup the base position
     y = MEASUREMENT_INFO_Y + (i * MEASUREMENT_Y_DISPLACEMENT) + 21;
     
+    //Clear the display field first
+    display_set_fg_color(0x00000000);
+    display_fill_rect(MEASUREMENT_VALUE_X, y, 75, 20);
+
+    
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
     measurement_functions[scopesettings.measurementitems[i].index](y, settings);

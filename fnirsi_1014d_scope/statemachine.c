@@ -17,7 +17,7 @@
 NAVIGATIONFUNCTION mainmenustartactions[] =
 {
   sm_open_picture_file_viewing,              //Picture browsing
-  0,                                         //Wave browsing
+  sm_open_waveform_file_viewing,             //Wave browsing
   0,                                         //Output browsing
   0,                                         //Capture output
   0,                                         //Screen brightness
@@ -112,8 +112,8 @@ void sm_handle_user_input(void)
       break;
       
     //Picture view handling
-    case NAV_PICTURE_VIEW_HANDLING:
-      sm_handle_picture_view_actions();
+    case NAV_ITEM_VIEW_HANDLING:
+      sm_handle_item_view_actions();
       break;
       
   }
@@ -129,8 +129,8 @@ void sm_handle_user_input(void)
       sm_handle_file_view_select_control();
       break;
       
-    case FILE_VIEW_PICTURE_CONTROL:
-      sm_handle_picture_view_control();
+    case FILE_VIEW_ITEM_CONTROL:
+      sm_handle_item_view_control();
       break;
   }
 
@@ -310,14 +310,7 @@ void sm_handle_file_view_actions(void)
   switch(userinterfacedata.command)
   {
     case UIC_BUTTON_NAV_OK:
-      //For now just loading the bitmap, but this also needs some error handling!!!!
-      //Depends on the viewtype what to do here
-      ui_load_bitmap_data();
-      
-      //Set the handling states for picture viewing
-      navigationstate = NAV_PICTURE_VIEW_HANDLING;
-      fileviewstate   = FILE_VIEW_PICTURE_CONTROL;
-      buttondialstate = BUTTON_DIAL_PICTURE_VIEW_HANDLING;
+      sm_open_file_view_item();
       break;
       
     case UIC_ROTARY_SEL_SUB:
@@ -377,19 +370,19 @@ void sm_handle_file_view_select_actions(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_handle_picture_view_actions(void)
+void sm_handle_item_view_actions(void)
 {
   //With the navigation actions the picture list can be traversed
   switch(userinterfacedata.command)
   {
     case UIC_ROTARY_SEL_SUB:
     case UIC_BUTTON_NAV_LEFT:
-      sm_picture_view_goto_previous_item();
+      sm_item_view_goto_previous_item();
       break;
 
     case UIC_ROTARY_SEL_ADD:
     case UIC_BUTTON_NAV_RIGHT:
-      sm_picture_view_goto_next_item();
+      sm_item_view_goto_next_item();
       break;
   }
 }
@@ -476,22 +469,22 @@ void sm_handle_file_view_select_control(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_handle_picture_view_control(void)
+void sm_handle_item_view_control(void)
 {
   //Check the buttons for the file view actions and handle them accordingly
   switch(userinterfacedata.command)
   {
     case UIC_BUTTON_NEXT:
-      sm_picture_view_goto_next_item();
+      sm_item_view_goto_next_item();
       
       break;
 
     case UIC_BUTTON_PREVIOUS:
-      sm_picture_view_goto_previous_item();
+      sm_item_view_goto_previous_item();
       break;
 
     case UIC_BUTTON_DELETE:
-      sm_picture_view_delete_current();
+      sm_item_view_delete_current();
       break;
   }
 }
@@ -1004,7 +997,7 @@ void sm_open_file_view(void)
   viewcurrentindex = 0;
   viewpage = 0;
 
-  //Go and setup everything to view the available picture items
+  //Go and setup everything to view the available items
   ui_setup_view_screen();
 }
 
@@ -1027,6 +1020,33 @@ void sm_close_view_screen(void)
   
   //Restore the normal scope screen
   ui_close_view_screen();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_open_file_view_item(void)
+{
+  switch(viewtype)
+  {
+    case VIEW_TYPE_PICTURE:
+      //For now just loading the bitmap, but this also needs some error handling!!!!
+      ui_load_bitmap_data();
+      
+      //Set the handling states for picture viewing
+      navigationstate = NAV_ITEM_VIEW_HANDLING;
+      fileviewstate   = FILE_VIEW_ITEM_CONTROL;
+      buttondialstate = BUTTON_DIAL_PICTURE_VIEW_HANDLING;
+      break;
+      
+    case VIEW_TYPE_WAVEFORM:
+      ui_load_trace_data();
+      
+      //Set the handling states for picture viewing
+      navigationstate = NAV_ITEM_VIEW_HANDLING;
+      fileviewstate   = FILE_VIEW_ITEM_CONTROL;
+      buttondialstate = BUTTON_DIAL_WAVE_VIEW_HANDLING;
+      break;
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1406,7 +1426,7 @@ void sm_file_view_delete_selected(void)
 //Next functions are for browsing through the pictures one by one instead of on the overview pages
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_picture_view_delete_current(void)
+void sm_item_view_delete_current(void)
 {
   //Ask the user if the current item should be deleted
   if(ui_handle_confirm_delete() == VIEW_CONFIRM_DELETE_YES)
@@ -1418,17 +1438,26 @@ void sm_picture_view_delete_current(void)
     ui_save_thumbnail_file();
   
     //Open the next item
+    switch(viewtype)
+    {
+      case VIEW_TYPE_PICTURE:
+        //For now just loading the bitmap, but this also needs some error handling!!!!
+        ui_load_bitmap_data();
+        break;
 
-    //For now just loading the bitmap, but this also needs some error handling!!!!
-    ui_load_bitmap_data();
+      case VIEW_TYPE_WAVEFORM:
+        ui_load_trace_data();
+        break;
+    }
 
-    //Either try selecting the next one if still items available, else fallback to the empty view screen
+
+    //On error Either try selecting the next one if still items available, else fallback to the empty view screen
   }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_picture_view_goto_next_item(void)
+void sm_item_view_goto_next_item(void)
 {
   //Select the next picture
   viewcurrentindex++;
@@ -1448,14 +1477,25 @@ void sm_picture_view_goto_next_item(void)
   }
 
   //For now just loading the bitmap, but this also needs some error handling!!!!
-  ui_load_bitmap_data();
+    //Open the next item
+  switch(viewtype)
+  {
+    case VIEW_TYPE_PICTURE:
+      //For now just loading the bitmap, but this also needs some error handling!!!!
+      ui_load_bitmap_data();
+      break;
+
+    case VIEW_TYPE_WAVEFORM:
+      ui_load_trace_data();
+      break;
+  }
   
   //Either try selecting the next one if still items available, else fallback to the empty view screen
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_picture_view_goto_previous_item(void)
+void sm_item_view_goto_previous_item(void)
 {
   //Select the previous picture
   viewcurrentindex--;
@@ -1474,8 +1514,18 @@ void sm_picture_view_goto_previous_item(void)
     viewpage--;
   }
 
-  //For now just loading the bitmap, but this also needs some error handling!!!!
-  ui_load_bitmap_data();
+  //Open the next item
+  switch(viewtype)
+  {
+    case VIEW_TYPE_PICTURE:
+      //For now just loading the bitmap, but this also needs some error handling!!!!
+      ui_load_bitmap_data();
+      break;
+
+    case VIEW_TYPE_WAVEFORM:
+      ui_load_trace_data();
+      break;
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1486,6 +1536,17 @@ void sm_open_picture_file_viewing(void)
 {
   //Signal viewing of pictures
   viewtype = VIEW_TYPE_PICTURE;
+
+  //Open the file viewing screen
+  sm_open_file_view();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_open_waveform_file_viewing(void)
+{
+  //Signal viewing of pictures
+  viewtype = VIEW_TYPE_WAVEFORM;
 
   //Open the file viewing screen
   sm_open_file_view();

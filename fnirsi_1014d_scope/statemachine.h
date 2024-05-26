@@ -83,7 +83,7 @@ enum NavigationStates
   NAV_MAIN_MENU_HANDLING,
   NAV_FILE_VIEW_HANDLING,
   NAV_FILE_VIEW_SELECT_HANDLING,
-  NAV_PICTURE_VIEW_HANDLING,
+  NAV_ITEM_VIEW_HANDLING,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -95,7 +95,7 @@ enum FileViewHandlingStates
   FILE_VIEW_NO_ACTION,
   FILE_VIEW_DEFAULT_CONTROL,
   FILE_VIEW_SELECT_CONTROL,
-  FILE_VIEW_PICTURE_CONTROL,
+  FILE_VIEW_ITEM_CONTROL,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -128,7 +128,7 @@ void sm_handle_time_volt_cursor(void);
 void sm_handle_main_menu_actions(void);
 void sm_handle_file_view_actions(void);
 void sm_handle_file_view_select_actions(void);
-void sm_handle_picture_view_actions(void);
+void sm_handle_item_view_actions(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //File view handling functions
@@ -138,7 +138,7 @@ void sm_handle_picture_view_actions(void);
 
 void sm_handle_file_view_control(void);
 void sm_handle_file_view_select_control(void);
-void sm_handle_picture_view_control(void);
+void sm_handle_item_view_control(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Button and rotary dial handling functions
@@ -173,6 +173,8 @@ void sm_select_main_menu_item(void);
 void sm_open_file_view(void);
 void sm_close_view_screen(void);
 
+void sm_open_file_view_item(void);
+
 void sm_file_view_goto_next_item(void);
 void sm_file_view_goto_previous_item(void);
 void sm_file_view_goto_next_row(void);
@@ -187,13 +189,14 @@ void sm_file_view_process_select(uint32 selectall);
 
 void sm_file_view_delete_selected(void);
 
-void sm_picture_view_delete_current(void);
+void sm_item_view_delete_current(void);
 
-void sm_picture_view_goto_next_item(void);
-void sm_picture_view_goto_previous_item(void);
+void sm_item_view_goto_next_item(void);
+void sm_item_view_goto_previous_item(void);
 
 
 void sm_open_picture_file_viewing(void);
+void sm_open_waveform_file_viewing(void);
 
 void sm_start_usb_export(void);
 
