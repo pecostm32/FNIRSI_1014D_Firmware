@@ -78,8 +78,8 @@ uint16 displaybuffer2[SCREEN_SIZE];
 
 uint16 gradientbuffer[SCREEN_HEIGHT];
 
-//Buffer for formating text in
-char measurementtext[20];
+//Global buffer for formating text in
+char globaldisplaytext[50];
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope data

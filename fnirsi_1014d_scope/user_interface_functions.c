@@ -1499,7 +1499,7 @@ void ui_display_voltage(uint32 ypos, PCHANNELSETTINGS settings, int32 value, uin
 
 void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, uint32 signedvalue)
 {
-  char   *buffer = measurementtext;
+  char   *buffer = globaldisplaytext;
   uint32  x = MEASUREMENT_VALUE_X;
   uint32  d;
   
@@ -1601,7 +1601,7 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
   display_set_font(&font_1);
   
   //Display it on the screen
-  display_text(x + 2, ypos + 5, measurementtext);
+  display_text(x + 2, ypos + 5, globaldisplaytext);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1958,7 +1958,6 @@ void ui_display_cursor_measurements(void)
   uint32 ch1ypos = 64;
   uint32 ch2ypos = 64;
   uint32 delta;
-  char   displaytext[10];
 
   //Check if need to do anything here
   if(scopesettings.timecursorsenable || (scopesettings.voltcursorsenable && (scopesettings.channel1.enable || scopesettings.channel2.enable)))
@@ -2026,16 +2025,16 @@ void ui_display_cursor_measurements(void)
       delta *= tcd->mul_factor;
 
       //Format the time for displaying
-      ui_cursor_print_value(displaytext, delta, tcd->time_scale, "T = ", "s");
-      display_text(13, 64, displaytext);
+      ui_cursor_print_value(globaldisplaytext, delta, tcd->time_scale, "T = ", "s");
+      display_text(13, 64, globaldisplaytext);
 
       //Calculate the frequency for this time. Need to adjust for it to stay within 32 bits
       delta /= 10;
       delta = 1000000000 / delta;
 
       //Format the frequency for displaying
-      ui_cursor_print_value(displaytext, delta, tcd->freq_scale, "F = ", "Hz");
-      display_text(13, 80, displaytext);
+      ui_cursor_print_value(globaldisplaytext, delta, tcd->freq_scale, "F = ", "Hz");
+      display_text(13, 80, globaldisplaytext);
     }
 
     //Check if volt cursor is enabled
@@ -2058,8 +2057,8 @@ void ui_display_cursor_measurements(void)
 
         //Channel 1 text has a variable position
         //Format the voltage for displaying
-        ui_cursor_print_value(displaytext, volts, vcd->volt_scale, "V1 = ", "V");
-        display_text(13, ch1ypos, displaytext);
+        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V1 = ", "V");
+        display_text(13, ch1ypos, globaldisplaytext);
       }
 
       //Check if channel 2 is enabled
@@ -2073,8 +2072,8 @@ void ui_display_cursor_measurements(void)
 
         //Channel 2 text has a variable position
         //Format the voltage for displaying
-        ui_cursor_print_value(displaytext, volts, vcd->volt_scale, "V2 = ", "V");
-        display_text(13, ch2ypos, displaytext);
+        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V2 = ", "V");
+        display_text(13, ch2ypos, globaldisplaytext);
       }
     }
   }
@@ -2254,7 +2253,7 @@ void ui_display_measurements_menu_items(uint32 xpos, PCHANNELSETTINGS settings)
     measurements_menu_item_functions[i](x, y, settings);
     
     //Draw the value aligned on the right per line
-    display_right_aligned_text(x, y, measurementtext);
+    display_right_aligned_text(x, y, globaldisplaytext);
     
     //Next line is 25 pixels down
     y += 25;
@@ -2331,11 +2330,11 @@ void ui_msm_display_freq(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings)
   if(settings->frequencyvalid)
   {
     //Format the frequency for displaying
-    ui_msm_print_value(measurementtext, settings->frequency, freq_calc_data[scopesettings.samplerate].freq_scale, "Hz");
+    ui_msm_print_value(globaldisplaytext, settings->frequency, freq_calc_data[scopesettings.samplerate].freq_scale, "Hz");
   }
   else
   {
-    strcpy(measurementtext, "xxxHz");
+    strcpy(globaldisplaytext, "xxxHz");
   }
 }
 
@@ -2347,11 +2346,11 @@ void ui_msm_display_cycle(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings)
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
-    ui_msm_print_value(measurementtext, (((uint64)settings->periodtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
+    ui_msm_print_value(globaldisplaytext, (((uint64)settings->periodtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
   }
   else
   {
-    strcpy(measurementtext, "xxxs");
+    strcpy(globaldisplaytext, "xxxs");
   }
 }
 
@@ -2363,11 +2362,11 @@ void ui_msm_display_time_plus(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setting
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
-    ui_msm_print_value(measurementtext, (((uint64)settings->hightime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
+    ui_msm_print_value(globaldisplaytext, (((uint64)settings->hightime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
   }
   else
   {
-    strcpy(measurementtext, "xxxs");
+    strcpy(globaldisplaytext, "xxxs");
   }
 }
 
@@ -2379,11 +2378,11 @@ void ui_msm_display_time_min(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
-    ui_msm_print_value(measurementtext, (((uint64)settings->lowtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
+    ui_msm_print_value(globaldisplaytext, (((uint64)settings->lowtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "s");
   }
   else
   {
-    strcpy(measurementtext, "xxxs");
+    strcpy(globaldisplaytext, "xxxs");
   }
 }
 
@@ -2397,7 +2396,7 @@ void ui_msm_display_duty_plus(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setting
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
-    buffer = ui_msm_print_decimal(measurementtext, (((uint64)settings->hightime * 1000) / settings->periodtime), 1, 0);
+    buffer = ui_msm_print_decimal(globaldisplaytext, (((uint64)settings->hightime * 1000) / settings->periodtime), 1, 0);
     
     //Add the duty cycle sign
     strcpy(buffer, "%");
@@ -2405,7 +2404,7 @@ void ui_msm_display_duty_plus(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setting
   }
   else
   {
-    strcpy(measurementtext, "xx%");
+    strcpy(globaldisplaytext, "xx%");
   }
 }
 
@@ -2419,7 +2418,7 @@ void ui_msm_display_duty_min(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
-    buffer = ui_msm_print_decimal(measurementtext, (((uint64)settings->lowtime * 1000) / settings->periodtime), 1, 0);
+    buffer = ui_msm_print_decimal(globaldisplaytext, (((uint64)settings->lowtime * 1000) / settings->periodtime), 1, 0);
     
     //Add the duty cycle sign
     strcpy(buffer, "%");
@@ -2427,7 +2426,7 @@ void ui_msm_display_duty_min(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings
   }
   else
   {
-    strcpy(measurementtext, "xx%");
+    strcpy(globaldisplaytext, "xx%");
   }
 }
 
@@ -2456,7 +2455,7 @@ void ui_msm_display_voltage(PCHANNELSETTINGS settings, int32 value)
   volts *= vcd->mul_factor;
 
   //Format the voltage for displaying
-  ui_msm_print_value(measurementtext, volts, vcd->volt_scale, "V");
+  ui_msm_print_value(globaldisplaytext, volts, vcd->volt_scale, "V");
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3690,7 +3689,9 @@ void ui_display_thumbnails(void)
   uint32 xpos = VIEW_ITEM_XSTART;
   uint32 ypos = VIEW_ITEM_YSTART;
 
-  uint32 x, y;
+  uint32 x,y;
+  
+  char *pagetext;
 
   //Use a separate buffer to clear the screen so it won't flicker when previous or next item is highlighted
   display_set_screen_buffer(displaybuffer1);
@@ -3968,6 +3969,32 @@ void ui_display_thumbnails(void)
       //Select next index
       index++;
     }
+    
+    //Display page number if more then one page available
+    if(viewpages)
+    {
+      //Show the page text in the highlight color
+      display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
+      display_set_font(&font_3);
+      
+      //Point to after the "PAGE " text to print the page number
+      pagetext = viewfilename + 5;
+      
+      //Load in the "PAGE " text
+      memcpy(viewfilename, "PAGE ", 5);
+      
+      //Add the actual page number. Internally viewpage starts at 0
+      pagetext = ui_print_decimal_number(pagetext, viewpage + 1);
+      
+      //Put in the separator between the page number and the number of pages
+      *pagetext++ = '/';
+      
+      //Add the actual number of pages. Here also one less is used internally
+      ui_print_decimal_number(pagetext, viewpages + 1);
+      
+      //Display it on the screen
+      display_text(5, 2, viewfilename);
+    }
   }
   else
   {
@@ -4242,6 +4269,46 @@ void ui_thumbnail_draw_pointer(uint32 xpos, uint32 ypos, uint32 direction, uint3
 
   //Draw the point
   display_fill_rect(x2, y2, 1, 1);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+char *ui_print_decimal_number(char *buffer, uint32 number)
+{
+  char    b[12];
+  uint32  i = 12;   //Start beyond the array since the index is pre decremented
+  uint32  s;
+
+  //For file number 0 no need to do the work
+  if(number == 0)
+  {
+    //Value is zero so just set a 0 character
+    b[--i] = '0';
+  }
+  else
+  {
+    //Process the digits
+    while(number)
+    {
+      //Set current digit to decreased index
+      b[--i] = (number % 10) + '0';
+
+      //Take of the current digit
+      number /= 10;
+    }
+  }
+  
+  //Determine the size of the decimal part
+  s = 12 - i;
+
+  //Copy the decimal file number to the buffer
+  memcpy(buffer, &b[i], s);
+
+  //Terminate the string
+  buffer[s] = 0;
+  
+  //Return the pointer to the end of the string
+  return(buffer + s);  
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

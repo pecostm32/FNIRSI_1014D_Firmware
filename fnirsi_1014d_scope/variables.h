@@ -824,7 +824,7 @@ extern uint16 displaybuffer2[SCREEN_SIZE];
 
 extern uint16 gradientbuffer[SCREEN_HEIGHT];
 
-extern char measurementtext[20];
+extern char globaldisplaytext[50];
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Fonts

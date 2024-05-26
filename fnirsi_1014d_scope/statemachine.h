@@ -187,6 +187,8 @@ void sm_file_view_process_select(uint32 selectall);
 
 void sm_file_view_delete_selected(void);
 
+void sm_picture_view_delete_current(void);
+
 void sm_picture_view_goto_next_item(void);
 void sm_picture_view_goto_previous_item(void);
 

@@ -155,6 +155,8 @@ void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, i
 
 void ui_thumbnail_draw_pointer(uint32 xpos, uint32 ypos, uint32 direction, uint32 color);
 
+char *ui_print_decimal_number(char *buffer, uint32 number);
+
 int32 ui_display_picture_item(void);
 
 void ui_display_file_status_message(int32 msgid, int32 alwayswait);

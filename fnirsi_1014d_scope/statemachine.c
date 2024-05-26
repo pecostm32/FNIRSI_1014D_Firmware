@@ -491,6 +491,7 @@ void sm_handle_picture_view_control(void)
       break;
 
     case UIC_BUTTON_DELETE:
+      sm_picture_view_delete_current();
       break;
   }
 }
@@ -1389,6 +1390,13 @@ void sm_file_view_delete_selected(void)
 
         //Redisplay the thumbnails
         ui_initialize_and_display_thumbnails();
+        
+        //Switch back to normal view mode
+        viewselectmode = VIEW_SELECT_NONE;
+
+        //Switch back to handling the basic view state
+        navigationstate = NAV_FILE_VIEW_HANDLING;
+        fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
       }
     }
   }
@@ -1396,6 +1404,28 @@ void sm_file_view_delete_selected(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Next functions are for browsing through the pictures one by one instead of on the overview pages
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_picture_view_delete_current(void)
+{
+  //Ask the user if the current item should be deleted
+  if(ui_handle_confirm_delete() == VIEW_CONFIRM_DELETE_YES)
+  {
+    //User opted for delete so do this for the current item
+    ui_remove_item_from_thumbnails(1);
+
+    //Save the thumbnail file
+    ui_save_thumbnail_file();
+  
+    //Open the next item
+
+    //For now just loading the bitmap, but this also needs some error handling!!!!
+    ui_load_bitmap_data();
+
+    //Either try selecting the next one if still items available, else fallback to the empty view screen
+  }
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_picture_view_goto_next_item(void)
@@ -1419,6 +1449,8 @@ void sm_picture_view_goto_next_item(void)
 
   //For now just loading the bitmap, but this also needs some error handling!!!!
   ui_load_bitmap_data();
+  
+  //Either try selecting the next one if still items available, else fallback to the empty view screen
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
