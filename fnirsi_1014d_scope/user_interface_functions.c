@@ -211,7 +211,7 @@ void ui_setup_usb_screen(void)
   scope_display_trace_data();
   
   //Re-sync the system files
-  ui_sync_thumbnail_files();
+//  ui_sync_thumbnail_files();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1282,6 +1282,9 @@ void ui_update_measurements(void)
   PCHANNELSETTINGS settings;
   int i,y;
   
+  //Draw in the actual screen buffer
+  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+  
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
@@ -1293,13 +1296,15 @@ void ui_update_measurements(void)
     
     //Clear the display field first
     display_set_fg_color(0x00000000);
-    display_fill_rect(MEASUREMENT_VALUE_X, y, 75, 20);
-
+    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 82, 20);
     
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
     measurement_functions[scopesettings.measurementitems[i].index](y, settings);
   }
+  
+  //Switch back to the separate display buffer to allow further actions on the trace display
+  display_set_screen_buffer(displaybuffer1);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3399,31 +3404,35 @@ void ui_remove_item_from_thumbnails(uint32 delete)
   //Calculate the number of items to move
   uint32 count = (viewavailableitems - nextindex);
 
-  //Only delete the file when requested
-  if(delete)
+  //Make sure there is an item available to remove
+  if(viewavailableitems)
   {
-    //Set the name in the global buffer for message display
-    strcpy(viewfilename, viewthumbnaildata[viewcurrentindex].filename);
-
-    //Delete the file from the SD card
-    if(f_unlink(viewfilename) != FR_OK)
+    //Only delete the file when requested
+    if(delete)
     {
-      //Signal unable to delete the file
-      ui_display_file_status_message(MESSAGE_FILE_DELETE_FAILED, 0);
+      //Set the name in the global buffer for message display
+      strcpy(viewfilename, viewthumbnaildata[viewcurrentindex].filename);
+
+      //Delete the file from the SD card
+      if(f_unlink(viewfilename) != FR_OK)
+      {
+        //Signal unable to delete the file
+        ui_display_file_status_message(MESSAGE_FILE_DELETE_FAILED, 0);
+      }
     }
+
+    //Bump all the entries in the file number list down
+    memmove(&viewfilenumberdata[viewcurrentindex], &viewfilenumberdata[nextindex], count * sizeof(uint16));
+
+    //Bump the thumbnails down to erase the removed one
+    memmove(&viewthumbnaildata[viewcurrentindex], &viewthumbnaildata[nextindex], count * sizeof(THUMBNAILDATA));
+
+    //One less item available
+    viewavailableitems--;
+
+    //Clear the freed up slot
+    viewfilenumberdata[viewavailableitems] = 0;
   }
-
-  //Bump all the entries in the file number list down
-  memmove(&viewfilenumberdata[viewcurrentindex], &viewfilenumberdata[nextindex], count * sizeof(uint16));
-
-  //Bump the thumbnails down to erase the removed one
-  memmove(&viewthumbnaildata[viewcurrentindex], &viewthumbnaildata[nextindex], count * sizeof(THUMBNAILDATA));
-
-  //One less item available
-  viewavailableitems--;
-
-  //Clear the freed up slot
-  viewfilenumberdata[viewavailableitems] = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3530,6 +3539,7 @@ int32 ui_load_trace_data(void)
 int32 ui_load_bitmap_data(void)
 {
   uint32 result;
+  uint32 dodelete = 1;
 
   //Set the name in the global buffer for message display
   strcpy(viewfilename, viewthumbnaildata[viewcurrentindex].filename);
@@ -3581,6 +3591,9 @@ int32 ui_load_bitmap_data(void)
   {
     //Signal unable to open the file
     ui_display_file_status_message(MESSAGE_FILE_OPEN_FAILED, 0);
+    
+    //No need to delete the file since it won't be there
+    dodelete = 0;
   }
 
   //Check if all went well
@@ -3590,8 +3603,9 @@ int32 ui_load_bitmap_data(void)
     return(VIEW_BITMAP_LOAD_OK);
   }
 
-  //Remove the current item from the thumbnnails and delete the item from disk, since it is faulty no need to keep it
-  ui_remove_item_from_thumbnails(1);
+  //Since there is an error with the file no need to keep it in the thumbnails
+  //Remove the current item from the thumbnnails and if needed, delete the item from disk
+  ui_remove_item_from_thumbnails(dodelete);
 
   //Save the thumbnail file
   ui_save_thumbnail_file();
@@ -3769,6 +3783,11 @@ void ui_display_thumbnails(void)
 
       //Point to the current thumbnail
       thumbnaildata = &viewthumbnaildata[index];
+      
+      if(viewfilenumberdata[index] == 27)
+      {
+        x = 100;
+      }
 
       //Display the thumbnail
       //Need to make a distinction between normal display and xy display mode
@@ -4003,7 +4022,10 @@ void ui_display_thumbnails(void)
   }
   else
   {
-    //Display EMPTY !!! with font 4
+    //Show the user there are no items available
+    display_set_fg_color(0x00FFFFFF);
+    display_set_font(&font_4);
+    display_text(254, 225, "NO ITEMS AVAILABLE");
   }
   
   //Copy the new screen to the actual screen buffer
@@ -4070,7 +4092,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
   //Set the parameters for channel 1
   thumbnaildata->channel1enable        = scopesettings.channel1.enable;
-  thumbnaildata->channel1traceposition = (uint8)(((position - 59) * 10000) / 42210);
+  thumbnaildata->channel1traceposition = (uint8)(((position - 59) * 10000) / 42210);  //42795
 
   //Calculate and limit pointer position for channel 2
   position = 458 - scopesettings.channel2.traceposition;
@@ -4087,8 +4109,8 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   }
 
   //Set the parameters for channel 2
-  thumbnaildata->channel2enable      = scopesettings.channel2.enable;
-  thumbnaildata->channel2traceposition = (uint8)(((position - 59) * 10000) / 42210);
+  thumbnaildata->channel2enable        = scopesettings.channel2.enable;
+  thumbnaildata->channel2traceposition = (uint8)(((position - 59) * 10000) / 42210);  //42795
 
   //Calculate and limit pointer position for trigger level
   position = 458 - scopesettings.triggerverticalposition;
@@ -4105,7 +4127,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   }
 
   //Set trigger information
-  thumbnaildata->triggerverticalposition   = (uint8)(((position - 59) * 10000) / 42210);
+  thumbnaildata->triggerverticalposition   = (uint8)(((position - 59) * 10000) / 42210);  //42795
   thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * 10000) / 42899;
 
   //Set the xy display mode
@@ -4146,7 +4168,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
     {
       //Adjust the samples to fit the thumbnail screen. Channel 1 is x, channel 2 is y
       *buffer1++ = (scope_get_x_sample(&scopesettings.channel1, index) * 10000) / 42210;
-      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - 60) * 10000) / 42210;
+      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - 60) * 10000) / 42210;  //Needs to change?? 42795
     }
   }
 }
@@ -4165,7 +4187,7 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   //Process the points
   for(index=1;index<settings->noftracepoints;index++)
   {
-    //FIll in the blanks between the given points
+    //Fill in the blanks between the given points
     ui_thumbnail_calculate_trace_data(ptr1->x, ptr1->y, ptr2->x, ptr2->y);
 
     //Select the next points
@@ -4177,8 +4199,8 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   //This yields a max of 182 points, which is more then is displayed on the thumbnail screen
   for(index=disp_xstart,pattern=0;index<=disp_xend;index+=4,pattern++)
   {
-    //Adjust the y point to fit the thumbnail screen. First trace y position on screen is 60. The available height on the thumbnail is 95 pixels so divide by 4,2210
-    *buffer++ = (uint8)(((thumbnailtracedata[index] - 60) * 10000) / 42210);
+    //Adjust the y point to fit the thumbnail screen. First trace y position on screen is 60 and max is 458. The available height on the thumbnail is 93 pixels so divide by 4,2795
+    *buffer++ = (uint8)(((thumbnailtracedata[index] - 60) * 10000) / 42795);
 
     //Skip one more sample every third loop
     if(pattern == 2)
@@ -4222,6 +4244,11 @@ void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, i
       //Set it in the buffer
       thumbnailtracedata[x] = yacc >> 16;
     }
+  }
+  else
+  {
+    //When there are no in between points set the next point
+    thumbnailtracedata[xstart + 1] = yacc >> 16;
   }
 }
 
@@ -4357,7 +4384,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
   //Draw the background in grey
   display_set_fg_color(0x00202020);
-  display_fill_rect(260, 210, 280, 60);
+  display_fill_rect(260, 210, 279, 59);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00303030);

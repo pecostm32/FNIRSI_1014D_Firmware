@@ -372,7 +372,7 @@ void sm_handle_file_view_select_actions(void)
 
 void sm_handle_item_view_actions(void)
 {
-  //With the navigation actions the picture list can be traversed
+  //With the navigation actions the item list can be traversed, opening them in series
   switch(userinterfacedata.command)
   {
     case UIC_ROTARY_SEL_SUB:
@@ -476,7 +476,6 @@ void sm_handle_item_view_control(void)
   {
     case UIC_BUTTON_NEXT:
       sm_item_view_goto_next_item();
-      
       break;
 
     case UIC_BUTTON_PREVIOUS:
@@ -485,6 +484,18 @@ void sm_handle_item_view_control(void)
 
     case UIC_BUTTON_DELETE:
       sm_item_view_delete_current();
+      
+      //Check if last item got deleted
+      if(viewavailableitems == 0)
+      {
+        //If so return to the file view state to show the empty screen
+        navigationstate = NAV_FILE_VIEW_HANDLING;
+        fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
+        buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
+
+        //Display the empty thumbnail page
+        ui_display_thumbnails();
+      }
       break;
   }
 }
@@ -980,18 +991,6 @@ void sm_select_main_menu_item(void)
 
 void sm_open_file_view(void)
 {
-  //Enable the file view handling buttons
-  fileviewstate = FILE_VIEW_DEFAULT_CONTROL;
-
-  //Set specific handling for the general scope control buttons and dials
-  buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
-
-  //On opening the file view the default navigation handling is opening of items
-  navigationstate = NAV_FILE_VIEW_HANDLING;
-
-  //Need a function pointer for the OK key or use an if statement on select mode enabled
-
-  //Need different functions hooked in when no items available!!!!!!  
 
   //Start with the first file highlighted
   viewcurrentindex = 0;
@@ -999,6 +998,23 @@ void sm_open_file_view(void)
 
   //Go and setup everything to view the available items
   ui_setup_view_screen();
+  
+  //Set specific handling for the general scope control buttons and dials
+  buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
+
+  //Check if there are available items to look through
+  if(viewavailableitems)
+  {
+    //If so, set the proper states for it
+    navigationstate = NAV_FILE_VIEW_HANDLING;
+    fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
+  }
+  else
+  {
+    //If not, only allowing returning to the main operational mode makes sense
+    navigationstate = NAV_NO_ACTION;
+    fileviewstate   = FILE_VIEW_NO_ACTION;
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1026,25 +1042,40 @@ void sm_close_view_screen(void)
 
 void sm_open_file_view_item(void)
 {
+  //When the OK button has been pressed try to open the file based on its type
+  //On failure an error message will be displayed and the scope remains in the file view state it was in
   switch(viewtype)
   {
     case VIEW_TYPE_PICTURE:
-      //For now just loading the bitmap, but this also needs some error handling!!!!
-      ui_load_bitmap_data();
-      
-      //Set the handling states for picture viewing
-      navigationstate = NAV_ITEM_VIEW_HANDLING;
-      fileviewstate   = FILE_VIEW_ITEM_CONTROL;
-      buttondialstate = BUTTON_DIAL_PICTURE_VIEW_HANDLING;
+      //Try to load the bitmap
+      if(ui_load_bitmap_data() == VIEW_BITMAP_LOAD_OK)
+      {
+        //If all went well set the handling states for picture viewing
+        navigationstate = NAV_ITEM_VIEW_HANDLING;
+        fileviewstate   = FILE_VIEW_ITEM_CONTROL;
+        buttondialstate = BUTTON_DIAL_PICTURE_VIEW_HANDLING;
+      }
+      else
+      {
+        //Redraw the thumbnails since the current one should not be there
+        ui_initialize_and_display_thumbnails();
+      }
       break;
       
     case VIEW_TYPE_WAVEFORM:
-      ui_load_trace_data();
-      
-      //Set the handling states for picture viewing
-      navigationstate = NAV_ITEM_VIEW_HANDLING;
-      fileviewstate   = FILE_VIEW_ITEM_CONTROL;
-      buttondialstate = BUTTON_DIAL_WAVE_VIEW_HANDLING;
+      //try to load the wave file
+      if(ui_load_trace_data() == VIEW_TRACE_LOAD_OK)
+      {
+        //Set the handling states for picture viewing
+        navigationstate = NAV_ITEM_VIEW_HANDLING;
+        fileviewstate   = FILE_VIEW_ITEM_CONTROL;
+        buttondialstate = BUTTON_DIAL_WAVE_VIEW_HANDLING;
+      }
+      else
+      {
+        //Redraw the thumbnails since the current one should not be there
+        ui_initialize_and_display_thumbnails();
+      }
       break;
   }
 }
@@ -1436,22 +1467,12 @@ void sm_item_view_delete_current(void)
 
     //Save the thumbnail file
     ui_save_thumbnail_file();
-  
-    //Open the next item
-    switch(viewtype)
-    {
-      case VIEW_TYPE_PICTURE:
-        //For now just loading the bitmap, but this also needs some error handling!!!!
-        ui_load_bitmap_data();
-        break;
 
-      case VIEW_TYPE_WAVEFORM:
-        ui_load_trace_data();
-        break;
-    }
+    //Need to decrement the index first because the next function increments it
+    viewcurrentindex--;
 
-
-    //On error Either try selecting the next one if still items available, else fallback to the empty view screen
+    //The next function handles missing files so used here to show the next available one
+    sm_item_view_goto_next_item();
   }
 }
 
@@ -1459,73 +1480,92 @@ void sm_item_view_delete_current(void)
 
 void sm_item_view_goto_next_item(void)
 {
-  //Select the next picture
-  viewcurrentindex++;
-
-  //Check if in range of the available items
-  if(viewcurrentindex >= viewavailableitems)
-  {
-    //Fall back to the first item
-    viewcurrentindex = 0;
-    viewpage = 0;
-  }
-  //Check if overflow to next page
-  else if(viewcurrentindex >= ((viewpage * VIEW_ITEMS_PER_PAGE) + viewitemsonpage))
-  {
-    //Jump to the next page if so
-    viewpage++;
-  }
-
-  //For now just loading the bitmap, but this also needs some error handling!!!!
-    //Open the next item
-  switch(viewtype)
-  {
-    case VIEW_TYPE_PICTURE:
-      //For now just loading the bitmap, but this also needs some error handling!!!!
-      ui_load_bitmap_data();
-      break;
-
-    case VIEW_TYPE_WAVEFORM:
-      ui_load_trace_data();
-      break;
-  }
+  uint32 retval = 1;
   
-  //Either try selecting the next one if still items available, else fallback to the empty view screen
+  //Try opening until successful or out of items. Success is based on a return value of zero
+  //Out of items can happen when the last file has been deleted with he sm_item_view_delete_current function
+  do
+  {
+    //Select the next picture
+    viewcurrentindex++;
+
+    //Check if in range of the available items
+    if(viewcurrentindex >= viewavailableitems)
+    {
+      //Fall back to the first item
+      viewcurrentindex = 0;
+      viewpage = 0;
+    }
+    //Check if overflow to next page
+    else if(viewcurrentindex >= ((viewpage * VIEW_ITEMS_PER_PAGE) + viewitemsonpage))
+    {
+      //Jump to the next page if so
+      viewpage++;
+    }
+
+    //Make sure there is an item available
+    if(viewavailableitems)
+    {
+      //Try to open the next item
+      switch(viewtype)
+      {
+        case VIEW_TYPE_PICTURE:
+          retval = ui_load_bitmap_data();
+          break;
+
+        case VIEW_TYPE_WAVEFORM:
+          retval = ui_load_trace_data();
+          break;
+      }
+    }
+  }
+  while(retval && viewavailableitems);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_item_view_goto_previous_item(void)
 {
-  //Select the previous picture
-  viewcurrentindex--;
-
-  //Check if it underflows
-  if(viewcurrentindex < 0)
+  uint32 retval = 1;
+  
+  //Try opening until successful or out of items. Success is based on a return value of zero
+  //Out of items cannot happen here, but still checking on it to be safe
+  do
   {
-    //If so roll over to the last item
-    viewcurrentindex = viewavailableitems - 1;
-    viewpage = viewpages;
-  }
-  //Check if underflow to previous page
-  else if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
-  {
-    //Jump to the previous page if so
-    viewpage--;
-  }
+    //Select the previous picture
+    viewcurrentindex--;
 
-  //Open the next item
-  switch(viewtype)
-  {
-    case VIEW_TYPE_PICTURE:
-      //For now just loading the bitmap, but this also needs some error handling!!!!
-      ui_load_bitmap_data();
-      break;
+    //Check if it underflows
+    if(viewcurrentindex < 0)
+    {
+      //If so roll over to the last item
+      viewcurrentindex = viewavailableitems - 1;
+      viewpage = viewpages;
+    }
+    //Check if underflow to previous page
+    else if(viewcurrentindex < (viewpage * VIEW_ITEMS_PER_PAGE))
+    {
+      //Jump to the previous page if so
+      viewpage--;
+    }
 
-    case VIEW_TYPE_WAVEFORM:
-      ui_load_trace_data();
-      break;
+    //Make sure there is an item available
+    if(viewavailableitems)
+    {
+      //Open the next item
+      switch(viewtype)
+      {
+        case VIEW_TYPE_PICTURE:
+          retval = ui_load_bitmap_data();
+          break;
+
+        case VIEW_TYPE_WAVEFORM:
+          retval = ui_load_trace_data();
+          break;
+      }
+    }
   }
+  while(retval && viewavailableitems);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

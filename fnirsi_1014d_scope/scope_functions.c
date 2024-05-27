@@ -4815,8 +4815,9 @@ void scope_display_trace_data(void)
 
 
 
-  //Use a separate buffer to clear the screen
+  //Use a separate buffer to clear the screen. Also used as source to copy back to the screen
   display_set_screen_buffer(displaybuffer1);
+  display_set_source_buffer(displaybuffer1);
 
   //Clear the trace portion of the screen
   display_set_fg_color(0x00000000);
@@ -4897,7 +4898,7 @@ void scope_display_trace_data(void)
   ui_draw_pointers();
 
   //Update the measurements in the six slots on the screen
-  ui_update_measurements();    //Still needs implementing
+  ui_update_measurements();
 
   //Check if in waveform view
   if(scopesettings.waveviewmode)
@@ -4910,7 +4911,6 @@ void scope_display_trace_data(void)
   }
   
   //Copy it to the actual screen buffer
-  display_set_source_buffer(displaybuffer1);
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
   display_copy_rect_to_screen(6, 59, 699, 399);
 }

@@ -150,6 +150,7 @@ void sm_button_dial_normal_handling(void);
 void sm_button_dial_menu_handling(void);
 void sm_button_dial_file_view_handling(void);
 void sm_button_dial_picture_view_handling(void);
+void sm_button_dial_wave_view_handling(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Functions to handle specific tasks
@@ -194,6 +195,7 @@ void sm_item_view_delete_current(void);
 void sm_item_view_goto_next_item(void);
 void sm_item_view_goto_previous_item(void);
 
+void sm_item_view_goto_item(void);
 
 void sm_open_picture_file_viewing(void);
 void sm_open_waveform_file_viewing(void);
