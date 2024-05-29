@@ -137,8 +137,88 @@
 
 #define FILE_BORDER_COLOR                0x00CC8947
 
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Trace window properties
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define TRACE_WINDOW_BORDER_XPOS          5
+#define TRACE_WINDOW_BORDER_YPOS         58
+
+#define TRACE_WINDOW_BORDER_WIDTH       701
+#define TRACE_WINDOW_BORDER_HEIGHT      401
+
+#define TRACE_MAX_WIDTH                 (TRACE_WINDOW_BORDER_WIDTH - 2)
+#define TRACE_MAX_HEIGHT                (TRACE_WINDOW_BORDER_HEIGHT - 2)
+
+#define TRACE_HORIZONTAL_START          (TRACE_WINDOW_BORDER_XPOS + 1)
+#define TRACE_VERTICAL_START            (TRACE_WINDOW_BORDER_YPOS + 1)
+
+#define TRACE_HORIZONTAL_END            (TRACE_HORIZONTAL_START + TRACE_MAX_WIDTH)
+#define TRACE_VERTICAL_END              (TRACE_VERTICAL_START + TRACE_MAX_HEIGHT)
+
+#define TRACE_HORIZONTAL_CENTER         ((TRACE_MAX_WIDTH / 2) + TRACE_HORIZONTAL_START)
+#define TRACE_VERTICAL_CENTER           ((TRACE_MAX_HEIGHT / 2) + TRACE_VERTICAL_START)
+
+#define DOT_SPACING                      5
+#define LINE_SPACING                    50
+
+#define DOT_HORIZONTAL_START            (TRACE_HORIZONTAL_START + 4)
+#define DOT_VERTICAL_START              (TRACE_VERTICAL_START + 4)
+
+#define LINE_HORIZONTAL_START           ((TRACE_HORIZONTAL_START + LINE_SPACING) - 1)   //Beter calculation should be from the center line
+#define LINE_VERTICAL_START             ((TRACE_VERTICAL_START + LINE_SPACING) - 1)
+
+//----------------------------------------------------------------------------------------------------------------------------------
+// Trace window outline shading settings
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define TOP_SHADE_LEFT_START            50
+#define TOP_SHADE_LEFT_END             110
+#define TOP_SHADE_RIGHT_START          227
+#define TOP_SHADE_RIGHT_END            492
+#define BOTTOM_SHADE_START             222
+#define BOTTOM_SHADE_END               622
+
+#define BOTTOM_SHADE_CUTOUT_START      252
+#define BOTTOM_SHADE_CUTOUT_END        595
+#define BOTTOM_SHADE_CUTOUT_STEP        10
+
+#define BOTTOM_SHADE_CUTOUT_TOP        (TRACE_WINDOW_BORDER_YPOS + TRACE_WINDOW_BORDER_HEIGHT + 5)
+
+#define BOTTOM_SHADE_CUTOUT_WIDTH        2
+#define BOTTOM_SHADE_CUTOUT_HEIGHT       9
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Pointer properties
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define VERTICAL_POINTER_WIDTH           21
+#define VERTICAL_POINTER_HEIGHT          15
+#define VERTICAL_POINTER_TOP             TRACE_VERTICAL_START
+#define VERTICAL_POINTER_BOTTOM          (TRACE_VERTICAL_END - VERTICAL_POINTER_HEIGHT)
+
+#define VERTICAL_POINTER_LEFT            (TRACE_HORIZONTAL_START)
+#define VERTICAL_POINTER_RIGHT           (TRACE_HORIZONTAL_END - VERTICAL_POINTER_WIDTH)
+
+#define HORIZONTAL_POINTER_WIDTH         15
+#define HORIZONTAL_POINTER_HEIGHT        21
+#define HORIZONTAL_POINTER_LEFT          TRACE_HORIZONTAL_START
+#define HORIZONTAL_POINTER_RIGHT         (TRACE_HORIZONTAL_END - HORIZONTAL_POINTER_WIDTH)
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//Thumbnail calculation values and trace window properties
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define THUMBNAIL_SAMPLE_MULTIPLIER   10000
+#define THUMBNAIL_X_DIVIDER
+#define THUMBNAIL_Y_DIVIDER           42903
+
+#define THUMBNAIL_TRACE_HEIGHT           94
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //Number of bits used for fixed point calculations on the voltages
+//----------------------------------------------------------------------------------------------------------------------------------
 
 #define VOLTAGE_SHIFTER                21
 

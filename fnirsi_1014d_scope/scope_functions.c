@@ -4770,30 +4770,30 @@ void scope_display_trace_data(void)
   {
     xrange = 1.0;
   }
-  else if(xrange > 725.0)
+  else if(xrange > (double)(TRACE_HORIZONTAL_END + 2))
   {
     //Limit on max screen pixels to avoid disp_xend becoming 0x80000000 due to overflow
-    xrange = 725.0;
+    xrange = (double)(TRACE_HORIZONTAL_END + 2);
   }
 
   //Calculate the start and end x coordinates
   disp_xstart = triggerposition - xrange;
   disp_xend = triggerposition + xrange;
 
-  //Limit on actual start of trace display
-  if(disp_xstart < 3)
+  //Limit on just before the start of trace display
+  if(disp_xstart < (TRACE_HORIZONTAL_START - 2))
   {
-    disp_xstart = 3;
+    disp_xstart = TRACE_HORIZONTAL_START - 2;
   }
 
-  //And limit on the actual end of the trace display
-  if(disp_xend > 725)
+  //And limit slightly after the end of the trace display for better results
+  if(disp_xend > (TRACE_HORIZONTAL_END + 2))
   {
-    disp_xend = 725;
+    disp_xend = TRACE_HORIZONTAL_END + 2;
   }
 
   //Determine first sample to use based on a full screen worth of samples and the trigger position in relation to the number of pixels on the screen
-  disp_first_sample = disp_trigger_index - (((725.0 / disp_xpos_per_sample) * triggerposition) / 725.0) - 1;
+  disp_first_sample = disp_trigger_index - ((((double)(TRACE_HORIZONTAL_END + 2) / disp_xpos_per_sample) * triggerposition) / (double)(TRACE_HORIZONTAL_END + 2)) - 1;
 
   //If below the first sample limit it on the first sample
   if(disp_first_sample < 0)
@@ -4821,7 +4821,7 @@ void scope_display_trace_data(void)
 
   //Clear the trace portion of the screen
   display_set_fg_color(0x00000000);
-  display_fill_rect(6, 59, 699, 399);
+  display_fill_rect(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH, TRACE_MAX_HEIGHT);
 
   //Check if not in waveform view mode with grid disabled
   if((scopesettings.waveviewmode == 0) || scopesettings.gridenable == 0)
@@ -4912,7 +4912,7 @@ void scope_display_trace_data(void)
   
   //Copy it to the actual screen buffer
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
-  display_copy_rect_to_screen(6, 59, 699, 399);
+  display_copy_rect_to_screen(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH, TRACE_MAX_HEIGHT);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -4980,15 +4980,14 @@ int32 scope_get_y_sample(PCHANNELSETTINGS settings, int32 index)
   {
     sample = 0;
   }
-
-  //Limit the sample on max displayable
-  if(sample > 401)
+  //Limit the sample on max displayable plus one to cut it of when outside displayable range
+  else if(sample > (TRACE_MAX_HEIGHT + 1))
   {
-    sample = 401;
+    sample = TRACE_MAX_HEIGHT + 1;
   }
 
   //Display y coordinates are inverted to signal orientation
-  return(448 - sample);
+  return(TRACE_VERTICAL_END - sample);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -5063,7 +5062,7 @@ void scope_display_channel_trace(PCHANNELSETTINGS settings)
   {
     //Calculate the scaler for the last y value based on the x distance from the last drawn position to the end of the screen
     //divided by the x distance it takes to where the next position should be drawn (Number of x steps per sample)
-    double scaler =  (725.0 - lastx) / disp_xpos_per_sample;    // (1 / samplestep);
+    double scaler =  ((double)(TRACE_HORIZONTAL_END + 2) - lastx) / disp_xpos_per_sample;    // (1 / samplestep);
 
     //Get the processed sample
     sample2 = scope_get_y_sample(settings, inputindex);

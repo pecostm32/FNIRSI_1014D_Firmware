@@ -248,12 +248,12 @@ const uint32 measurement_shade_colors[] =
 
 void ui_draw_outline(void)
 {
-  int xs1 = 50;
-  int xe1 = 110;
-  int xs2 = 227;
-  int xe2 = 492;
-  int xs3 = 222;
-  int xe3 = 622;
+  int xs1 = TOP_SHADE_LEFT_START;
+  int xe1 = TOP_SHADE_LEFT_END;
+  int xs2 = TOP_SHADE_RIGHT_START;
+  int xe2 = TOP_SHADE_RIGHT_END;
+  int xs3 = BOTTOM_SHADE_START;
+  int xe3 = BOTTOM_SHADE_END;
   int x,y,yt,yb;
   
   const uint32 *color = shade_colors;
@@ -261,17 +261,21 @@ void ui_draw_outline(void)
   //Set the color for drawing the signal display shade
   display_set_fg_color(0x00202020);
 
-  //Draw the outer edge
-  display_draw_rect(4, 57, 703, 403);
+  //Draw the outer edge for a bit of shading effect
+  display_draw_rect(TRACE_WINDOW_BORDER_XPOS - 1, TRACE_WINDOW_BORDER_YPOS - 1, TRACE_WINDOW_BORDER_WIDTH + 2, TRACE_WINDOW_BORDER_HEIGHT + 2);
   
   //Set the color for drawing the signal display outline
   display_set_fg_color(0x00646464);
 
-  //Draw the inner edge
-  display_draw_rect(5, 58, 701, 401);
+  //Draw the inner edge, the actual brighter border of the trace window
+  display_draw_rect(TRACE_WINDOW_BORDER_XPOS, TRACE_WINDOW_BORDER_YPOS, TRACE_WINDOW_BORDER_WIDTH, TRACE_WINDOW_BORDER_HEIGHT);
   
-  //Draw top side shades with starting color 0x00343434 down going with 0x00040404 down to 0x00000000)
-  for(yt=57,yb=459;yt>(57 - (sizeof(shade_colors)/sizeof(uint32)));yt--,yb++)
+  //Set the vertical starting positions for drawing the shades
+  yt=TRACE_WINDOW_BORDER_YPOS - 1;
+  yb=TRACE_WINDOW_BORDER_YPOS + TRACE_WINDOW_BORDER_HEIGHT;
+  
+  //Draw top and bottom side shades
+  for(;yt>((TRACE_WINDOW_BORDER_YPOS - 1) - (sizeof(shade_colors)/sizeof(uint32)));yt--,yb++)
   {
     display_set_fg_color(*color);
     
@@ -298,9 +302,9 @@ void ui_draw_outline(void)
   display_set_fg_color(0x00000000);
   
   //A range of cutouts with an 10 pixel interval
-  for(x=252;x<595;x+=10)
+  for(x=BOTTOM_SHADE_CUTOUT_START;x<BOTTOM_SHADE_CUTOUT_END;x+=BOTTOM_SHADE_CUTOUT_STEP)
   {
-    display_draw_rect(x, 464, 2, 9);
+    display_draw_rect(x, BOTTOM_SHADE_CUTOUT_TOP, BOTTOM_SHADE_CUTOUT_WIDTH, BOTTOM_SHADE_CUTOUT_HEIGHT);
   }
   
   //Draw the top and bottom edges of the measurement sections
@@ -433,9 +437,6 @@ void ui_display_waiting_triggered_text(void)
     xpos = 652;
   }
   
-  //Triggered text needs to be placed a bit to the right, which might be fixed by tweaking the icon
-  //Have to see how many pixels it needs to be offset.
-  
   //Display the text icon with infill of the background since the other text icon needs to be overwritten
   display_copy_icon_use_colors(icon, xpos, 464, 54, 14);
 }
@@ -458,39 +459,36 @@ void ui_draw_grid(void)
     display_set_fg_color(color);
 
     //Draw the center lines
-    display_draw_horz_line(258,  6, 704);
-    display_draw_vert_line(355, 59, 457);
+    display_draw_horz_line(TRACE_VERTICAL_CENTER, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END - 1);
+    display_draw_vert_line(TRACE_HORIZONTAL_CENTER, TRACE_VERTICAL_START, TRACE_VERTICAL_END - 1);
 
     //Draw the ticks on the x line
-    for(i=10;i<705;i+=5)
+    for(i=DOT_HORIZONTAL_START;i<TRACE_HORIZONTAL_END-1;i+=DOT_SPACING)
     {
-      display_draw_vert_line(i, 256, 260);
+      display_draw_vert_line(i, TRACE_VERTICAL_CENTER - 2, TRACE_VERTICAL_CENTER + 2);
     }
 
     //Draw the ticks on the y line
-    for(i=63;i<457;i+=5)
+    for(i=DOT_VERTICAL_START;i<TRACE_VERTICAL_END-1;i+=DOT_SPACING)
     {
-      display_draw_horz_line(i, 353, 357);
+      display_draw_horz_line(i, TRACE_HORIZONTAL_CENTER - 2, TRACE_HORIZONTAL_CENTER + 2);
     }
 
     //Draw the horizontal dots
-    for(i=108;i<457;i+=50)
+    for(i=LINE_VERTICAL_START;i<TRACE_VERTICAL_END-1;i+=LINE_SPACING)
     {
-      display_draw_horz_dots(i, 10, 704, 5);
+      display_draw_horz_dots(i, DOT_HORIZONTAL_START, TRACE_HORIZONTAL_END - 1, DOT_SPACING);
     }
 
     //Draw the vertical dots
-    for(i=55;i<705;i+=50)
+    for(i=LINE_HORIZONTAL_START;i<TRACE_HORIZONTAL_END-1;i+=LINE_SPACING)
     {
-      display_draw_vert_dots(i, 63, 457, 5);
+      display_draw_vert_dots(i, DOT_VERTICAL_START, TRACE_VERTICAL_END - 1, DOT_SPACING);
     }
   }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//1014d   display_copy_rect_to_screen(5, 58, 701, 401);  5 - 706  58 - 459
-//1013d   display_copy_rect_to_screen(2, 46, 728, 434);  2 - 730  46 - 480
-
 
 void ui_draw_pointers(void)
 {
@@ -510,21 +508,21 @@ void ui_draw_pointers(void)
     if(scopesettings.xymodedisplay == 0)
     {
       //y position for the channel 1 trace center pointer.
-      position = 458 - scopesettings.channel1.traceposition;
+      position = TRACE_VERTICAL_END - scopesettings.channel1.traceposition;
 
       //Limit on the top of the displayable region
-      if(position < 59)
+      if(position < VERTICAL_POINTER_TOP)
       {
-        position = 59;
+        position = VERTICAL_POINTER_TOP;
       }
       //Limit on the bottom of the displayable region (pointer is 15 pixels high)
-      else if(position > 443)
+      else if(position > VERTICAL_POINTER_BOTTOM)
       {
-        position = 443;
+        position = VERTICAL_POINTER_BOTTOM;
       }
 
       //Draw the pointer
-      display_left_pointer(6, position, '1');
+      display_left_pointer(VERTICAL_POINTER_LEFT, position, '1');
     }
     else
     {
@@ -543,7 +541,7 @@ void ui_draw_pointers(void)
       }
 
       //Draw the pointer
-      display_top_pointer(position, 59, '1');
+      display_top_pointer(position, VERTICAL_POINTER_TOP, '1');
     }
   }
 
@@ -554,21 +552,21 @@ void ui_draw_pointers(void)
     display_set_fg_color(CHANNEL2_COLOR);
 
     //y position for the channel 2 trace center pointer
-    position = 458 - scopesettings.channel2.traceposition;
+    position = TRACE_VERTICAL_END - scopesettings.channel2.traceposition;
 
     //Limit on the top of the displayable region
-    if(position < 59)
+    if(position < VERTICAL_POINTER_TOP)
     {
-      position = 59;
+      position = VERTICAL_POINTER_TOP;
     }
     //Limit on the bottom of the displayable region
-    else if(position > 443)
+    else if(position > VERTICAL_POINTER_BOTTOM)
     {
-      position = 443;
+      position = VERTICAL_POINTER_BOTTOM;
     }
 
     //Draw the pointer
-    display_left_pointer(6, position, '2');
+    display_left_pointer(VERTICAL_POINTER_LEFT, position, '2');
   }
 
   //Need to think about trigger position in 200mS - 20mS/div settings. Not sure if they work or need to be done in software
@@ -581,29 +579,29 @@ void ui_draw_pointers(void)
     position = scopesettings.triggerhorizontalposition + 6;
 
     //Limit on the right of the displayable region
-    if(position > 690)
+    if(position > HORIZONTAL_POINTER_RIGHT)
     {
-      position = 690;
+      position = HORIZONTAL_POINTER_RIGHT;
     }
 
     //Set the color for drawing the pointer
     display_set_fg_color(TRIGGER_COLOR);
 
     //Draw the pointer
-    display_top_pointer(position, 59, 'H');
+    display_top_pointer(position, VERTICAL_POINTER_TOP, 'H');
 
     //y position for the trigger level pointer
-    position = 458 - scopesettings.triggerverticalposition;
+    position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
 
     //Limit on the top of the displayable region
-    if(position < 59)
+    if(position < VERTICAL_POINTER_TOP)
     {
-      position = 59;
+      position = VERTICAL_POINTER_TOP;
     }
     //Limit on the bottom of the displayable region
-    else if(position > 443)
+    else if(position > VERTICAL_POINTER_BOTTOM)
     {
-      position = 443;
+      position = VERTICAL_POINTER_BOTTOM;
     }
 
     //Need to reset the fore ground color because the display_top_pointer copies the background color over it
@@ -613,7 +611,7 @@ void ui_draw_pointers(void)
     display_set_font(&font_3);
 
     //Draw the pointer
-    display_right_pointer(684, position, 'T');
+    display_right_pointer(VERTICAL_POINTER_RIGHT, position, 'T');
   }
 }
 
@@ -3719,7 +3717,7 @@ void ui_display_thumbnails(void)
   display_set_fg_color(0x00000000);
 
   //Clear the screen
-  display_fill_rect(0, 0, 800, 480);
+  display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //Check if there are items to display
   if(viewavailableitems)
@@ -3763,10 +3761,6 @@ void ui_display_thumbnails(void)
       //Fill in the side bar
       display_copy_icon_full_color(thumbnail_side_bar_icon, xpos + 171, y, 26, 118);
       
-      //Set grey color for trace border
-      display_set_fg_color(0x00909090);
-      display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 25);
-
       //Check on highlighted item
       if(index == viewcurrentindex)
       {
@@ -3784,11 +3778,6 @@ void ui_display_thumbnails(void)
       //Point to the current thumbnail
       thumbnaildata = &viewthumbnaildata[index];
       
-      if(viewfilenumberdata[index] == 27)
-      {
-        x = 100;
-      }
-
       //Display the thumbnail
       //Need to make a distinction between normal display and xy display mode
       if(thumbnaildata->xydisplaymode == 0)
@@ -3810,8 +3799,8 @@ void ui_display_thumbnails(void)
         uint32 xs = xpos + thumbnaildata->disp_xstart;
         uint32 xe = xpos + thumbnaildata->disp_xend;
 
-        //Offset the trace data to below the signal area border
-        y = ypos + 12;
+        //Offset the trace data to just on the signal area border
+        y = ypos + 11;
 
         //Check if channel 1 is enabled
         if(thumbnaildata->channel1enable)
@@ -3873,6 +3862,10 @@ void ui_display_thumbnails(void)
           sample++;
         }
       }
+      
+      //Draw the grey trace border after the traces has been drawn to mask the out of the screen pixels
+      display_set_fg_color(0x00909090);
+      display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 26);
 
       //Need to make a distinction between normal display and xy display mode for displaying the pointers
       if(thumbnaildata->xydisplaymode == 0)
@@ -4031,7 +4024,7 @@ void ui_display_thumbnails(void)
   //Copy the new screen to the actual screen buffer
   display_set_source_buffer(displaybuffer1);
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
-  display_copy_rect_to_screen(0, 0, 800, 480);
+  display_copy_rect_to_screen(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -4077,57 +4070,57 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   strcpy(thumbnaildata->filename, viewfilename);
 
   //Calculate and limit pointer position for channel 1
-  position = 458 - scopesettings.channel1.traceposition;
+  position = TRACE_VERTICAL_END - scopesettings.channel1.traceposition;
 
   //Limit on the top of the displayable region
-  if(position < 59)
+  if(position < VERTICAL_POINTER_TOP)
   {
-    position = 59;
+    position = VERTICAL_POINTER_TOP;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 443)
+  else if(position > VERTICAL_POINTER_BOTTOM)
   {
-    position = 443;
+    position = VERTICAL_POINTER_BOTTOM;
   }
 
   //Set the parameters for channel 1
   thumbnaildata->channel1enable        = scopesettings.channel1.enable;
-  thumbnaildata->channel1traceposition = (uint8)(((position - 59) * 10000) / 42210);  //42795
+  thumbnaildata->channel1traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
 
   //Calculate and limit pointer position for channel 2
-  position = 458 - scopesettings.channel2.traceposition;
+  position = TRACE_VERTICAL_END - scopesettings.channel2.traceposition;
 
   //Limit on the top of the displayable region
-  if(position < 59)
+  if(position < VERTICAL_POINTER_TOP)
   {
-    position = 59;
+    position = VERTICAL_POINTER_TOP;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 443)
+  else if(position > VERTICAL_POINTER_BOTTOM)
   {
-    position = 443;
+    position = VERTICAL_POINTER_BOTTOM;
   }
 
   //Set the parameters for channel 2
   thumbnaildata->channel2enable        = scopesettings.channel2.enable;
-  thumbnaildata->channel2traceposition = (uint8)(((position - 59) * 10000) / 42210);  //42795
+  thumbnaildata->channel2traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
 
   //Calculate and limit pointer position for trigger level
-  position = 458 - scopesettings.triggerverticalposition;
+  position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
 
   //Limit on the top of the displayable region
-  if(position < 59)
+  if(position < VERTICAL_POINTER_TOP)
   {
-    position = 59;
+    position = VERTICAL_POINTER_TOP;
   }
   //Limit on the bottom of the displayable region
-  else if(position > 443)
+  else if(position > VERTICAL_POINTER_BOTTOM)
   {
-    position = 443;
+    position = VERTICAL_POINTER_BOTTOM;
   }
 
   //Set trigger information
-  thumbnaildata->triggerverticalposition   = (uint8)(((position - 59) * 10000) / 42210);  //42795
+  thumbnaildata->triggerverticalposition   = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
   thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * 10000) / 42899;
 
   //Set the xy display mode
@@ -4168,7 +4161,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
     {
       //Adjust the samples to fit the thumbnail screen. Channel 1 is x, channel 2 is y
       *buffer1++ = (scope_get_x_sample(&scopesettings.channel1, index) * 10000) / 42210;
-      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - 60) * 10000) / 42210;  //Needs to change?? 42795
+      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - VERTICAL_POINTER_TOP) * 10000) / 42210;  //Needs to change?? 42795
     }
   }
 }
@@ -4179,6 +4172,7 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
 {
   int32  index;
   uint32 pattern;
+  int32  sample;
 
   //Point to the first and second trace point for easy access
   PDISPLAYPOINTS ptr1 = &settings->tracepoints[0];
@@ -4199,9 +4193,28 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   //This yields a max of 182 points, which is more then is displayed on the thumbnail screen
   for(index=disp_xstart,pattern=0;index<=disp_xend;index+=4,pattern++)
   {
-    //Adjust the y point to fit the thumbnail screen. First trace y position on screen is 60 and max is 458. The available height on the thumbnail is 93 pixels so divide by 4,2795
-    *buffer++ = (uint8)(((thumbnailtracedata[index] - 60) * 10000) / 42795);
-
+    //Take of the trace screen top offset to get the actual sample value. Can be negative when the trace is outside the displayable region
+    sample = (int32)thumbnailtracedata[index] - TRACE_WINDOW_BORDER_YPOS;
+    
+    //Limit the sample to the extremes
+    if(sample < 0)
+    {
+      sample = 0;
+    }
+    else if(sample > TRACE_WINDOW_BORDER_HEIGHT)
+    {
+      //Limit to the thumbnail trace display window height
+      sample = THUMBNAIL_TRACE_HEIGHT;
+    }
+    else
+    {
+      //Scale the sample for the Y direction to fit the thumbnail trace screen window
+      sample = (sample * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
+    }
+    
+    //FIll the buffer with the samples
+    *buffer++ = (uint8)sample;
+    
     //Skip one more sample every third loop
     if(pattern == 2)
     {
@@ -4212,6 +4225,7 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//Function to fill in samples based on linear interpolation
 
 void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, int32 yend)
 {
@@ -4233,7 +4247,7 @@ void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, i
   thumbnailtracedata[xend]   = yend;
 
   //Check if there are points in between
-  if(dx > 2)
+  if(dx > 1)
   {
     //Handle the in between x positions
     for(x=xstart+1;x<xend;x++)
@@ -4244,11 +4258,6 @@ void ui_thumbnail_calculate_trace_data(int32 xstart, int32 ystart, int32 xend, i
       //Set it in the buffer
       thumbnailtracedata[x] = yacc >> 16;
     }
-  }
-  else
-  {
-    //When there are no in between points set the next point
-    thumbnailtracedata[xstart + 1] = yacc >> 16;
   }
 }
 
@@ -4487,10 +4496,10 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define HDC_XPOS   270
+#define HCD_XPOS   270
 #define HCD_YPOS   217
-#define HDC_WIDTH  260
-#define HDC_HEIGHT  40
+#define HCD_WIDTH  260
+#define HCD_HEIGHT  40
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -4500,21 +4509,21 @@ int32 ui_handle_confirm_delete(void)
 
   //Save the screen rectangle where the message will be displayed
   display_set_destination_buffer(displaybuffer2);
-  display_copy_rect_from_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+  display_copy_rect_from_screen(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
 
   //display the confirm delete menu
   //Draw the background in some shade of red
   display_set_fg_color(0x00A04020);
-  display_fill_rect(HDC_XPOS, HCD_YPOS, HDC_WIDTH - 1, HDC_HEIGHT - 1);
+  display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH - 1, HCD_HEIGHT - 1);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00404040);
-  display_draw_rect(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+  display_draw_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
 
   //White color for text and use a big font
   display_set_fg_color(0x00000000);
   display_set_font(&font_4);
-  display_text(HDC_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
+  display_text(HCD_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
 
   //Make sure the last command is erased
   userinterfacedata.command = 0;
@@ -4539,7 +4548,7 @@ int32 ui_handle_confirm_delete(void)
   
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);
-  display_copy_rect_to_screen(HDC_XPOS, HCD_YPOS, HDC_WIDTH, HDC_HEIGHT);
+  display_copy_rect_to_screen(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
   
   //return the choice
   return(choice);

@@ -1365,7 +1365,7 @@ void display_copy_icon_full_color(const uint16 *icon, uint32 xpos, uint32 ypos, 
 void display_left_pointer(uint32 xpos, uint32 ypos, int8 id)
 {
   //Draw the pointer
-  display_copy_icon_fg_color(left_pointer_icon, xpos, ypos, 21, 15);
+  display_copy_icon_fg_color(left_pointer_icon, xpos, ypos, VERTICAL_POINTER_WIDTH, VERTICAL_POINTER_HEIGHT);
  
   //Set the color for drawing the id
   displaydata.fg_color = displaydata.bg_color;
@@ -1379,7 +1379,7 @@ void display_left_pointer(uint32 xpos, uint32 ypos, int8 id)
 void display_right_pointer(uint32 xpos, uint32 ypos, int8 id)
 {
   //Draw the pointer
-  display_copy_icon_fg_color(right_pointer_icon, xpos, ypos, 21, 15);
+  display_copy_icon_fg_color(right_pointer_icon, xpos, ypos, VERTICAL_POINTER_WIDTH, VERTICAL_POINTER_HEIGHT);
  
   //Set the color for drawing the id
   displaydata.fg_color = displaydata.bg_color;
@@ -1393,7 +1393,7 @@ void display_right_pointer(uint32 xpos, uint32 ypos, int8 id)
 void display_top_pointer(uint32 xpos, uint32 ypos, int8 id)
 {
   //Draw the pointer
-  display_copy_icon_fg_color(top_pointer_icon, xpos, ypos, 15, 21);
+  display_copy_icon_fg_color(top_pointer_icon, xpos, ypos, HORIZONTAL_POINTER_WIDTH, HORIZONTAL_POINTER_HEIGHT);
  
   //Set the color for drawing the id
   displaydata.fg_color = displaydata.bg_color;
