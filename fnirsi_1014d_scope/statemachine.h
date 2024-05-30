@@ -195,10 +195,14 @@ void sm_item_view_delete_current(void);
 void sm_item_view_goto_next_item(void);
 void sm_item_view_goto_previous_item(void);
 
-void sm_item_view_goto_item(void);
+//----------------------------------------------------------------------------------------------------------------------------------
+//Next functions are for executing main menu items
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_open_picture_file_viewing(void);
 void sm_open_waveform_file_viewing(void);
+
+void sm_do_base_calibration(void);
 
 void sm_start_usb_export(void);
 

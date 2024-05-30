@@ -156,15 +156,12 @@ int main(void)
 
   //Set screen brightness
   fpga_set_translated_brightness();
-  
-  //Make sure the last command is erased
-  userinterfacedata.command = 0;
 
   //Discard the first response from the user interface controller
-  uart1_get_data();
+  uart1_receive_data();
 
   //Signal last command has been handled
-  userinterfacedata.command = 0;
+  toprocesscommand = 0;
   
   //Initialize the state machine
   sm_init();

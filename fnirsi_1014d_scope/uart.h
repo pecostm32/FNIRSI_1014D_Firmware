@@ -62,7 +62,15 @@
 
 void uart1_init(void);
 
-uint8 uart1_get_data(void);
+//Requests data from the user interface controller and returns it to the caller
+uint8 uart1_receive_data(void);
+
+//Requests data from the user interface controller when no previous command is set and sets it in the toprocesscommand variable
+uint8 uart1_get_user_input(void);
+
+//Waits for user input and sets the received command in the lastreceivedcommand variable
+void uart1_wait_for_user_input(void); 
+
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

@@ -197,7 +197,7 @@ void ui_setup_usb_screen(void)
   usb_device_enable();
 
   //Wait for the user to push a button or rotate a dial on the front panel of the scope
-  while(uart1_get_data() == 0);
+  uart1_wait_for_user_input();
 
   //Stop the USB interface
   usb_device_disable();
@@ -626,8 +626,8 @@ void ui_draw_time_cursors(void)
     display_set_fg_color(CURSORS_COLOR);
 
     //Draw the lines
-    display_draw_vert_dashes(scopesettings.timecursor1position, 59, 459, 3, 2);
-    display_draw_vert_dashes(scopesettings.timecursor2position, 59, 459, 3, 2);
+    display_draw_vert_dashes(scopesettings.timecursor1position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
+    display_draw_vert_dashes(scopesettings.timecursor2position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
   }
 }
 
@@ -642,8 +642,8 @@ void ui_draw_volt_cursors(void)
     display_set_fg_color(CURSORS_COLOR);
 
     //Draw the lines
-    display_draw_horz_dashes(scopesettings.voltcursor1position, 5, 706, 3, 2);
-    display_draw_horz_dashes(scopesettings.voltcursor2position, 5, 706, 3, 2);
+    display_draw_horz_dashes(scopesettings.voltcursor1position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
+    display_draw_horz_dashes(scopesettings.voltcursor2position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
   }
 }
 
@@ -971,7 +971,6 @@ void ui_display_time_per_division(void)
     //Display the in the bottom information section using the table
     display_text(155, 465, (char *)time_div_texts[scopesettings.timeperdiv]);
   }
-  
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3481,6 +3480,9 @@ int32 ui_load_trace_data(void)
               scopesettings.runstate = 1;
               scopesettings.waveviewmode = 1;
 
+              //Allow redrawing of the trace display
+              enabletracedisplay = TRACE_DISPLAY_ENABLED;
+              
               //Show the normal scope screen
               ui_setup_main_screen();
 
@@ -3523,7 +3525,7 @@ int32 ui_load_trace_data(void)
     return(VIEW_TRACE_LOAD_OK);
   }
 
-  //Remove the current item from the thumbnnails and delete the item from disk, since the file is faultyand thus no longer needed
+  //Remove the current item from the thumbnnails and delete the item from disk, since the file is faulty and thus no longer needed
   ui_remove_item_from_thumbnails(1);
 
   //Save the thumbnail file
@@ -3562,8 +3564,8 @@ int32 ui_load_bitmap_data(void)
         
         //Show the filename on the bottom of the picture
         display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
-        display_set_font(&font_3);
-        display_text(330, 455, viewfilename);
+        display_set_font(&font_0);
+        display_text(VIEW_FILENAME_XPOS, VIEW_FILENAME_YPOS, viewfilename);
       }
       else
       {
@@ -4040,14 +4042,24 @@ void ui_display_thumbnail_data(uint32 xstart, uint32 xend, uint32 ypos, uint32 c
   //Get the first sample
   sample1 = *buffer++;
 
+  if(sample1 > 94)
+  {
+    sample1 = 94;
+  }
+
   //Position it within the thumbnail on screen
   sample1 += ypos;
-
+  
   //Do while the samples last
   for(x=xstart;x<xend;x++)
   {
     //Get the second sample
     sample2 = *buffer++;
+
+    if(sample2 > 94)
+    {
+      sample2 = 94;
+    }
 
     //Position it within the thumbnail on screen
     sample2 += ypos;
@@ -4085,7 +4097,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
   //Set the parameters for channel 1
   thumbnaildata->channel1enable        = scopesettings.channel1.enable;
-  thumbnaildata->channel1traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
+  thumbnaildata->channel1traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
 
   //Calculate and limit pointer position for channel 2
   position = TRACE_VERTICAL_END - scopesettings.channel2.traceposition;
@@ -4103,7 +4115,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
   //Set the parameters for channel 2
   thumbnaildata->channel2enable        = scopesettings.channel2.enable;
-  thumbnaildata->channel2traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
+  thumbnaildata->channel2traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
 
   //Calculate and limit pointer position for trigger level
   position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
@@ -4120,15 +4132,15 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   }
 
   //Set trigger information
-  thumbnaildata->triggerverticalposition   = (uint8)(((position - VERTICAL_POINTER_TOP) * 10000) / 42210);  //42795
-  thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * 10000) / 42899;
+  thumbnaildata->triggerverticalposition   = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
+  thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
   //Set the xy display mode
   thumbnaildata->xydisplaymode = scopesettings.xymodedisplay;
 
-  //Set the display start and end x positions. Conversion to thumbnail x coordinates is dividing by 4,2899
-  thumbnaildata->disp_xstart = (disp_xstart * 10000) / 42899;
-  thumbnaildata->disp_xend   = (disp_xend * 10000) / 42899;
+  //Set the display start and end x positions. Conversion to thumbnail x coordinates is done by dividing since the region is smaller
+  thumbnaildata->disp_xstart = (disp_xstart * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
+  thumbnaildata->disp_xend   = (disp_xend * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
   //Check which display mode is active
   if(scopesettings.xymodedisplay == 0)
@@ -4160,8 +4172,8 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
     for(;index<last;index+=4)
     {
       //Adjust the samples to fit the thumbnail screen. Channel 1 is x, channel 2 is y
-      *buffer1++ = (scope_get_x_sample(&scopesettings.channel1, index) * 10000) / 42210;
-      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - VERTICAL_POINTER_TOP) * 10000) / 42210;  //Needs to change?? 42795
+      *buffer1++ = (scope_get_x_sample(&scopesettings.channel1, index) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
+      *buffer2++ = ((scope_get_y_sample(&scopesettings.channel2, index) - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
     }
   }
 }
@@ -4471,14 +4483,8 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
   //Maybe wait for touch to continue in case of an error message
   if(checkconfirmation)
   {
-    //Make sure the last command is erased
-    userinterfacedata.command = 0;
-
     //Wait for the user to push a button or rotate a dial on the front panel of the scope
-    while(uart1_get_data() == 0);
-    
-    //Signal last command has been handled
-    userinterfacedata.command = 0;
+    uart1_wait_for_user_input();
   }
   else
   {
@@ -4525,14 +4531,11 @@ int32 ui_handle_confirm_delete(void)
   display_set_font(&font_4);
   display_text(HCD_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
 
-  //Make sure the last command is erased
-  userinterfacedata.command = 0;
-  
   //Wait for the user to push a button or rotate a dial on the front panel of the scope
-  while(uart1_get_data() == 0);
+  uart1_wait_for_user_input();
   
   //Check if the user pressed the OK button
-  if(userinterfacedata.command == UIC_BUTTON_NAV_OK)
+  if(lastreceivedcommand == UIC_BUTTON_NAV_OK)
   {
     //If so, set the chosen option to yes
     choice = VIEW_CONFIRM_DELETE_YES;
@@ -4542,9 +4545,6 @@ int32 ui_handle_confirm_delete(void)
     //Else set the chosen option to no
     choice = VIEW_CONFIRM_DELETE_NO;
   }
-
-  //Signal last command is handled
-  userinterfacedata.command = 0;
   
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);

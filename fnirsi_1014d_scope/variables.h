@@ -207,12 +207,19 @@
 #define HORIZONTAL_POINTER_RIGHT         (TRACE_HORIZONTAL_END - HORIZONTAL_POINTER_WIDTH)
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//Cursor trace properties
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define CURSOR_LINE_LENGTH                3
+#define CURSOR_SPACE_LENGTH               2
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //Thumbnail calculation values and trace window properties
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #define THUMBNAIL_SAMPLE_MULTIPLIER   10000
-#define THUMBNAIL_X_DIVIDER
-#define THUMBNAIL_Y_DIVIDER           42903
+#define THUMBNAIL_X_DIVIDER           42899
+#define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT / 
 
 #define THUMBNAIL_TRACE_HEIGHT           94
 
@@ -237,6 +244,16 @@
 #define MEASUREMENT_Y_DISPLACEMENT       80
 
 //----------------------------------------------------------------------------------------------------------------------------------
+//Wave file name display position
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define VIEW_FILENAME_XPOS             330
+#define VIEW_FILENAME_YPOS             458
+
+//----------------------------------------------------------------------------------------------------------------------------------
+//
+//The below needs to be cleaned up and filled in for new settings
+//
 //Menu positions and dimensions
 //----------------------------------------------------------------------------------------------------------------------------------
 //Run and stop text
@@ -301,7 +318,8 @@
 #define SAMPLES_PER_ADC                   (SAMPLE_COUNT / 2)
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//Cursors
+//Cursor types
+//----------------------------------------------------------------------------------------------------------------------------------
 
 #define CURSOR_TIME_LEFT              0
 #define CURSOR_TIME_RIGHT             1
@@ -372,7 +390,6 @@ struct tagDisplayPoints
 
 struct tagUserInterfaceData
 {
-  uint8 command;
   uint8 action;
   
   uint8 selectedcursor;
@@ -706,7 +723,8 @@ extern uint8 gridbrightnessopen;
 extern uint8 calibrationopen;
 
 
-
+extern uint8 lastreceivedcommand;         //Command set in the wait for user input function
+extern uint8 toprocesscommand;            //Command set in the get data function which needs to be processed in the main loop
 
 extern uint8 navigationstate;
 extern uint8 fileviewstate;
@@ -991,7 +1009,13 @@ extern const uint8 channel_menu_OFF_icon[];
 extern const uint16 thumbnail_top_bar_icon[];
 extern const uint16 thumbnail_side_bar_icon[];
 
+extern const uint8 calibration_start_text_icon[];
+extern const uint8 calibrating_text_icon[];
+extern const uint8 succeed_text_icon[];
+extern const uint8 failed_text_icon[];
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #endif /* VARIABLES_H */
 
+//----------------------------------------------------------------------------------------------------------------------------------

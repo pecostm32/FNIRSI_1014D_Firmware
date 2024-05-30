@@ -42,27 +42,43 @@ void uart1_init(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-uint8 uart1_get_data(void)
+uint8 uart1_receive_data(void)
+{
+  //Wait for the UART to be ready to transmit new data
+  while((*UART1_LS_REG & UART_LSR_TEMT) == 0);
+
+  //Send the poll request byte to the target
+  *UART1_TX_REG = 0xFF;
+
+  //Wait for the response from the target
+  while((*UART1_LS_REG & UART_LSR_DR) == 0);
+
+  //Return the received data
+  return(*UART1_RX_REG);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+uint8 uart1_get_user_input(void)
 {
   //Check if polling the user interface is needed
   //When a command has been received but not processed yet it should be skipped
-  if(userinterfacedata.command == 0)
+  if(toprocesscommand == 0)
   {
-    //Wait for the UART to be ready to transmit new data
-    while((*UART1_LS_REG & UART_LSR_TEMT) == 0);
-
-    //Send the poll request byte to the target
-    *UART1_TX_REG = 0xFF;
-
-    //Wait for the response from the target
-    while((*UART1_LS_REG & UART_LSR_DR) == 0);
-
     //Set the received command in the user interface data to be processed
-    userinterfacedata.command = *UART1_RX_REG;
+    toprocesscommand = uart1_receive_data();
   }
   
   //Return the current active command as a flag to signal actual input has been received
-  return(userinterfacedata.command);
+  return(toprocesscommand);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void uart1_wait_for_user_input(void)
+{
+  //Wait for the user to push a button or rotate a dial on the front panel of the scope
+  while((lastreceivedcommand = uart1_receive_data()) == 0);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

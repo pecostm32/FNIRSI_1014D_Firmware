@@ -57,6 +57,9 @@ uint8 gridbrightnessopen = 0;
 uint8 calibrationopen = 0;
 
 
+uint8 lastreceivedcommand = 0;
+uint8 toprocesscommand = 0;
+
 uint8 navigationstate = 0;
 uint8 fileviewstate = 0;
 uint8 buttondialstate = 0;

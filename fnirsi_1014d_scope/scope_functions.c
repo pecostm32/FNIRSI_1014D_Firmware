@@ -4899,20 +4899,19 @@ void scope_display_trace_data(void)
 
   //Update the measurements in the six slots on the screen
   ui_update_measurements();
-
-  //Check if in waveform view
-  if(scopesettings.waveviewmode)
-  {
-    //Display the file name
-    //Use white text and font_0
-    display_set_fg_color(0x00FFFFFF);
-    display_set_font(&font_0);
-    display_text(550, 48, viewfilename);
-  }
   
   //Copy it to the actual screen buffer
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
   display_copy_rect_to_screen(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH, TRACE_MAX_HEIGHT);
+
+  //Check if in waveform view
+  if(scopesettings.waveviewmode)
+  {
+    //Display the file name directly on the actual display because it is outside the trace window
+    display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
+    display_set_font(&font_0);
+    display_text(VIEW_FILENAME_XPOS, VIEW_FILENAME_YPOS, viewfilename);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

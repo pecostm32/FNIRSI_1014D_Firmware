@@ -24,7 +24,7 @@ NAVIGATIONFUNCTION mainmenustartactions[] =
   0,                                         //Scale (grid) brightness
   0,                                         //Automatic 50%
   0,                                         //X-Y mode curve
-  0,                                         //Base calibration
+  sm_do_base_calibration,                    //Base calibration
   sm_start_usb_export,                       //USB export
   0                                          //Factory settings
 };
@@ -50,14 +50,14 @@ void sm_init(void)
 void sm_handle_user_input(void)
 {
   //Get the latest command to be processed
-  if(uart1_get_data() == 0)
+  if(uart1_get_user_input() == 0)
   {
     //No active command so skip the rest
     return;
   }
   
   //Set the action value for the add or subtract commands
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     //For all the addition actions the set and speed value need to be positive;
     case UIC_BUTTON_NAV_UP:
@@ -115,7 +115,6 @@ void sm_handle_user_input(void)
     case NAV_ITEM_VIEW_HANDLING:
       sm_handle_item_view_actions();
       break;
-      
   }
   
   //Handle the file view actions second
@@ -152,10 +151,14 @@ void sm_handle_user_input(void)
     case BUTTON_DIAL_PICTURE_VIEW_HANDLING:
       sm_button_dial_picture_view_handling();
       break;
+
+    case BUTTON_DIAL_WAVE_VIEW_HANDLING:
+      sm_button_dial_wave_view_handling();
+      break;
   }
   
   //Signal the active command has been processed
-  userinterfacedata.command = 0;
+  toprocesscommand = 0;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -165,7 +168,7 @@ void sm_handle_user_input(void)
 void sm_handle_time_volt_cursor(void)
 {
   //For the left time cursor navigation only the right button and the rotary dial are active
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NAV_LEFT:
       //Select the left time cursor if enabled
@@ -280,7 +283,7 @@ void sm_handle_time_volt_cursor(void)
 void sm_handle_main_menu_actions(void)
 {
   //With the navigation actions the menu list can be traversed and the active option can be started
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NAV_LEFT:
       sm_close_menu();
@@ -307,7 +310,7 @@ void sm_handle_main_menu_actions(void)
 void sm_handle_file_view_actions(void)
 {
   //With the navigation actions the item list can be traversed and the active item can be opened or selected
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NAV_OK:
       sm_open_file_view_item();
@@ -338,7 +341,7 @@ void sm_handle_file_view_actions(void)
 void sm_handle_file_view_select_actions(void)
 {
   //With the navigation actions the item list can be traversed and the active item can be opened or selected
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NAV_OK:
       //Toggle the selected state for this item
@@ -373,7 +376,7 @@ void sm_handle_file_view_select_actions(void)
 void sm_handle_item_view_actions(void)
 {
   //With the navigation actions the item list can be traversed, opening them in series
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_ROTARY_SEL_SUB:
     case UIC_BUTTON_NAV_LEFT:
@@ -394,7 +397,7 @@ void sm_handle_item_view_actions(void)
 void sm_handle_file_view_control(void)
 {
   //Check the buttons for the file view actions and handle them accordingly
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NEXT:
       //Select the next page
@@ -451,7 +454,7 @@ void sm_handle_file_view_control(void)
 void sm_handle_file_view_select_control(void)
 {
   //Check the buttons for the file view actions and handle them accordingly
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_DELETE:
       sm_file_view_delete_selected();
@@ -472,7 +475,7 @@ void sm_handle_file_view_select_control(void)
 void sm_handle_item_view_control(void)
 {
   //Check the buttons for the file view actions and handle them accordingly
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_NEXT:
       sm_item_view_goto_next_item();
@@ -507,7 +510,7 @@ void sm_handle_item_view_control(void)
 void sm_button_dial_normal_handling(void)
 {
   //Handle the received command
-  switch(userinterfacedata.command)
+  switch(toprocesscommand)
   {
     case UIC_BUTTON_RUN_STOP:
       //Toggle the run state
@@ -734,7 +737,7 @@ void sm_button_dial_normal_handling(void)
 void sm_button_dial_menu_handling(void)
 {
   //This depends on the fact that the navigation buttons are in an undivided sequential range to filter them out and respond the same to all other given user input except for the navigation dial commands
-  if(((userinterfacedata.command < UIC_BUTTON_NAV_RIGHT) || (userinterfacedata.command > UIC_BUTTON_NAV_LEFT)) && (userinterfacedata.command != UIC_ROTARY_SEL_ADD) && (userinterfacedata.command != UIC_ROTARY_SEL_SUB))
+  if(((toprocesscommand < UIC_BUTTON_NAV_RIGHT) || (toprocesscommand > UIC_BUTTON_NAV_LEFT)) && (toprocesscommand != UIC_ROTARY_SEL_ADD) && (toprocesscommand != UIC_ROTARY_SEL_SUB))
   {
     //When in a menu state only the navigation keys and rotary dial have dedicated actions. All the others close the menu and return to normal operation
     sm_close_menu();
@@ -746,7 +749,7 @@ void sm_button_dial_menu_handling(void)
 void sm_button_dial_file_view_handling(void)
 {
   //Return to the previous mode when the menu button is pressed
-  if(userinterfacedata.command == UIC_BUTTON_MENU)
+  if(toprocesscommand == UIC_BUTTON_MENU)
   {
     sm_close_view_screen();
   }
@@ -757,7 +760,7 @@ void sm_button_dial_file_view_handling(void)
 void sm_button_dial_picture_view_handling(void)
 {
   //Return to the previous mode when the menu button is pressed
-  if(userinterfacedata.command == UIC_BUTTON_MENU)
+  if(toprocesscommand == UIC_BUTTON_MENU)
   {
     //Set the file viewing states
     navigationstate = NAV_FILE_VIEW_HANDLING;
@@ -766,6 +769,161 @@ void sm_button_dial_picture_view_handling(void)
     
     //Display the thumbnail page with the current view item selected
     ui_display_thumbnails();
+  }
+}
+
+void sm_button_dial_wave_view_handling(void)
+{
+  //Process the user input as far as is allowed for wave file viewing
+  switch(toprocesscommand)
+  {
+    case UIC_BUTTON_MENU:
+      //When the menu button is pressed return to the previous viewing state
+      navigationstate = NAV_FILE_VIEW_HANDLING;
+      fileviewstate   = FILE_VIEW_DEFAULT_CONTROL;
+      buttondialstate = BUTTON_DIAL_FILE_VIEW_HANDLING;
+
+      //Disable the trace displaying
+      enabletracedisplay = TRACE_DISPLAY_NOT_ENABLED;
+      
+      //Display the thumbnail page with the current view item selected
+      ui_display_thumbnails();
+      break;
+      
+    case UIC_BUTTON_SAVE_PICTURE:
+      //Save the screen as bitmap on the SD card
+      ui_save_view_item_file(VIEW_TYPE_PICTURE);
+      break;
+
+    case UIC_BUTTON_H_CUR:
+      //Toggle the horizontal cursor state
+      scopesettings.timecursorsenable ^= 1;
+
+      //Enable the navigation state for the cursor handling
+      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
+      
+      //Take needed actions when the cursor is enabled
+      if(scopesettings.timecursorsenable)
+      {
+        //Select the left cursor to start with
+        userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+      }
+      else
+      {
+        //When the time cursor gets disabled check if the voltage cursor is enabled
+        if(scopesettings.voltcursorsenable)
+        {
+          //Select the top volt cursor if not on the bottom volt cursor 
+          if(userinterfacedata.selectedcursor != CURSOR_VOLT_BOTTOM)
+          {
+            //Select the top volt cursor
+            userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+          }
+        }
+        else
+        {
+          //No more cursor enabled so no more action in the navigation part
+          navigationstate = NAV_NO_ACTION;
+        }
+      }
+      break;
+
+    case UIC_BUTTON_V_CUR:
+      //Toggle the vertical cursor state
+      scopesettings.voltcursorsenable ^= 1;
+
+      //Enable the navigation state for the cursor handling
+      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
+      
+      //Take needed actions when the cursor is enabled
+      if(scopesettings.voltcursorsenable)
+      {
+        //Select the top volt cursor to start with
+        userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+      }
+      else
+      {
+        //When the volt cursor gets disabled check if the time cursor is enabled
+        if(scopesettings.timecursorsenable)
+        {
+          //Select the left time cursor if not on the right time cursor 
+          if(userinterfacedata.selectedcursor != CURSOR_TIME_RIGHT)
+          {
+            //Select the left time cursor
+            userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+          }
+        }
+        else
+        {
+          //No more cursor enabled so no more action in the navigation part
+          navigationstate = NAV_NO_ACTION;
+        }
+      }
+      break;
+      
+    case UIC_BUTTON_MOVE_SPEED:
+      //Toggle the move speed
+      scopesettings.movespeed ^= 1;
+      
+      //Display the new speed on the screen
+      ui_display_move_speed();
+      
+      //Set the actual movement speed in the user interface data
+      if(scopesettings.movespeed == 0)
+      {
+        //Fast speed selected means taking 10 pixel steps
+        userinterfacedata.movespeed = 10;
+      }
+      else
+      {
+        //Slow speed selected means taking 1 pixel steps
+        userinterfacedata.movespeed = 1;
+      }
+      break;
+
+    case UIC_BUTTON_CH1_ENABLE:
+      scopesettings.channel1.enable ^= 1;
+      
+      //Update the information part to show the channel is either disabled or enabled
+      ui_display_channel_settings(&scopesettings.channel1);
+      break;
+
+    case UIC_BUTTON_CH2_ENABLE:
+      scopesettings.channel2.enable ^= 1;
+      
+      //Update the information part to show the channel is either disabled or enabled
+      ui_display_channel_settings(&scopesettings.channel2);
+      break;
+      
+    case UIC_ROTARY_CH1_POS_ADD:
+    case UIC_ROTARY_CH1_POS_SUB:
+      sm_set_channel_position(&scopesettings.channel1);
+      break;
+      
+    case UIC_ROTARY_CH2_POS_ADD:
+    case UIC_ROTARY_CH2_POS_SUB:
+      sm_set_channel_position(&scopesettings.channel2);
+      break;
+      
+    case UIC_ROTARY_TRIG_POS_ADD:
+    case UIC_ROTARY_TRIG_POS_SUB:
+      sm_set_trigger_position();
+      break;
+      
+    case UIC_ROTARY_SCALE_CH1_ADD:
+    case UIC_ROTARY_SCALE_CH1_SUB:
+      sm_set_channel_sensitivity(&scopesettings.channel1);
+      break;
+      
+    case UIC_ROTARY_SCALE_CH2_ADD:
+    case UIC_ROTARY_SCALE_CH2_SUB:
+      sm_set_channel_sensitivity(&scopesettings.channel2);
+      break;
+
+    case UIC_ROTARY_TIME_ADD:
+    case UIC_ROTARY_TIME_SUB:
+      sm_set_time_base();
+      break;
   }
 }
 
@@ -1587,9 +1745,20 @@ void sm_open_waveform_file_viewing(void)
 {
   //Signal viewing of pictures
   viewtype = VIEW_TYPE_WAVEFORM;
-
+  
   //Open the file viewing screen
   sm_open_file_view();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_do_base_calibration(void)
+{
+  //Need to display the start message and wait for confirmation
+  //then either exit or start the actual calibration
+  //during that time display the calibrating message
+  //on success show the succeed message
+  //on failure show the failure message
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1597,7 +1766,7 @@ void sm_open_waveform_file_viewing(void)
 void sm_start_usb_export(void)
 {
   //Signal open command has been processed
-  userinterfacedata.command = 0;
+  toprocesscommand = 0;
   
   //Cancel navigation actions
   userinterfacedata.navigationfunctions = 0;
@@ -1609,7 +1778,9 @@ void sm_start_usb_export(void)
   ui_setup_usb_screen();
   
   //Signal cancel command has been processed
-  userinterfacedata.command = 0;
+  toprocesscommand = 0;
 }
+
+//----------------------------------------------------------------------------------------------------------------------------------
 
 //----------------------------------------------------------------------------------------------------------------------------------
