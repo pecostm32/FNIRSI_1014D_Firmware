@@ -5,6 +5,25 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+#define CALIBRATION_STATE_START          0
+#define CALIBRATION_STATE_BUSY           1
+#define CALIBRATION_STATE_SUCCESS        2
+#define CALIBRATION_STATE_FAIL           3
+#define CALIBRATION_STATE_HIDE           4
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define CALIBRATION_MSG_XPOS           191
+#define CALIBRATION_MSG_YPOS           363
+
+#define CALIBRATION_START_MSG_WIDTH    173
+#define CALIBRATION_START_MSG_HEIGHT    65
+
+#define CALIBRATION_MSG_WIDTH           92
+#define CALIBRATION_MSG_HEIGHT          33
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void ui_setup_display_lib(void);
 
 void ui_setup_main_screen(void);
@@ -164,6 +183,10 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait);
 //----------------------------------------------------------------------------------------------------------------------------------
 
 int32 ui_handle_confirm_delete(void);
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_show_calibration_message(uint32 state);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

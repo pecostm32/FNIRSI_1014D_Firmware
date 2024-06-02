@@ -4063,7 +4063,6 @@ void scope_process_trigger(uint32 count)
   }
 }
 
-#if 0
 //----------------------------------------------------------------------------------------------------------------------------------
 
 uint32 scope_do_baseline_calibration(void)
@@ -4310,7 +4309,7 @@ uint32 scope_do_channel_calibration(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-
+#if 0
 void scope_do_50_percent_trigger_setup(void)
 {
   //Check which channel is the active trigger channel

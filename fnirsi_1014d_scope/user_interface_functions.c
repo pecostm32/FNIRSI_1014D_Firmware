@@ -4526,7 +4526,7 @@ int32 ui_handle_confirm_delete(void)
   display_set_fg_color(0x00404040);
   display_draw_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
 
-  //White color for text and use a big font
+  //Black text and a big font
   display_set_fg_color(0x00000000);
   display_set_font(&font_4);
   display_text(HCD_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
@@ -4552,6 +4552,82 @@ int32 ui_handle_confirm_delete(void)
   
   //return the choice
   return(choice);
+}
+
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+SHADEDRECTDATA calibration_start_box =
+{
+  CALIBRATION_START_MSG_WIDTH,
+  CALIBRATION_START_MSG_HEIGHT,
+  { 0x00404040, 0x00282828, 0x00101010 },
+  0x00000000
+};
+
+SHADEDRECTDATA calibration_message_box =
+{
+  CALIBRATION_MSG_WIDTH,
+  CALIBRATION_MSG_HEIGHT,
+  { 0x00404040, 0x00282828, 0x00101010 },
+  0x00000000
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_show_calibration_message(uint32 state)
+{
+  //Check on what to do
+  switch(state)
+  {
+    case CALIBRATION_STATE_START:
+      //Save the screen rectangle where the message will be displayed
+      display_set_destination_buffer(displaybuffer2);
+      display_copy_rect_from_screen(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, CALIBRATION_START_MSG_WIDTH, CALIBRATION_START_MSG_HEIGHT);
+
+      //Create the box to show the start text in
+      display_draw_shaded_rect(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, &calibration_start_box, 0);
+
+      //Add the text
+      display_set_fg_color(0x00FFFFFF);
+      display_copy_icon_fg_color(calibration_start_text_icon, CALIBRATION_MSG_XPOS + 8, CALIBRATION_MSG_YPOS + 10, 159, 44);
+      return;
+
+    case CALIBRATION_STATE_BUSY:
+    case CALIBRATION_STATE_HIDE:
+      //Restore the original screen to hide the start message
+      display_set_source_buffer(displaybuffer2);
+      display_copy_rect_to_screen(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, CALIBRATION_START_MSG_WIDTH, CALIBRATION_START_MSG_HEIGHT);
+      
+      //When the given state is hide then nothing more to do
+      if(state == CALIBRATION_STATE_HIDE)
+      {
+        return;
+      }
+      break;
+  }
+
+   //Create the box to show the message text in
+  display_draw_shaded_rect(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, &calibration_message_box, 0);
+
+  //Set the color for displaying the text
+  display_set_fg_color(0x00FFFFFF);
+  
+  //Display the intended message
+  switch(state)
+  {
+    case CALIBRATION_STATE_BUSY:
+      display_copy_icon_fg_color(calibrating_text_icon, CALIBRATION_MSG_XPOS + 14, CALIBRATION_MSG_YPOS + 7, 66, 18);
+      break;
+
+    case CALIBRATION_STATE_SUCCESS:
+      display_copy_icon_fg_color(succeed_text_icon, CALIBRATION_MSG_XPOS + 21, CALIBRATION_MSG_YPOS + 9, 51, 14);
+      break;
+
+    case CALIBRATION_STATE_FAIL:
+      display_copy_icon_fg_color(failed_text_icon, CALIBRATION_MSG_XPOS + 28, CALIBRATION_MSG_YPOS + 9, 37, 14);
+      break;
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

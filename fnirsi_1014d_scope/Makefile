@@ -58,14 +58,16 @@ build: .build-post
 
 .build-post: .build-impl
 # Add your post 'build' code here...
-# Extract the binary
 	arm-none-eabi-objcopy -O binary dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.elf dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.bin
 	
 # Fix the BROM header
 	./mksunxi dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.bin
 
-# Make the SD card package
-	./flashfilepacker -o dist/Debug/GNU_ARM-Linux/fnirsi_1014d.bin -i dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.bin -l 0x4000
+# EMULATOR package
+	./flashfilepacker -o ../../FNIRSI-1014D/Oscilloscope_Emulator/1014D_test_code.bin -i dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.bin -l 0x27000
+	
+# SD card package
+	./flashfilepacker -o dist/Debug/GNU_ARM-Linux/fnirsi_1014d.bin -i dist/Debug/GNU_ARM-Linux/fnirsi_1014d_scope.bin -l 0x8000
 
 
 

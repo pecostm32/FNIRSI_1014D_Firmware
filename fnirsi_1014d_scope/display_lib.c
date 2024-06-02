@@ -649,14 +649,18 @@ void display_draw_shaded_rect(uint32 xpos, uint32 ypos, PSHADEDRECTDATA shadeinf
   display_set_fg_color(shadeinfo->fillcolor);
   display_fill_rect(x, y, w - 1, h - 1);
   
-  //Offset the positions for placing the text
-  x = xpos + textinfo->xoffset;
-  y = ypos + textinfo->yoffset;
-  
-  //The text is placed with the specified color on top of the background drawn first 
-  display_set_fg_color(textinfo->color);
-  display_set_font(textinfo->font);
-  display_text(x, y, textinfo->text);
+  //Place text when given
+  if(textinfo)
+  {
+    //Offset the positions for placing the text
+    x = xpos + textinfo->xoffset;
+    y = ypos + textinfo->yoffset;
+
+    //The text is placed with the specified color on top of the background drawn first 
+    display_set_fg_color(textinfo->color);
+    display_set_font(textinfo->font);
+    display_text(x, y, textinfo->text);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

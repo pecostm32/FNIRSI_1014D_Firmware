@@ -181,6 +181,8 @@ void sm_file_view_goto_previous_item(void);
 void sm_file_view_goto_next_row(void);
 void sm_file_view_goto_previous_row(void);
 
+void sm_file_view_delete_current(void);
+
 void sm_file_view_goto_next_item_on_page(void);
 void sm_file_view_goto_previous_item_on_page(void);
 void sm_file_view_goto_next_row_on_page(void);

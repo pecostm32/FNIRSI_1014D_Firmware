@@ -439,6 +439,10 @@ void sm_handle_file_view_control(void)
       ui_display_thumbnails();
       break;
 
+    case UIC_BUTTON_DELETE:
+      sm_file_view_delete_current();
+      break;
+      
     case UIC_BUTTON_SELECT_ALL:
       sm_file_view_process_select(1);
       break;
@@ -1370,6 +1374,24 @@ void sm_file_view_goto_previous_row(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_file_view_delete_current(void)
+{
+  //Ask the user if the current item should be deleted
+  if(ui_handle_confirm_delete() == VIEW_CONFIRM_DELETE_YES)
+  {
+    //User opted for delete so do this for the current item
+    ui_remove_item_from_thumbnails(1);
+
+    //Save the thumbnail file
+    ui_save_thumbnail_file();
+
+    //Go and highlight the next item
+    ui_display_thumbnails();
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //The next set of functions browse through the view items but stay on the current page
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1754,11 +1776,41 @@ void sm_open_waveform_file_viewing(void)
 
 void sm_do_base_calibration(void)
 {
-  //Need to display the start message and wait for confirmation
-  //then either exit or start the actual calibration
-  //during that time display the calibrating message
-  //on success show the succeed message
-  //on failure show the failure message
+  //On selection of this menu item show the user to disconnect the probes and press ok
+  ui_show_calibration_message(CALIBRATION_STATE_START);
+  
+  //Wait until the user provides input
+  uart1_wait_for_user_input();
+  
+  //Check if it is ok to proceed
+  if(lastreceivedcommand == UIC_BUTTON_NAV_OK)
+  {
+    //Show the user the scope is busy with calibrating
+    ui_show_calibration_message(CALIBRATION_STATE_BUSY);
+    
+    //Perform the calibration
+    if(scope_do_baseline_calibration() == 1)
+    {
+      //Show that it completed with success
+      ui_show_calibration_message(CALIBRATION_STATE_SUCCESS);
+    }
+    else
+    {
+      //Show that it failed
+      ui_show_calibration_message(CALIBRATION_STATE_FAIL);
+    }
+
+    //Wait for a second
+    timer0_delay(1000);
+    
+    //Close the main menu and return to the normal operational state
+    sm_close_menu();
+  }
+  else
+  {
+    //Hide the message and call it the day
+    ui_show_calibration_message(CALIBRATION_STATE_HIDE);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
