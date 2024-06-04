@@ -1461,7 +1461,7 @@ uint8 printhexnibble(uint8 nibble)
 
 void display_hex(uint32 xpos, uint32 ypos, uint32 digits, int32 value)
 {
-  int8  b[13];
+  char  b[13];
   int32 i;
   int32 shifter;
     

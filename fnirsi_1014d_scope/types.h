@@ -5,10 +5,10 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-typedef long long            int64;
-typedef int                  int32;
-typedef short                int16;
-typedef char                 int8;
+typedef signed long long     int64;
+typedef signed int           int32;
+typedef signed short         int16;
+typedef signed char          int8;
 
 typedef unsigned long long   uint64;
 typedef unsigned int         uint32;

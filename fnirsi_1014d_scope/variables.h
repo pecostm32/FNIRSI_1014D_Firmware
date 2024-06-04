@@ -398,9 +398,9 @@ struct tagUserInterfaceData
 
   int16 menuitem;
   
-  int16 movespeed;
-  int16 speedvalue; 
-  int16 setvalue;
+  int8  movespeed;
+  int8  speedvalue; 
+  int8  setvalue;
   
   PNAVIGATIONFUNCTIONS navigationfunctions;
   PFILEVIEWFUNCTIONS   fileviewfunctions;
@@ -587,7 +587,7 @@ struct tagScopeSettings
 
 struct tagThumbnailData
 {
-  int8  filename[33];
+  char  filename[33];
   uint8 channel1enable;
   uint8 channel2enable;
   uint8 channel1traceposition;
@@ -745,8 +745,6 @@ extern uint8 buttondialstate;
 
 extern uint8 enablesampling;
 extern uint8 enabletracedisplay;
-
-extern NAVIGATIONFUNCTION mainmenustartaction;
 
 extern int8 *sliderdata;
 

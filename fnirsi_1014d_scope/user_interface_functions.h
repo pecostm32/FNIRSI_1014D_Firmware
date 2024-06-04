@@ -68,6 +68,8 @@ void ui_display_logo(void);
 void ui_display_run_stop_text(void);
 void ui_display_move_speed(void);
 
+void ui_show_open_slider(void);
+
 //----------------------------------------------------------------------------------------------------------------------------------
 // Grid and cursor functions
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -116,7 +118,7 @@ void ui_display_cursor_measurements(void);
 
 void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header, char *sign);
 
-void ui_open_slider(uint16 xpos, uint16 ypos);
+void ui_open_slider(uint16 xpos, uint16 ypos, uint32 savebackground);
 void ui_close_slider(uint16 xpos, uint16 ypos);
 void ui_display_slider(uint16 xpos, uint16 ypos);
 

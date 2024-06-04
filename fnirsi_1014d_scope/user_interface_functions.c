@@ -1005,6 +1005,21 @@ void ui_display_move_speed(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+void ui_show_open_slider(void)
+{
+  //Check if the grid brightness slider menu is open and draw it in if so
+  if((navigationstate == NAV_SLIDER_HANDLING) && (sliderdata == &scopesettings.gridbrightness))
+  {
+    //Main menu with the slider possibly opened
+    ui_display_main_menu();
+
+    //Show the slider with the current setting without saving the background
+    ui_open_slider(SLIDER_XPOS, SLIDER_GRID_YPOS, 0);
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 SHADEDRECTDATA channel_disabled_box =
 {
   20,
@@ -2167,15 +2182,19 @@ SHADEDROUNDEDRECTDATA slider_rounded_box =
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_open_slider(uint16 xpos, uint16 ypos)
+void ui_open_slider(uint16 xpos, uint16 ypos, uint32 savebackground)
 {
-  //Save the screen under the slider
-  display_set_destination_buffer(displaybuffer2);
-  display_copy_rect_from_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+  //Only save the back ground when requested
+  if(savebackground)
+  {
+    //Save the screen under the slider
+    display_set_destination_buffer(displaybuffer2);
+    display_copy_rect_from_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
 
-  //Setup the slider menu in a separate buffer to be able to display without flicker
-  display_set_screen_buffer(displaybuffer1);
-
+    //Setup the slider menu in a separate buffer to be able to display without flicker
+    display_set_screen_buffer(displaybuffer1);
+  }
+  
   //Draw the outer box
   display_draw_shaded_rect(xpos, ypos, &slider_outer_box, 0);
 
@@ -2185,12 +2204,16 @@ void ui_open_slider(uint16 xpos, uint16 ypos)
   //Display the actual slider
   ui_display_slider(xpos, ypos);
 
-  //Set source and target for getting it on the actual screen
-  display_set_source_buffer(displaybuffer1);
-  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+  //Only need to copy it onto the actual screen when the background is saved
+  if(savebackground)
+  {
+    //Set source and target for getting it on the actual screen
+    display_set_source_buffer(displaybuffer1);
+    display_set_screen_buffer((uint16 *)maindisplaybuffer);
 
-  //Show the slider box on the screen
-  display_copy_rect_to_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+    //Show the slider box on the screen
+    display_copy_rect_to_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

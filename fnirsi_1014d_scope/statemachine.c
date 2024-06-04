@@ -20,8 +20,8 @@ NAVIGATIONFUNCTION mainmenustartactions[] =
   sm_open_waveform_file_viewing,             //Wave browsing
   0,                                         //Output browsing
   0,                                         //Capture output
-  sm_open_screen_brightness_setting,         //Screen brightness
-  0,                                         //Scale (grid) brightness
+  sm_open_brightness_setting,                //Screen brightness
+  sm_open_brightness_setting,                //Scale (grid) brightness
   0,                                         //Automatic 50%
   0,                                         //X-Y mode curve
   sm_do_base_calibration,                    //Base calibration
@@ -296,9 +296,9 @@ void sm_handle_main_menu_actions(void)
 
     case UIC_BUTTON_NAV_OK:
     case UIC_BUTTON_NAV_RIGHT:
-      //If there is a start action handler set execute it
-      if(mainmenustartaction)
-        mainmenustartaction();
+      //If there is a start action handler set for this menu option, execute it
+      if(mainmenustartactions[userinterfacedata.menuitem])
+        mainmenustartactions[userinterfacedata.menuitem]();
       break;
 
     case UIC_BUTTON_NAV_UP:
@@ -555,9 +555,6 @@ void sm_button_dial_normal_handling(void)
       //Switch to the menu handling navigation state
       navigationstate = NAV_MAIN_MENU_HANDLING;
       
-      //Set the start action
-      mainmenustartaction = mainmenustartactions[userinterfacedata.menuitem];
-      
       //Switch to button and dial state for menu handling
       buttondialstate = BUTTON_DIAL_MENU_HANDLING;
       
@@ -799,6 +796,8 @@ void sm_button_dial_picture_view_handling(void)
     ui_display_thumbnails();
   }
 }
+
+//----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_button_dial_wave_view_handling(void)
 {
@@ -1164,9 +1163,6 @@ void sm_select_main_menu_item(void)
     userinterfacedata.menuitem = 0;
   }
 
-  //Set the start action
-  mainmenustartaction = mainmenustartactions[userinterfacedata.menuitem];
-  
   //Set the highlight on the current selected item
   ui_highlight_main_menu_item();
 }
@@ -1776,37 +1772,71 @@ void sm_item_view_goto_previous_item(void)
 
 void sm_slider_close(void)
 {
+  //Start with the assumption that the screen brightness option is selected
+  uint16 y = SLIDER_SCREEN_YPOS;
+  
   //Switch back to menu navigation state
   navigationstate = NAV_MAIN_MENU_HANDLING;
   
-  //Need to know which one here
+  //Signal no more slider data to be updated
+  sliderdata = 0;
+
+  //Check if the scale (grid) brightness option is selected
+  if(userinterfacedata.menuitem == MAIN_MENU_GRID_BRIGHTNESS)
+  {
+    //If so use the Y position for that one
+    y = SLIDER_GRID_YPOS;
+  }
+  
   //Close the slider panel
-  ui_close_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
+  ui_close_slider(SLIDER_XPOS, y);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_slider_adjust(void)
 {
-  //Adjust the slider data for the current action
-  *sliderdata += userinterfacedata.setvalue;
+  //Start with the assumption that the screen brightness option is selected
+  uint16 y = SLIDER_SCREEN_YPOS;
   
-  //Limit with the allowable range
-  if(*sliderdata < 0)
+  //Slider data needs to be set for the execution of this code
+  if(sliderdata)
   {
-    *sliderdata = 0;
+    //Adjust the slider data for the current action
+    *sliderdata += userinterfacedata.setvalue;
+
+    //Limit with the allowable range
+    if(*sliderdata < 0)
+    {
+      *sliderdata = 0;
+    }
+    else if(*sliderdata > 100)
+    {
+      *sliderdata = 100;
+    }
+
+    //Check if the scale (grid) brightness option is selected
+    if(userinterfacedata.menuitem == MAIN_MENU_GRID_BRIGHTNESS)
+    {
+      //If so use the Y position for that one
+      y = SLIDER_GRID_YPOS;
+    }
+
+    //Check if the screen brightness option is selected
+    if(userinterfacedata.menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
+    {
+      //Show the new setting of the slider
+      ui_display_slider(SLIDER_XPOS, y);
+
+      //If so write the new value to the FPGA
+      fpga_set_translated_brightness();
+    }
+    else
+    {
+      //For the grid brightness showing the adjusted setting directly in the background the screen has to be redrawn
+      scope_display_trace_data();
+    }
   }
-  else if(*sliderdata > 100)
-  {
-    *sliderdata = 100;
-  }
-  
-  //Need a if here to see which menu item is accessed
-  
-  //Show the new setting of the slider
-  ui_display_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
-  
-  //Need a function pointer to handle the new value setting. For screen brightness the FPGA function needs to be called
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1835,16 +1865,33 @@ void sm_open_waveform_file_viewing(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_open_screen_brightness_setting(void)
+void sm_open_brightness_setting(void)
 {
+  uint16 y;
+  
   //Switch to the slider handling navigation state
   navigationstate = NAV_SLIDER_HANDLING;
   
-  //Set the variable that needs to be adjusted
-  sliderdata = &scopesettings.screenbrightness;
+  //Check if the screen brightness option is selected
+  if(userinterfacedata.menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
+  {
+    //If so set the screen brightness variable to be adjusted
+    sliderdata = &scopesettings.screenbrightness;
+    
+    //Set the y position for opening the slider next to this menu item
+    y = SLIDER_SCREEN_YPOS;
+  }
+  else
+  {
+    //Only other option with the slider is the grid brightness so set that variable to be adjusted
+    sliderdata = &scopesettings.gridbrightness;
+    
+    //Set the y position for opening the slider next to this menu item
+    y = SLIDER_GRID_YPOS;
+  }
   
-  //Show the slider with the current setting
-  ui_open_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
+  //Show the slider with the current setting and save the background for closing
+  ui_open_slider(SLIDER_XPOS, y, 1);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

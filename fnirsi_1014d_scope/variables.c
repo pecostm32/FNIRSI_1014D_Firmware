@@ -67,9 +67,6 @@ uint8 buttondialstate = 0;
 uint8 enablesampling = 1;
 uint8 enabletracedisplay = 1;
 
-NAVIGATIONFUNCTION mainmenustartaction = 0;
-
-
 int8 *sliderdata = 0;
 
 //----------------------------------------------------------------------------------------------------------------------------------

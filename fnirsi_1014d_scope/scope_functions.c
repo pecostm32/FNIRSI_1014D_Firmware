@@ -4899,6 +4899,9 @@ void scope_display_trace_data(void)
   //Update the measurements in the six slots on the screen
   ui_update_measurements();
   
+  //To allow for grid brightness to be changed in the background of the slider menu draw it in when needed
+  ui_show_open_slider();
+  
   //Copy it to the actual screen buffer
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
   display_copy_rect_to_screen(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH, TRACE_MAX_HEIGHT);

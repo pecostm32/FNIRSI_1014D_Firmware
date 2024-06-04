@@ -66,11 +66,16 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define SAMPLING_NOT_ENABLED         0
-#define SAMPLING_ENABLED             1
+#define SAMPLING_NOT_ENABLED          0
+#define SAMPLING_ENABLED              1
 
-#define TRACE_DISPLAY_NOT_ENABLED    0
-#define TRACE_DISPLAY_ENABLED        1
+#define TRACE_DISPLAY_NOT_ENABLED     0
+#define TRACE_DISPLAY_ENABLED         1
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define MAIN_MENU_SCREEN_BRIGHTNESS   4
+#define MAIN_MENU_GRID_BRIGHTNESS     5
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Navigation states
@@ -209,7 +214,7 @@ void sm_slider_adjust(void);
 void sm_open_picture_file_viewing(void);
 void sm_open_waveform_file_viewing(void);
 
-void sm_open_screen_brightness_setting(void);
+void sm_open_brightness_setting(void);
 
 void sm_do_base_calibration(void);
 
