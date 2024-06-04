@@ -695,6 +695,38 @@ void display_draw_highlight_rect(uint32 xpos, uint32 ypos, PHIGHLIGHTRECTDATA hi
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+void display_draw_shaded_rounded_rect(uint32 xpos, uint32 ypos, PSHADEDROUNDEDRECTDATA shadeinfo)
+{
+  int i;
+  int x = xpos;
+  int y = ypos;
+  int w = shadeinfo->width;
+  int h = shadeinfo->height;
+  int r = shadeinfo->radius;
+  
+  //The highlight rectangle uses four rectangles within each other with a different shade of color
+  //To make it look like it has depth
+  for(i=0;i<3;i++)
+  {
+    //Use the specified colors the caller handed over
+    display_set_fg_color(shadeinfo->rectcolors[i]);
+    display_draw_rounded_rect(x, y, w, h, r);
+    
+    //Lines of 1 pixel wide are used
+    x++;
+    y++;
+    w -= 2;
+    h -= 2;
+    r--;
+  }
+  
+  //The center of the last rectangle is filled with the fill color
+  display_set_fg_color(shadeinfo->fillcolor);
+  display_fill_rounded_rect(x, y, w - 1, h - 1, r);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 const uint32 angles[4][2] = { { 0, 900 }, { 900, 1800 }, { 1800, 2700 }, { 2700, 3600 } };
 
 //----------------------------------------------------------------------------------------------------------------------------------

@@ -20,7 +20,7 @@ NAVIGATIONFUNCTION mainmenustartactions[] =
   sm_open_waveform_file_viewing,             //Wave browsing
   0,                                         //Output browsing
   0,                                         //Capture output
-  0,                                         //Screen brightness
+  sm_open_screen_brightness_setting,         //Screen brightness
   0,                                         //Scale (grid) brightness
   0,                                         //Automatic 50%
   0,                                         //X-Y mode curve
@@ -114,6 +114,11 @@ void sm_handle_user_input(void)
     //Picture view handling
     case NAV_ITEM_VIEW_HANDLING:
       sm_handle_item_view_actions();
+      break;
+      
+    //Slider adjust handling
+    case NAV_SLIDER_HANDLING:
+      sm_handle_slider_actions();
       break;
   }
   
@@ -386,6 +391,25 @@ void sm_handle_item_view_actions(void)
     case UIC_ROTARY_SEL_ADD:
     case UIC_BUTTON_NAV_RIGHT:
       sm_item_view_goto_next_item();
+      break;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_handle_slider_actions(void)
+{
+  //With the navigation actions the slider can be closed or adjusted
+  switch(toprocesscommand)
+  {
+    case UIC_BUTTON_NAV_OK:
+    case UIC_BUTTON_NAV_LEFT:
+      sm_slider_close();
+      break;
+
+    case UIC_ROTARY_SEL_ADD:
+    case UIC_ROTARY_SEL_SUB:
+      sm_slider_adjust();
       break;
   }
 }
@@ -1749,6 +1773,43 @@ void sm_item_view_goto_previous_item(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_slider_close(void)
+{
+  //Switch back to menu navigation state
+  navigationstate = NAV_MAIN_MENU_HANDLING;
+  
+  //Need to know which one here
+  //Close the slider panel
+  ui_close_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_slider_adjust(void)
+{
+  //Adjust the slider data for the current action
+  *sliderdata += userinterfacedata.setvalue;
+  
+  //Limit with the allowable range
+  if(*sliderdata < 0)
+  {
+    *sliderdata = 0;
+  }
+  else if(*sliderdata > 100)
+  {
+    *sliderdata = 100;
+  }
+  
+  //Need a if here to see which menu item is accessed
+  
+  //Show the new setting of the slider
+  ui_display_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
+  
+  //Need a function pointer to handle the new value setting. For screen brightness the FPGA function needs to be called
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //Next functions are for executing main menu items
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -1770,6 +1831,20 @@ void sm_open_waveform_file_viewing(void)
   
   //Open the file viewing screen
   sm_open_file_view();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_open_screen_brightness_setting(void)
+{
+  //Switch to the slider handling navigation state
+  navigationstate = NAV_SLIDER_HANDLING;
+  
+  //Set the variable that needs to be adjusted
+  sliderdata = &scopesettings.screenbrightness;
+  
+  //Show the slider with the current setting
+  ui_open_slider(SLIDER_XPOS, SLIDER_SCREEN_YPOS);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

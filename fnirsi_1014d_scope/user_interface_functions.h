@@ -24,6 +24,35 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+#define SLIDER_XPOS                     191
+#define SLIDER_SCREEN_YPOS              239
+#define SLIDER_GRID_YPOS                270
+
+#define SLIDER_OUTER_BOX_WIDTH          267
+#define SLIDER_OUTER_BOX_HEIGHT          34
+
+#define SLIDER_ROUNDED_BOX_WIDTH        210
+#define SLIDER_ROUNDED_BOX_HEIGHT        12
+#define SLIDER_ROUNDED_BOX_RADIUS         4
+
+#define SLIDER_ROUNDED_BOX_X_OFFSET      11
+#define SLIDER_ROUNDED_BOX_Y_OFFSET      11
+
+#define SLIDER_LINE_MAX_WIDTH           200
+#define SLIDER_LINE_HEIGHT                2
+
+#define SLIDER_LINE_X_OFFSET             16
+#define SLIDER_LINE_Y_OFFSET             16
+
+#define SLIDER_TEXT_WIDTH                24
+#define SLIDER_TEXT_HEIGHT               11
+
+#define SLIDER_TEXT_X_OFFSET            231
+#define SLIDER_TEXT_Y_OFFSET             10
+
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void ui_setup_display_lib(void);
 
 void ui_setup_main_screen(void);
@@ -86,6 +115,10 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings);
 void ui_display_cursor_measurements(void);
 
 void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header, char *sign);
+
+void ui_open_slider(uint16 xpos, uint16 ypos);
+void ui_close_slider(uint16 xpos, uint16 ypos);
+void ui_display_slider(uint16 xpos, uint16 ypos);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 // Functions for displaying the measurement values on the measurements slots

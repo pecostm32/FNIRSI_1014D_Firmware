@@ -64,9 +64,10 @@ void display_draw_vert_dots(uint32 xpos, uint32 ystart, uint32 yend, uint32 inte
 void display_draw_horz_dashes(uint32 ypos, uint32 xstart, uint32 xend, uint32 length, uint32 interval);
 void display_draw_vert_dashes(uint32 xpos, uint32 ystart, uint32 yend, uint32 length, uint32 interval);
 void display_draw_rect(uint32 xpos, uint32 ypos, uint32 width, uint32 height);
+void display_draw_rounded_rect(uint32 xpos, uint32 ypos, uint32 width, uint32 height, uint32 radius);
 void display_draw_shaded_rect(uint32 xpos, uint32 ypos, PSHADEDRECTDATA shadeinfo, PTEXTDATA textinfo);
 void display_draw_highlight_rect(uint32 xpos, uint32 ypos, PHIGHLIGHTRECTDATA highlightinfo);
-void display_draw_rounded_rect(uint32 xpos, uint32 ypos, uint32 width, uint32 height, uint32 radius);
+void display_draw_shaded_rounded_rect(uint32 xpos, uint32 ypos, PSHADEDROUNDEDRECTDATA shadeinfo);
 void display_draw_arc(uint32 xpos, uint32 ypos, uint32 radius, uint32 startangle, uint32 endangle, uint32 direction);
 
 //----------------------------------------------------------------------------------------------------------------------------------

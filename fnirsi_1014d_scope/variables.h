@@ -357,6 +357,8 @@ typedef struct tagTextData              TEXTDATA,             *PTEXTDATA;
 
 typedef struct tagHighlightRectData     HIGHLIGHTRECTDATA,    *PHIGHLIGHTRECTDATA;
 
+typedef struct tagShadedRoundedRectData SHADEDROUNDEDRECTDATA,   *PSHADEDROUNDEDRECTDATA;
+
 typedef struct tagMeasurementInfo       MEASUREMENTINFO,      *PMEASUREMENTINFO;
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -558,8 +560,8 @@ struct tagScopeSettings
   
   uint8 menustate;
   
-  uint8 screenbrightness;
-  uint8 gridbrightness;
+  int8  screenbrightness;
+  int8  gridbrightness;
   uint8 gridenable;
   uint8 alwaystrigger50;
   uint8 xymodedisplay;
@@ -672,6 +674,17 @@ struct tagHighlightRectData
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
+
+struct tagShadedRoundedRectData
+{
+  uint32 width;
+  uint32 height;
+  uint32 radius;
+  uint32 rectcolors[3];
+  uint32 fillcolor;
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //Linker variables
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -734,6 +747,8 @@ extern uint8 enablesampling;
 extern uint8 enabletracedisplay;
 
 extern NAVIGATIONFUNCTION mainmenustartaction;
+
+extern int8 *sliderdata;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope data

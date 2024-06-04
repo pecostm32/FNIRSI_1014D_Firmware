@@ -2148,6 +2148,99 @@ void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+SHADEDRECTDATA slider_outer_box =
+{
+  SLIDER_OUTER_BOX_WIDTH,
+  SLIDER_OUTER_BOX_HEIGHT,
+  { 0x00444444, 0x00282828, 0x00141414 },
+  0x00000000
+};
+
+SHADEDROUNDEDRECTDATA slider_rounded_box =
+{
+  SLIDER_ROUNDED_BOX_WIDTH,
+  SLIDER_ROUNDED_BOX_HEIGHT,
+  SLIDER_ROUNDED_BOX_RADIUS,
+  { 0x00444444, 0x00282828, 0x00141414 },
+  0x00000000
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_open_slider(uint16 xpos, uint16 ypos)
+{
+  //Save the screen under the slider
+  display_set_destination_buffer(displaybuffer2);
+  display_copy_rect_from_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+
+  //Setup the slider menu in a separate buffer to be able to display without flicker
+  display_set_screen_buffer(displaybuffer1);
+
+  //Draw the outer box
+  display_draw_shaded_rect(xpos, ypos, &slider_outer_box, 0);
+
+  //Draw the inner rounded box
+  display_draw_shaded_rounded_rect(xpos + SLIDER_ROUNDED_BOX_X_OFFSET, ypos + SLIDER_ROUNDED_BOX_Y_OFFSET, &slider_rounded_box);
+  
+  //Display the actual slider
+  ui_display_slider(xpos, ypos);
+
+  //Set source and target for getting it on the actual screen
+  display_set_source_buffer(displaybuffer1);
+  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+
+  //Show the slider box on the screen
+  display_copy_rect_to_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_close_slider(uint16 xpos, uint16 ypos)
+{
+  //Set source and target for getting it on the actual screen
+  display_set_source_buffer(displaybuffer2);
+  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+
+  //Remove the slider box from the screen
+  display_copy_rect_to_screen(xpos, ypos, SLIDER_OUTER_BOX_WIDTH, SLIDER_OUTER_BOX_HEIGHT);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_display_slider(uint16 xpos, uint16 ypos)
+{
+  uint16 ws = ((SLIDER_LINE_MAX_WIDTH * *sliderdata) / 100);
+  uint16 xs = xpos + SLIDER_LINE_X_OFFSET;
+  uint16 ys = ypos + SLIDER_LINE_Y_OFFSET;
+  uint16 xt = xpos + SLIDER_TEXT_X_OFFSET;
+  uint16 yt = ypos + SLIDER_TEXT_Y_OFFSET;
+
+  //Clear the background first
+  display_set_fg_color(0x00000000);
+  
+  //Start with no slider
+  display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH -1, SLIDER_LINE_HEIGHT - 1);
+  
+  //And remove the position text
+  display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH, SLIDER_TEXT_HEIGHT);
+
+  //Check if there is a line to draw
+  if(ws)
+  {
+    //Draw the first part of the slider bar in a green color
+    //Fill rect needs a reduction of 1 in both width and height
+    display_set_fg_color(0x0000FF00);
+    display_fill_rect(xs, ys, ws - 1, SLIDER_LINE_HEIGHT - 1);
+  }
+  
+  //Display the position with wite text
+  display_set_fg_color(0x00FFFFFF);
+  display_set_font(&font_2);
+  display_decimal(xt, yt, *sliderdata);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 HIGHLIGHTRECTDATA measurement_menu_highlight_box =
 {
   141,
@@ -4617,15 +4710,15 @@ void ui_show_calibration_message(uint32 state)
   switch(state)
   {
     case CALIBRATION_STATE_BUSY:
-      display_copy_icon_fg_color(calibrating_text_icon, CALIBRATION_MSG_XPOS + 14, CALIBRATION_MSG_YPOS + 7, 66, 18);
+      display_copy_icon_fg_color(calibrating_text_icon, CALIBRATION_MSG_XPOS + 14, CALIBRATION_MSG_YPOS + 7, 70, 18);
       break;
 
     case CALIBRATION_STATE_SUCCESS:
-      display_copy_icon_fg_color(succeed_text_icon, CALIBRATION_MSG_XPOS + 21, CALIBRATION_MSG_YPOS + 9, 51, 14);
+      display_copy_icon_fg_color(succeed_text_icon, CALIBRATION_MSG_XPOS + 21, CALIBRATION_MSG_YPOS + 9, 55, 14);
       break;
 
     case CALIBRATION_STATE_FAIL:
-      display_copy_icon_fg_color(failed_text_icon, CALIBRATION_MSG_XPOS + 28, CALIBRATION_MSG_YPOS + 9, 37, 14);
+      display_copy_icon_fg_color(failed_text_icon, CALIBRATION_MSG_XPOS + 28, CALIBRATION_MSG_YPOS + 14, 41, 14);
       break;
   }
 }

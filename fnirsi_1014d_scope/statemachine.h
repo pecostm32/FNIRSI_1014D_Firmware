@@ -84,6 +84,7 @@ enum NavigationStates
   NAV_FILE_VIEW_HANDLING,
   NAV_FILE_VIEW_SELECT_HANDLING,
   NAV_ITEM_VIEW_HANDLING,
+  NAV_SLIDER_HANDLING,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -129,6 +130,7 @@ void sm_handle_main_menu_actions(void);
 void sm_handle_file_view_actions(void);
 void sm_handle_file_view_select_actions(void);
 void sm_handle_item_view_actions(void);
+void sm_handle_slider_actions(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //File view handling functions
@@ -197,12 +199,17 @@ void sm_item_view_delete_current(void);
 void sm_item_view_goto_next_item(void);
 void sm_item_view_goto_previous_item(void);
 
+void sm_slider_close(void);
+void sm_slider_adjust(void);
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //Next functions are for executing main menu items
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_open_picture_file_viewing(void);
 void sm_open_waveform_file_viewing(void);
+
+void sm_open_screen_brightness_setting(void);
 
 void sm_do_base_calibration(void);
 
