@@ -168,25 +168,25 @@ void ui_setup_usb_screen(void)
 
   //Draw the computer screen
   display_fill_rounded_rect(470, 115, 250, 190, 2);
-  display_fill_rect(580, 305, 30, 20);
+  display_fill_rect(580, 305, 31, 21);
   display_fill_rounded_rect(550, 325, 90, 10, 2);
-  display_fill_rect(550, 331, 89, 4);
+  display_fill_rect(550, 331, 90, 5);
 
   //Draw the scope
   display_fill_rounded_rect(80, 200, 180, 135, 2);
 
   //Draw the cable
-  display_fill_rect(210, 188, 10, 12);
-  display_fill_rect(213, 154, 4, 36);
-  display_fill_rect(213, 150, 152, 4);
-  display_fill_rect(361, 154, 4, 106);
-  display_fill_rect(361, 260, 98, 4);
-  display_fill_rect(458, 257, 12, 10);
+  display_fill_rect(210, 188, 11, 13);
+  display_fill_rect(213, 154, 5, 37);
+  display_fill_rect(213, 150, 153, 5);
+  display_fill_rect(361, 154, 5, 107);
+  display_fill_rect(361, 260, 99, 5);
+  display_fill_rect(458, 257, 13, 11);
 
   //Fill in the screens with a blue color
   display_set_fg_color(0x00000055);
-  display_fill_rect(477, 125, 235, 163);
-  display_fill_rect(88, 210, 163, 112);
+  display_fill_rect(477, 125, 236, 164);
+  display_fill_rect(88, 210, 164, 113);
 
   //Draw a dark border around the blue screens
   display_set_fg_color(0x00111111);
@@ -211,7 +211,7 @@ void ui_setup_usb_screen(void)
   scope_display_trace_data();
   
   //Re-sync the system files
-//  ui_sync_thumbnail_files();
+  ui_sync_thumbnail_files();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -309,8 +309,8 @@ void ui_draw_outline(void)
   
   //Draw the top and bottom edges of the measurement sections
   display_set_fg_color(0x00303430);
-  display_fill_rect(711,   0, 83, 2);
-  display_fill_rect(711, 477, 83, 2);
+  display_fill_rect(711,   0, 84, 3);
+  display_fill_rect(711, 477, 84, 3);
   
   //Next lines are shorter and shifted
   xs1 = 712;
@@ -959,7 +959,7 @@ void ui_display_time_per_division(void)
 {
   //Clear the old text before printing the new text
   display_set_fg_color(0x00000000);
-  display_fill_rect(153, 465, 65, 14);
+  display_fill_rect(153, 465, 66, 15);
   
   //Text is RGB 565 based white
   display_set_fg_color(0x00F8FCF8);
@@ -1160,7 +1160,7 @@ void ui_display_channel_coupling(PCHANNELSETTINGS settings)
   
   //Clear the old text first
   display_set_fg_color(0x00000000);
-  display_fill_rect(x - 1, y + 2, 17, 9);
+  display_fill_rect(x - 1, y + 2, 18, 10);
 
   //Colors are different when disabled or enabled
   if(settings->enable)
@@ -1199,7 +1199,7 @@ void ui_display_channel_sensitivity(PCHANNELSETTINGS settings)
   
   //Clear the old text first
   display_set_fg_color(0x00000000);
-  display_fill_rect(x - 1, y + 2, 44, 9);
+  display_fill_rect(x - 1, y + 2, 45, 10);
   
   //Colors are different when disabled or enabled
   if(settings->enable)
@@ -1308,7 +1308,7 @@ void ui_update_measurements(void)
     
     //Clear the display field first
     display_set_fg_color(0x00000000);
-    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 82, 20);
+    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 83, 21);
     
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
@@ -1700,7 +1700,7 @@ void ui_display_main_menu(void)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(6, 115, 180, 342);
+  display_fill_rect(6, 115, 181, 343);
 
   //Calculate the y position for the highlight box based on the selected menu item
   y = 118 + (userinterfacedata.menuitem * 31);
@@ -1733,7 +1733,7 @@ void ui_unhighlight_main_menu_item(void)
   
   //Fill the section with the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(9, y, 174, 25);
+  display_fill_rect(9, y, 175, 26);
   
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
@@ -1801,7 +1801,7 @@ void ui_display_channel_menu(PCHANNELSETTINGS settings)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(261, 214, 188, 88);
+  display_fill_rect(261, 214, 189, 89);
 
   //Need to calculate the y position for the highlight box
   y = 275; //217 + (selected * 29);
@@ -1875,7 +1875,7 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
   display_set_fg_color(settings->color);
   
   //Highlight the selected item
-  display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 3, 13);
+  display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 4, 14);
   
   //Display the selected text in black
   display_set_fg_color(0x00000000);
@@ -1892,7 +1892,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(367, 250, 29, 15);
+    display_fill_rect(367, 250, 30, 16);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1912,7 +1912,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(407, 250, 29, 15);
+    display_fill_rect(407, 250, 30, 16);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1937,7 +1937,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(367, 279, 29, 15);
+    display_fill_rect(367, 279, 30, 16);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1957,7 +1957,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(407, 279, 29, 15);
+    display_fill_rect(407, 279, 30, 16);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -2020,7 +2020,7 @@ void ui_display_cursor_measurements(void)
     display_set_fg_color(0x00404040);
 
     //Draw rectangle for the texts depending on what is enabled.
-    display_fill_rect(6, 59, 101, height - 1);
+    display_fill_rect(6, 59, 102, height);
     
     //Make it a on one corner rounded thing
     display_draw_horz_line(height + 59, 6, 106);
@@ -2242,7 +2242,7 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
   display_set_fg_color(0x00000000);
   
   //Start with no slider
-  display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH -1, SLIDER_LINE_HEIGHT - 1);
+  display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH, SLIDER_LINE_HEIGHT);
   
   //And remove the position text
   display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH, SLIDER_TEXT_HEIGHT);
@@ -2253,13 +2253,101 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
     //Draw the first part of the slider bar in a green color
     //Fill rect needs a reduction of 1 in both width and height
     display_set_fg_color(0x0000FF00);
-    display_fill_rect(xs, ys, ws - 1, SLIDER_LINE_HEIGHT - 1);
+    display_fill_rect(xs, ys, ws, SLIDER_LINE_HEIGHT);
   }
   
   //Display the position with wite text
   display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_2);
   display_decimal(xt, yt, *sliderdata);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+SHADEDRECTDATA on_off_setting_box =
+{
+  ON_OFF_SETTING_BOX_WIDTH,
+  ON_OFF_SETTING_BOX_HEIGHT,
+  { 0x00444444, 0x00282828, 0x00141414 },
+  0x00000000
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+HIGHLIGHTRECTDATA on_off_select_box =
+{
+  ON_OFF_SELECT_BOX_WIDTH,
+  ON_OFF_SELECT_BOX_HEIGHT,
+  { 0x0000FF00, 0x00009900, 0x00005500, 0x00002200 },
+  0x00000000
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+SHADEDRECTDATA on_off_check_box =
+{
+  ON_OFF_CHECK_SIZE,
+  ON_OFF_CHECK_SIZE,
+  { 0x0000FF00, 0x0000BB00, 0x00009900 },
+  0x00006400
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground)
+{
+  //Only save the back ground when requested
+  if(savebackground)
+  {
+    //Save the screen under the on off setting box
+    display_set_destination_buffer(displaybuffer2);
+    display_copy_rect_from_screen(xpos, ypos, ON_OFF_SETTING_BOX_WIDTH, ON_OFF_SETTING_BOX_HEIGHT);
+
+    //Setup the setting menu in a separate buffer to be able to display without flicker
+    display_set_screen_buffer(displaybuffer1);
+  }
+  
+  //Draw the outer box
+  display_draw_shaded_rect(xpos, ypos, &on_off_setting_box, 0);
+  
+  //Display the actual settings
+  ui_display_on_off_setting(xpos, ypos);
+
+  //Only need to copy it onto the actual screen when the background is saved
+  if(savebackground)
+  {
+    //Set source and target for getting it on the actual screen
+    display_set_source_buffer(displaybuffer1);
+    display_set_screen_buffer((uint16 *)maindisplaybuffer);
+
+    //Show the on off setting menu box on the screen
+    display_copy_rect_to_screen(xpos, ypos, ON_OFF_SETTING_BOX_WIDTH, ON_OFF_SETTING_BOX_HEIGHT);
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_close_on_off_setting(uint16 xpos, uint16 ypos)
+{
+  //Set source and target for getting it on the actual screen
+  display_set_source_buffer(displaybuffer2);
+  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+
+  //Remove the on off menu box from the screen
+  display_copy_rect_to_screen(xpos, ypos, ON_OFF_SETTING_BOX_WIDTH, ON_OFF_SETTING_BOX_HEIGHT);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
+{
+  //Need a global var pointer for the setting
+  
+  //Need to display the select box
+  
+  //Need to display the check box
+  
+  //Need to display the ON and OFF text icons
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2280,7 +2368,7 @@ void ui_display_measurements_menu(void)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(380, 114, 313, 332);
+  display_fill_rect(380, 114, 314, 333);
 
   //Draw the menu outline slightly lighter then the background
   display_set_fg_color(0x00303430);
@@ -3883,7 +3971,7 @@ void ui_display_thumbnails(void)
       if(index == viewcurrentindex)
       {
         display_set_fg_color(0x00707070);
-        display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 32, VIEW_ITEM_HEIGHT - 27);
+        display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 31, VIEW_ITEM_HEIGHT - 26);
       }
       
       //Draw a grid
@@ -4521,7 +4609,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
   //Draw the background in grey
   display_set_fg_color(0x00202020);
-  display_fill_rect(260, 210, 279, 59);
+  display_fill_rect(260, 210, 280, 60);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00303030);
@@ -4636,7 +4724,7 @@ int32 ui_handle_confirm_delete(void)
   //display the confirm delete menu
   //Draw the background in some shade of red
   display_set_fg_color(0x00A04020);
-  display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH - 1, HCD_HEIGHT - 1);
+  display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00404040);

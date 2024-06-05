@@ -20,8 +20,6 @@
 #include "sin_cos_math.h"
 
 #include <string.h>
-
-
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -647,7 +645,7 @@ void display_draw_shaded_rect(uint32 xpos, uint32 ypos, PSHADEDRECTDATA shadeinf
   
   //The center of the last rectangle is filled with the fill color
   display_set_fg_color(shadeinfo->fillcolor);
-  display_fill_rect(x, y, w - 1, h - 1);
+  display_fill_rect(x, y, w, h);
   
   //Place text when given
   if(textinfo)
@@ -690,7 +688,7 @@ void display_draw_highlight_rect(uint32 xpos, uint32 ypos, PHIGHLIGHTRECTDATA hi
   
   //The center of the last rectangle is filled with the fill color
   display_set_fg_color(highlightinfo->fillcolor);
-  display_fill_rect(x, y, w - 1, h - 1);
+  display_fill_rect(x, y, w, h);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -858,13 +856,13 @@ void display_fill_rect(uint32 xpos, uint32 ypos, uint32 width, uint32 height)
   }
   
   //Draw all the pixels
-  for(y=ypos;y<=height;y++)
+  for(y=ypos;y<height;y++)
   {
     //Point to the first pixel of this line in the screen buffer
     ptr = displaydata.screenbuffer + ((y * displaydata.pixelsperline) + xpos);
 
     //Draw the pixels on the line
-    for(x=xpos;x<=width;x++)
+    for(x=xpos;x<width;x++)
     {
       //Set the current screen buffer pixel with the requested color
       *ptr++ = displaydata.fg_color;

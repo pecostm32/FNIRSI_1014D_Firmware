@@ -50,6 +50,16 @@
 #define SLIDER_TEXT_X_OFFSET            231
 #define SLIDER_TEXT_Y_OFFSET             10
 
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define ON_OFF_SETTING_BOX_WIDTH         68
+#define ON_OFF_SETTING_BOX_HEIGHT        65
+
+#define ON_OFF_SELECT_BOX_WIDTH          60
+#define ON_OFF_SELECT_BOX_HEIGHT         26
+
+#define ON_OFF_CHECK_SIZE                 9
+
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -121,6 +131,10 @@ void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header
 void ui_open_slider(uint16 xpos, uint16 ypos, uint32 savebackground);
 void ui_close_slider(uint16 xpos, uint16 ypos);
 void ui_display_slider(uint16 xpos, uint16 ypos);
+
+void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground);
+void ui_close_on_off_setting(uint16 xpos, uint16 ypos);
+void ui_display_on_off_setting(uint16 xpos, uint16 ypos);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 // Functions for displaying the measurement values on the measurements slots

@@ -260,31 +260,8 @@
 
 #define RUN_STOP_TEXT_XPOS                  97
 #define RUN_STOP_TEXT_YPOS                  12
-#define RUN_STOP_TEXT_WIDTH                 38
-#define RUN_STOP_TEXT_HEIGHT                18
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Channel button and menu
-
-#define CH1_BUTTON_XPOS                    150
-#define CH2_BUTTON_XPOS                    260
-
-#define CH_BUTTON_YPOS                       5
-#define CH_BUTTON_WIDTH                     30
-#define CH_BUTTON_HEIGHT                    35
-
-#define CH_BUTTON_BG_WIDTH                 103
-#define CH_BUTTON_BG_HEIGHT                 35
-
-#define CH1_MENU_XPOS          CH1_BUTTON_XPOS
-#define CH2_MENU_XPOS          CH2_BUTTON_XPOS
-
-#define CH_MENU_YPOS                        46
-#define CH_MENU_WIDTH                      183
-#define CH_MENU_HEIGHT                     252
-
-#define CH1_TOUCHED_COLOR           0x000000FF
-#define CH2_TOUCHED_COLOR           0x00FF0000
+#define RUN_STOP_TEXT_WIDTH                 39
+#define RUN_STOP_TEXT_HEIGHT                19
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Channel voltage per division buttons
