@@ -1257,16 +1257,22 @@ const MEASUREMENTFUNCTION measurement_functions[] =
 void ui_display_measurements(void)
 {
   PCHANNELSETTINGS settings;
-  int i,y;
+  int i,y,dy;
   
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
+    dy = i * MEASUREMENT_Y_DISPLACEMENT;
+    
+    //Clear the background first
+    display_set_fg_color(0x00000000);
+    display_fill_rect(706, 8 + dy, 93, 69);
+    
     //Get the channel information for displaying the box in the channel color
     settings = scopesettings.measurementitems[i].channelsettings;
     
     //Setup the base position
-    y = MEASUREMENT_INFO_Y + (i * MEASUREMENT_Y_DISPLACEMENT);
+    y = MEASUREMENT_INFO_Y + dy;
     
     //Mark it as the channel settings area
     display_draw_shaded_rect(MEASUREMENT_CHANNEL_BOX_X, y, settings->boxdata, settings->boxtext);
@@ -1293,13 +1299,16 @@ void ui_update_measurements(void)
 {
   PCHANNELSETTINGS settings;
   int i,y;
-  
-  //Draw in the actual screen buffer
-  display_set_screen_buffer((uint16 *)maindisplaybuffer);
+
+  //Use the first display buffer as source to copy to the main screen buffer
+  display_set_source_buffer(displaybuffer1);
   
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
+    //Draw the item in the first display buffer to avoid flicker on the screen
+    display_set_screen_buffer(displaybuffer1);
+    
     //Get the channel information for displaying the value
     settings = scopesettings.measurementitems[i].channelsettings;
     
@@ -1308,11 +1317,15 @@ void ui_update_measurements(void)
     
     //Clear the display field first
     display_set_fg_color(0x00000000);
-    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 83, 21);
+    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 84, 21);
     
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
     measurement_functions[scopesettings.measurementitems[i].index](y, settings);
+
+    //Copy this item to the main screen
+    display_set_screen_buffer((uint16 *)maindisplaybuffer);
+    display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 83, 21);
   }
   
   //Switch back to the separate display buffer to allow further actions on the trace display
@@ -1948,7 +1961,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(0x00FFFFFF);
   }
   
-  //Display the AC text
+  //Display the ON text
   display_copy_icon_fg_color(channel_menu_ON_icon, 372, 281, 21, 12);
 
   if(settings->fftenable == 0)
@@ -1968,7 +1981,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(0x00FFFFFF);
   }
   
-  //Display the DC text
+  //Display the OFF text
   display_copy_icon_fg_color(channel_menu_OFF_icon, 409, 281, 26, 12);
 }
 
@@ -2232,34 +2245,38 @@ void ui_close_slider(uint16 xpos, uint16 ypos)
 
 void ui_display_slider(uint16 xpos, uint16 ypos)
 {
-  uint16 ws = ((SLIDER_LINE_MAX_WIDTH * *sliderdata) / 100);
-  uint16 xs = xpos + SLIDER_LINE_X_OFFSET;
-  uint16 ys = ypos + SLIDER_LINE_Y_OFFSET;
-  uint16 xt = xpos + SLIDER_TEXT_X_OFFSET;
-  uint16 yt = ypos + SLIDER_TEXT_Y_OFFSET;
-
-  //Clear the background first
-  display_set_fg_color(0x00000000);
-  
-  //Start with no slider
-  display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH, SLIDER_LINE_HEIGHT);
-  
-  //And remove the position text
-  display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH, SLIDER_TEXT_HEIGHT);
-
-  //Check if there is a line to draw
-  if(ws)
+  //sliderdata needs to be set otherwise no use in running the code
+  if(sliderdata)
   {
-    //Draw the first part of the slider bar in a green color
-    //Fill rect needs a reduction of 1 in both width and height
-    display_set_fg_color(0x0000FF00);
-    display_fill_rect(xs, ys, ws, SLIDER_LINE_HEIGHT);
+    uint16 ws = ((SLIDER_LINE_MAX_WIDTH * *sliderdata) / 100);
+    uint16 xs = xpos + SLIDER_LINE_X_OFFSET;
+    uint16 ys = ypos + SLIDER_LINE_Y_OFFSET;
+    uint16 xt = xpos + SLIDER_TEXT_X_OFFSET;
+    uint16 yt = ypos + SLIDER_TEXT_Y_OFFSET;
+
+    //Clear the background first
+    display_set_fg_color(0x00000000);
+
+    //Start with no slider
+    display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH, SLIDER_LINE_HEIGHT);
+
+    //And remove the position text
+    display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH, SLIDER_TEXT_HEIGHT);
+
+    //Check if there is a line to draw
+    if(ws)
+    {
+      //Draw the first part of the slider bar in a green color
+      //Fill rect needs a reduction of 1 in both width and height
+      display_set_fg_color(0x0000FF00);
+      display_fill_rect(xs, ys, ws, SLIDER_LINE_HEIGHT);
+    }
+
+    //Display the position with wite text
+    display_set_fg_color(0x00FFFFFF);
+    display_set_font(&font_2);
+    display_decimal(xt, yt, *sliderdata);
   }
-  
-  //Display the position with wite text
-  display_set_fg_color(0x00FFFFFF);
-  display_set_font(&font_2);
-  display_decimal(xt, yt, *sliderdata);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2307,10 +2324,7 @@ void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground)
     display_set_screen_buffer(displaybuffer1);
   }
   
-  //Draw the outer box
-  display_draw_shaded_rect(xpos, ypos, &on_off_setting_box, 0);
-  
-  //Display the actual settings
+  //Display the actual menu with the settings
   ui_display_on_off_setting(xpos, ypos);
 
   //Only need to copy it onto the actual screen when the background is saved
@@ -2341,13 +2355,43 @@ void ui_close_on_off_setting(uint16 xpos, uint16 ypos)
 
 void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
 {
-  //Need a global var pointer for the setting
-  
-  //Need to display the select box
-  
-  //Need to display the check box
-  
-  //Need to display the ON and OFF text icons
+  uint16 y;
+
+  //onoffdata needs to be set, otherwise there is no use in running the code
+  if(onoffdata)
+  {
+    //Draw the outer box to clear the background
+    display_draw_shaded_rect(xpos, ypos, &on_off_setting_box, 0);
+    
+    //Need to display the highlight box on the selected item
+    if(onoffhighlighteditem == 0)
+    {
+      y = ypos + ON_OFF_SELECT_OFF_Y_OFFSET;
+    }
+    else
+    {
+      y = ypos + ON_OFF_SELECT_ON_Y_OFFSET;
+    }
+
+    display_draw_highlight_rect(xpos + ON_OFF_SELECT_X_OFFSET, y, &on_off_select_box);
+
+    //Need to display the check box on the currently active item
+    if(*onoffdata == 0)
+    {
+      y = ypos + ON_OFF_CHECK_OFF_Y_OFFSET;
+    }
+    else
+    {
+      y = ypos + ON_OFF_CHECK_ON_Y_OFFSET;
+    }
+
+    display_draw_shaded_rect(xpos + ON_OFF_CHECK_X_OFFSET, y, &on_off_check_box, 0);
+
+    //Need to display the ON and OFF text icons
+    display_set_fg_color(0x00FFFFFF);
+    display_copy_icon_fg_color(setting_menu_ON_icon, xpos + ON_OFF_TEXT_X_OFFSET, ypos + ON_OFF_TEXT_ON_Y_OFFSET, 20, 14);
+    display_copy_icon_fg_color(setting_menu_OFF_icon, xpos + ON_OFF_TEXT_X_OFFSET, ypos + ON_OFF_TEXT_OFF_Y_OFFSET, 25, 14);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2362,9 +2406,21 @@ HIGHLIGHTRECTDATA measurement_menu_highlight_box =
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+const char *measurementslotnames[] =
+{
+  "F1",
+  "F2",
+  "F3",
+  "F4",
+  "F5",
+  "F6",
+};
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void ui_display_measurements_menu(void)
 {
-  int y;
+  uint16 x,y;
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
@@ -2374,19 +2430,24 @@ void ui_display_measurements_menu(void)
   display_set_fg_color(0x00303430);
   display_draw_rect(379, 113, 316, 335);
 
-  //Draw the lines to separate the header and the two channels
+  //Draw the lines to separate the header, the two channels and the current slot
   display_draw_horz_line(140, 380, 694);
-  display_draw_vert_line(537, 114, 139);                 //x +158
+  display_draw_vert_line(512, 114, 139);
+  display_draw_vert_line(562, 114, 139);
+
+  //Show the current slot name
+  display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
+  display_set_font(&font_3);
+  display_text(531, 120, measurementslotnames[measurementslot]);
   
+  //Set the x position for the currently selected item based on the used channel
+  x = 383 + (scopesettings.measurementitems[measurementslot].channel * 167);
   
-  
-  //Need to calculate the y position for the highlight box
-  //Need two x values for the selection box
-  //One for the channel 1 list and one for the channel 2 list
-  y = 142; // + (selected * 31);
+  //Set the y position for the currently selected item
+  y = 142 + (scopesettings.measurementitems[measurementslot].index * 25);
   
   //Draw the menu high lighter box for the selected item (Original code used three rectangles)
-  display_draw_highlight_rect(383, y, &measurement_menu_highlight_box);
+  display_draw_highlight_rect(x, y, &measurement_menu_highlight_box);
   
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);

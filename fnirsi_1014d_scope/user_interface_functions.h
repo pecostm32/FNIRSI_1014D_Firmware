@@ -52,14 +52,29 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+#define ON_OFF_SETTING_XPOS             191
+#define ON_OFF_SETTING_50_PERCENT_YPOS  301
+#define ON_OFF_SETTING_XY_MODE_YPOS     332
+
 #define ON_OFF_SETTING_BOX_WIDTH         68
 #define ON_OFF_SETTING_BOX_HEIGHT        65
+
+#define ON_OFF_SELECT_X_OFFSET            4
+#define ON_OFF_SELECT_ON_Y_OFFSET         4
+#define ON_OFF_SELECT_OFF_Y_OFFSET       36
 
 #define ON_OFF_SELECT_BOX_WIDTH          60
 #define ON_OFF_SELECT_BOX_HEIGHT         26
 
+#define ON_OFF_CHECK_X_OFFSET            12
+#define ON_OFF_CHECK_ON_Y_OFFSET         12
+#define ON_OFF_CHECK_OFF_Y_OFFSET        44
+
 #define ON_OFF_CHECK_SIZE                 9
 
+#define ON_OFF_TEXT_X_OFFSET             31
+#define ON_OFF_TEXT_ON_Y_OFFSET          10
+#define ON_OFF_TEXT_OFF_Y_OFFSET         42
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

@@ -77,6 +77,9 @@
 #define MAIN_MENU_SCREEN_BRIGHTNESS   4
 #define MAIN_MENU_GRID_BRIGHTNESS     5
 
+#define MAIN_MENU_50_PERCENT          6
+#define MAIN_MENU_XY_MODE             7
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //Navigation states
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -90,6 +93,9 @@ enum NavigationStates
   NAV_FILE_VIEW_SELECT_HANDLING,
   NAV_ITEM_VIEW_HANDLING,
   NAV_SLIDER_HANDLING,
+  NAV_ON_OFF_HANDLING,
+  NAV_MEASUREMENTS_MENU_HANDLING,
+  NAV_CHANNEL_MENU_HANDLING,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -102,6 +108,7 @@ enum FileViewHandlingStates
   FILE_VIEW_DEFAULT_CONTROL,
   FILE_VIEW_SELECT_CONTROL,
   FILE_VIEW_ITEM_CONTROL,
+  FILE_VIEW_MENU_CONTROL,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -115,7 +122,9 @@ enum ButtonDialHandlingStates
   BUTTON_DIAL_MENU_HANDLING,
   BUTTON_DIAL_FILE_VIEW_HANDLING,
   BUTTON_DIAL_PICTURE_VIEW_HANDLING,
-  BUTTON_DIAL_WAVE_VIEW_HANDLING  
+  BUTTON_DIAL_WAVE_VIEW_HANDLING,
+  BUTTON_DIAL_MEASUREMENTS_MENU_HANDLING,
+  BUTTON_DIAL_CHANNEL_MENU_HANDLING,
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -136,6 +145,9 @@ void sm_handle_file_view_actions(void);
 void sm_handle_file_view_select_actions(void);
 void sm_handle_item_view_actions(void);
 void sm_handle_slider_actions(void);
+void sm_handle_on_off_actions(void);
+void sm_handle_measurements_menu_actions(void);
+void sm_handle_channel_menu_actions(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //File view handling functions
@@ -154,10 +166,11 @@ void sm_handle_item_view_control(void);
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_button_dial_normal_handling(void);
-void sm_button_dial_menu_handling(void);
 void sm_button_dial_file_view_handling(void);
 void sm_button_dial_picture_view_handling(void);
 void sm_button_dial_wave_view_handling(void);
+void sm_button_dial_measurements_menu_handling(void);
+void sm_button_dial_channel_menu_handling(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Functions to handle specific tasks
@@ -207,6 +220,14 @@ void sm_item_view_goto_previous_item(void);
 void sm_slider_close(void);
 void sm_slider_adjust(void);
 
+void sm_on_off_close(void);
+void sm_on_off_check(void);
+void sm_on_off_select(void);
+
+void sm_open_measurements_menu(void);
+
+void sm_open_channel_menu(PCHANNELSETTINGS settings);
+
 //----------------------------------------------------------------------------------------------------------------------------------
 //Next functions are for executing main menu items
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -215,6 +236,8 @@ void sm_open_picture_file_viewing(void);
 void sm_open_waveform_file_viewing(void);
 
 void sm_open_brightness_setting(void);
+
+void sm_open_on_off_setting(void);
 
 void sm_do_base_calibration(void);
 

@@ -723,7 +723,12 @@ extern uint8 buttondialstate;
 extern uint8 enablesampling;
 extern uint8 enabletracedisplay;
 
-extern int8 *sliderdata;
+extern int8 *sliderdata;                  //Pointer to the data used for displaying and modifying a slider based setting
+
+extern uint8  onoffhighlighteditem;       //Indicator for which item is currently highlighted
+extern uint8 *onoffdata;                  //Pointer to the data used for displaying and modifying an on off setting
+
+extern uint8 measurementslot;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope data
@@ -855,15 +860,8 @@ extern const int8 time_div_text_x_offsets[24];
 extern const char *acquisition_speed_texts[18];
 extern const int8 acquisition_speed_text_x_offsets[18];
 
-
 extern const MEASUREMENTFUNCTION measurement_functions[];
 extern const char *measurement_names[12];
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//For touch filtering on slider movement
-//----------------------------------------------------------------------------------------------------------------------------------
-
-extern uint16 prevxtouch;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Data for picture and waveform view mode
@@ -995,6 +993,9 @@ extern const uint8 channel_menu_AC_icon[];
 extern const uint8 channel_menu_DC_icon[];
 extern const uint8 channel_menu_ON_icon[];
 extern const uint8 channel_menu_OFF_icon[];
+
+extern const uint8 setting_menu_ON_icon[];
+extern const uint8 setting_menu_OFF_icon[];
 
 extern const uint16 thumbnail_top_bar_icon[];
 extern const uint16 thumbnail_side_bar_icon[];
