@@ -309,13 +309,7 @@
 //Typedefs
 //----------------------------------------------------------------------------------------------------------------------------------
 
-typedef struct tagTouchCoords           TOUCHCOORDS,          *PTOUCHCOORDS;
-
 typedef struct tagDisplayPoints         DISPLAYPOINTS,        *PDISPLAYPOINTS;
-
-typedef struct tagUserInterfaceData     USERINTERFACEDATA,    *PUSERINTERFACEDATA;
-typedef struct tagNavigationFunctions   NAVIGATIONFUNCTIONS,  *PNAVIGATIONFUNCTIONS;
-typedef struct tagFileViewFunctions     FILEVIEWFUNCTIONS,    *PFILEVIEWFUNCTIONS;
 
 typedef struct tagChannelSettings       CHANNELSETTINGS,      *PCHANNELSETTINGS;
 typedef struct tagScopeSettings         SCOPESETTINGS,        *PSCOPESETTINGS;
@@ -349,62 +343,10 @@ typedef void (*MSMITEMFUNCTION)(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setti
 //Structures
 //----------------------------------------------------------------------------------------------------------------------------------
 
-struct tagTouchCoords
-{
-  uint16 x1;
-  uint16 x2;
-  uint16 y1;
-  uint16 y2;
-};
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
 struct tagDisplayPoints
 {
   uint16 x;
   uint16 y;  
-};
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-struct tagUserInterfaceData
-{
-  uint8 action;
-  
-  uint8 selectedcursor;
-
-  int16 menuitem;
-  
-  int8  movespeed;
-  int8  speedvalue; 
-  int8  setvalue;
-  
-  PNAVIGATIONFUNCTIONS navigationfunctions;
-  PFILEVIEWFUNCTIONS   fileviewfunctions;
-};
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-struct tagNavigationFunctions
-{
-  NAVIGATIONFUNCTION left;
-  NAVIGATIONFUNCTION right;
-  NAVIGATIONFUNCTION up;
-  NAVIGATIONFUNCTION down;
-  NAVIGATIONFUNCTION ok;
-  
-  NAVIGATIONFUNCTION dial;
-};
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-struct tagFileViewFunctions
-{
-  FILEVIEWFUNCTION select;
-  FILEVIEWFUNCTION selectall;
-  FILEVIEWFUNCTION delete;
-  FILEVIEWFUNCTION previous;             //Labeled LAST on the button
-  FILEVIEWFUNCTION next;
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -414,7 +356,7 @@ struct tagChannelSettings
   //Settings
   uint8  enable;
   uint8  coupling;
-  uint8  magnification;
+  int8   magnification;
   uint8  displayvoltperdiv;
   uint8  samplevoltperdiv;
   uint8  fftenable;
@@ -675,12 +617,6 @@ extern uint8 BSS_END;
 extern volatile uint32 timer0ticks;
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//User interface data
-//----------------------------------------------------------------------------------------------------------------------------------
-
-extern USERINTERFACEDATA userinterfacedata;
-
-//----------------------------------------------------------------------------------------------------------------------------------
 //Channel information display data
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -695,23 +631,14 @@ extern TEXTDATA          channel_2_box_text;
 //State machine data
 //----------------------------------------------------------------------------------------------------------------------------------
 
-extern uint16 previousxtouch;
-extern uint16 previousytouch;
+extern uint8 selectedcursor;
 
-extern uint16 xtouchdisplacement;
-extern uint16 ytouchdisplacement;
+extern int16 menuitem;
 
-extern uint16 maxdisplacement;
-
-extern uint8 touchstate;
+extern int8  speedvalue;
+extern int8  setvalue;
 
 extern uint32 previoustimerticks;
-
-extern uint8 systemsettingsmenuopen;
-extern uint8 screenbrightnessopen;
-extern uint8 gridbrightnessopen;
-extern uint8 calibrationopen;
-
 
 extern uint8 lastreceivedcommand;         //Command set in the wait for user input function
 extern uint8 toprocesscommand;            //Command set in the get data function which needs to be processed in the main loop
@@ -729,6 +656,8 @@ extern uint8  onoffhighlighteditem;       //Indicator for which item is currentl
 extern uint8 *onoffdata;                  //Pointer to the data used for displaying and modifying an on off setting
 
 extern uint8 measurementslot;
+
+extern PCHANNELSETTINGS currentsettings;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope data
@@ -766,38 +695,6 @@ extern uint32 disp_trigger_index;
 
 extern int32 disp_xstart;
 extern int32 disp_xend;
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Distances of touch point to traces and cursors
-//----------------------------------------------------------------------------------------------------------------------------------
-
-extern uint16 distance_channel_1;
-extern uint16 distance_channel_2;
-
-extern uint16 distance_trigger_level;
-
-extern uint16 distance_time_cursor_left;
-extern uint16 distance_time_cursor_right;
-
-extern uint16 distance_volt_cursor_top;
-extern uint16 distance_volt_cursor_bottom;
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Previous trace and cursor settings
-//----------------------------------------------------------------------------------------------------------------------------------
-
-extern uint16 previous_channel_1_offset;
-extern uint16 previous_channel_2_offset;
-
-extern uint16 previous_trigger_level_offset;
-
-extern uint16 previous_trigger_point_position;
-
-extern uint16 previous_left_time_cursor_position;
-extern uint16 previous_right_time_cursor_position;
-
-extern uint16 previous_top_volt_cursor_position;
-extern uint16 previous_bottom_volt_cursor_position;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Calibration data
@@ -947,14 +844,6 @@ extern const uint8 select_sign_icon[];
 extern const uint8 waste_bin_icon[];
 extern const uint8 previous_picture_icon[];
 extern const uint8 next_picture_icon[];
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-extern const uint8 letter_c_icon[];
-extern const uint8 letter_e_icon[];
-extern const uint8 letter_o_icon[];
-extern const uint8 letter_p_icon[];
-extern const uint8 letter_s_icon[];
 
 //----------------------------------------------------------------------------------------------------------------------------------
 

@@ -59,6 +59,13 @@ void sm_handle_user_input(void)
   //Check if the power off command is given
   if(toprocesscommand == UIC_BUTTON_OFF)
   {
+    //Check if in normal running state so real settings are active
+    if(viewactive == VIEW_NOT_ACTIVE)
+    {
+      //Get the settings in the working buffer and write them to the flash
+      scope_save_configuration_data();
+    }
+    
     //Save the settings at this point and wait until power is off
     while(1);
   }
@@ -68,6 +75,7 @@ void sm_handle_user_input(void)
   {
     //For all the addition actions the set and speed value need to be positive;
     case UIC_BUTTON_NAV_UP:
+    case UIC_BUTTON_NAV_RIGHT:
     case UIC_ROTARY_SEL_ADD:
     case UIC_ROTARY_SCALE_CH1_ADD:
     case UIC_ROTARY_SCALE_CH2_ADD:
@@ -76,12 +84,13 @@ void sm_handle_user_input(void)
     case UIC_ROTARY_CH2_POS_ADD:
     case UIC_ROTARY_TRIG_POS_ADD:
     case UIC_ROTARY_TRIG_LEVEL_ADD:
-      userinterfacedata.setvalue = 1;
-      userinterfacedata.speedvalue = userinterfacedata.movespeed;
+      setvalue = 1;
+      speedvalue = scopesettings.movespeed;
       break;
 
     //For all the subtraction actions the set and speed value need to be negative;
     case UIC_BUTTON_NAV_DOWN:
+    case UIC_BUTTON_NAV_LEFT:
     case UIC_ROTARY_SEL_SUB:
     case UIC_ROTARY_SCALE_CH1_SUB:
     case UIC_ROTARY_SCALE_CH2_SUB:
@@ -90,8 +99,8 @@ void sm_handle_user_input(void)
     case UIC_ROTARY_CH2_POS_SUB:
     case UIC_ROTARY_TRIG_POS_SUB:
     case UIC_ROTARY_TRIG_LEVEL_SUB:
-      userinterfacedata.setvalue = -1;
-      userinterfacedata.speedvalue = userinterfacedata.movespeed * -1;
+      setvalue = -1;
+      speedvalue = scopesettings.movespeed * -1;
       break;
   }
 
@@ -215,7 +224,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the left time cursor if enabled
       if(scopesettings.timecursorsenable)
       {
-        userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+        selectedcursor = CURSOR_TIME_LEFT;
       }
       break;
 
@@ -223,7 +232,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the right time cursor if enabled
       if(scopesettings.timecursorsenable)
       {
-        userinterfacedata.selectedcursor = CURSOR_TIME_RIGHT;
+        selectedcursor = CURSOR_TIME_RIGHT;
       }
       break;
 
@@ -231,7 +240,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the top volt cursor if enabled
       if(scopesettings.voltcursorsenable)
       {
-        userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+        selectedcursor = CURSOR_VOLT_TOP;
       }
       break;
 
@@ -239,17 +248,17 @@ void sm_handle_time_volt_cursor(void)
       //Select the bottom volt cursor if enabled
       if(scopesettings.voltcursorsenable)
       {
-        userinterfacedata.selectedcursor = CURSOR_VOLT_BOTTOM;
+        selectedcursor = CURSOR_VOLT_BOTTOM;
       }
       break;
 
     case UIC_ROTARY_SEL_ADD:
     case UIC_ROTARY_SEL_SUB:
-      switch(userinterfacedata.selectedcursor)
+      switch(selectedcursor)
       {
         case CURSOR_TIME_LEFT:
           //Adjust the setting based on the set speed value
-          scopesettings.timecursor1position += userinterfacedata.speedvalue;
+          scopesettings.timecursor1position += speedvalue;
 
           //Limit it on the trace portion of the screen and the right time cursor
           if(scopesettings.timecursor1position < 6)
@@ -266,7 +275,7 @@ void sm_handle_time_volt_cursor(void)
 
         case CURSOR_TIME_RIGHT:
           //Adjust the setting based on the set speed value
-          scopesettings.timecursor2position += userinterfacedata.speedvalue;
+          scopesettings.timecursor2position += speedvalue;
 
           //Limit it on the trace portion of the screen and the left time cursor
           if(scopesettings.timecursor2position <= scopesettings.timecursor1position)
@@ -283,7 +292,7 @@ void sm_handle_time_volt_cursor(void)
 
         case CURSOR_VOLT_TOP:
           //Adjust the setting based on the set speed value
-          scopesettings.voltcursor1position -= userinterfacedata.speedvalue;
+          scopesettings.voltcursor1position -= speedvalue;
 
           //Limit it on the trace portion of the screen and the bottom volt cursor
           if(scopesettings.voltcursor1position < 59)
@@ -300,7 +309,7 @@ void sm_handle_time_volt_cursor(void)
 
         case CURSOR_VOLT_BOTTOM:
           //Adjust the setting based on the set speed value
-         scopesettings.voltcursor2position -= userinterfacedata.speedvalue;
+         scopesettings.voltcursor2position -= speedvalue;
 
          //Limit it on the trace portion of the screen and the top volt cursor
          if(scopesettings.voltcursor2position <= scopesettings.voltcursor1position)
@@ -333,8 +342,8 @@ void sm_handle_main_menu_actions(void)
     case UIC_BUTTON_NAV_OK:
     case UIC_BUTTON_NAV_RIGHT:
       //If there is a start action handler set for this menu option, execute it
-      if(mainmenustartactions[userinterfacedata.menuitem])
-        mainmenustartactions[userinterfacedata.menuitem]();
+      if(mainmenustartactions[menuitem])
+        mainmenustartactions[menuitem]();
       break;
 
     case UIC_BUTTON_NAV_UP:
@@ -502,7 +511,7 @@ void sm_handle_measurements_menu_actions(void)
     case UIC_BUTTON_NAV_UP:
     case UIC_BUTTON_NAV_DOWN:
       //For the list select the current set value is added to traverse through the list
-      index -= userinterfacedata.setvalue;
+      index -= setvalue;
       
       //Need to check on the limits of the list
       if(index < 0)
@@ -561,17 +570,28 @@ void sm_handle_channel_menu_actions(void)
       break;
 
     case UIC_BUTTON_NAV_LEFT:
-      //Action depends on which line is selected
-      break;
-      
     case UIC_BUTTON_NAV_RIGHT:
+      sm_select_channel_option();
       break;
       
     case UIC_ROTARY_SEL_ADD:
     case UIC_ROTARY_SEL_SUB:
     case UIC_BUTTON_NAV_UP:
     case UIC_BUTTON_NAV_DOWN:
-      //This just has to select another settings line
+      //Select the next or previous line based on the set value
+      menuitem -= setvalue;
+      
+      //Limit it on the range for this menu
+      if(menuitem < 0)
+      {
+        menuitem = 2;
+      }
+      else if(menuitem > 2)
+      {
+        menuitem = 0;
+      }  
+      
+      ui_display_channel_menu(currentsettings);
       break;
   }
 }
@@ -711,11 +731,12 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_AUTO:
+      scope_do_auto_setup();
       break;
       
     case UIC_BUTTON_MENU:
       //First item on the list is highlighted
-      userinterfacedata.menuitem = 0;
+      menuitem = 0;
 
       //Switch to the menu handling states
       navigationstate = NAV_MAIN_MENU_HANDLING;
@@ -751,7 +772,7 @@ void sm_button_dial_normal_handling(void)
       if(scopesettings.timecursorsenable)
       {
         //Select the left cursor to start with
-        userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+        selectedcursor = CURSOR_TIME_LEFT;
       }
       else
       {
@@ -759,10 +780,10 @@ void sm_button_dial_normal_handling(void)
         if(scopesettings.voltcursorsenable)
         {
           //Select the top volt cursor if not on the bottom volt cursor
-          if(userinterfacedata.selectedcursor != CURSOR_VOLT_BOTTOM)
+          if(selectedcursor != CURSOR_VOLT_BOTTOM)
           {
             //Select the top volt cursor
-            userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+            selectedcursor = CURSOR_VOLT_TOP;
           }
         }
         else
@@ -784,7 +805,7 @@ void sm_button_dial_normal_handling(void)
       if(scopesettings.voltcursorsenable)
       {
         //Select the top volt cursor to start with
-        userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+        selectedcursor = CURSOR_VOLT_TOP;
       }
       else
       {
@@ -792,10 +813,10 @@ void sm_button_dial_normal_handling(void)
         if(scopesettings.timecursorsenable)
         {
           //Select the left time cursor if not on the right time cursor
-          if(userinterfacedata.selectedcursor != CURSOR_TIME_RIGHT)
+          if(selectedcursor != CURSOR_TIME_RIGHT)
           {
             //Select the left time cursor
-            userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+            selectedcursor = CURSOR_TIME_LEFT;
           }
         }
         else
@@ -807,23 +828,20 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_MOVE_SPEED:
-      //Toggle the move speed
-      scopesettings.movespeed ^= 1;
-
-      //Display the new speed on the screen
-      ui_display_move_speed();
-
-      //Set the actual movement speed in the user interface data
-      if(scopesettings.movespeed == 0)
+      //Set the new movement speed based on what the previous value was
+      if(scopesettings.movespeed == MOVE_SPEED_FAST)
       {
-        //Fast speed selected means taking 10 pixel steps
-        userinterfacedata.movespeed = 10;
+        //Slow speed selected means taking 1 pixel steps
+        scopesettings.movespeed = MOVE_SPEED_SLOW;
       }
       else
       {
-        //Slow speed selected means taking 1 pixel steps
-        userinterfacedata.movespeed = 1;
+        //Fast speed selected means taking 10 pixel steps
+        scopesettings.movespeed = MOVE_SPEED_FAST;
       }
+
+      //Display the new speed on the screen
+      ui_display_move_speed();
       break;
 
     case UIC_BUTTON_CH1_ENABLE:
@@ -887,51 +905,27 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_F1:
-      //Set the slot id to be used
-      measurementslot = 0;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(0);
       break;
       
     case UIC_BUTTON_F2:
-      //Set the slot id to be used
-      measurementslot = 1;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(1);
       break;
 
     case UIC_BUTTON_F3:
-      //Set the slot id to be used
-      measurementslot = 2;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(2);
       break;
 
     case UIC_BUTTON_F4:
-      //Set the slot id to be used
-      measurementslot = 3;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(3);
       break;
 
     case UIC_BUTTON_F5:
-      //Set the slot id to be used
-      measurementslot = 4;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(4);
       break;
 
     case UIC_BUTTON_F6:
-      //Set the slot id to be used
-      measurementslot = 5;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(5);
       break;
 
     case UIC_BUTTON_GEN:
@@ -1038,7 +1032,7 @@ void sm_button_dial_wave_view_handling(void)
       if(scopesettings.timecursorsenable)
       {
         //Select the left cursor to start with
-        userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+        selectedcursor = CURSOR_TIME_LEFT;
       }
       else
       {
@@ -1046,10 +1040,10 @@ void sm_button_dial_wave_view_handling(void)
         if(scopesettings.voltcursorsenable)
         {
           //Select the top volt cursor if not on the bottom volt cursor
-          if(userinterfacedata.selectedcursor != CURSOR_VOLT_BOTTOM)
+          if(selectedcursor != CURSOR_VOLT_BOTTOM)
           {
             //Select the top volt cursor
-            userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+            selectedcursor = CURSOR_VOLT_TOP;
           }
         }
         else
@@ -1071,7 +1065,7 @@ void sm_button_dial_wave_view_handling(void)
       if(scopesettings.voltcursorsenable)
       {
         //Select the top volt cursor to start with
-        userinterfacedata.selectedcursor = CURSOR_VOLT_TOP;
+        selectedcursor = CURSOR_VOLT_TOP;
       }
       else
       {
@@ -1079,10 +1073,10 @@ void sm_button_dial_wave_view_handling(void)
         if(scopesettings.timecursorsenable)
         {
           //Select the left time cursor if not on the right time cursor
-          if(userinterfacedata.selectedcursor != CURSOR_TIME_RIGHT)
+          if(selectedcursor != CURSOR_TIME_RIGHT)
           {
             //Select the left time cursor
-            userinterfacedata.selectedcursor = CURSOR_TIME_LEFT;
+            selectedcursor = CURSOR_TIME_LEFT;
           }
         }
         else
@@ -1094,23 +1088,20 @@ void sm_button_dial_wave_view_handling(void)
       break;
 
     case UIC_BUTTON_MOVE_SPEED:
-      //Toggle the move speed
-      scopesettings.movespeed ^= 1;
-
-      //Display the new speed on the screen
-      ui_display_move_speed();
-
-      //Set the actual movement speed in the user interface data
-      if(scopesettings.movespeed == 0)
+      //Set the new movement speed based on what the previous value was
+      if(scopesettings.movespeed == MOVE_SPEED_FAST)
       {
-        //Fast speed selected means taking 10 pixel steps
-        userinterfacedata.movespeed = 10;
+        //Slow speed selected means taking 1 pixel steps
+        scopesettings.movespeed = MOVE_SPEED_SLOW;
       }
       else
       {
-        //Slow speed selected means taking 1 pixel steps
-        userinterfacedata.movespeed = 1;
+        //Fast speed selected means taking 10 pixel steps
+        scopesettings.movespeed = MOVE_SPEED_FAST;
       }
+
+      //Display the new speed on the screen
+      ui_display_move_speed();
       break;
 
     case UIC_BUTTON_CH1_ENABLE:
@@ -1167,51 +1158,27 @@ void sm_button_dial_measurements_menu_handling(void)
   switch(toprocesscommand)
   {
     case UIC_BUTTON_F1:
-      //Set the slot id to be used
-      measurementslot = 0;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(0);
       break;
       
     case UIC_BUTTON_F2:
-      //Set the slot id to be used
-      measurementslot = 1;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(1);
       break;
 
     case UIC_BUTTON_F3:
-      //Set the slot id to be used
-      measurementslot = 2;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(2);
       break;
 
     case UIC_BUTTON_F4:
-      //Set the slot id to be used
-      measurementslot = 3;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(3);
       break;
 
     case UIC_BUTTON_F5:
-      //Set the slot id to be used
-      measurementslot = 4;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(4);
       break;
 
     case UIC_BUTTON_F6:
-      //Set the slot id to be used
-      measurementslot = 5;
-      
-      //Open the measurements menu with the item in the selected slot highlighted
-      sm_open_measurements_menu();
+      sm_open_measurements_menu(5);
       break;
       
     default:
@@ -1289,7 +1256,7 @@ void sm_restore_navigation_handling(void)
 void sm_set_trigger_position(void)
 {
   //Adjust the setting based on the given value
-  scopesettings.triggerhorizontalposition += userinterfacedata.speedvalue;
+  scopesettings.triggerhorizontalposition += speedvalue;
 
   //Check if still in allowed range
   if(scopesettings.triggerhorizontalposition < 0)
@@ -1309,7 +1276,7 @@ void sm_set_trigger_position(void)
 void sm_set_trigger_level(void)
 {
   //Adjust the setting based on the given value
-  scopesettings.triggerverticalposition += userinterfacedata.speedvalue;
+  scopesettings.triggerverticalposition += speedvalue;
 
   //Check if still in allowed range
   if(scopesettings.triggerverticalposition < 15)
@@ -1329,7 +1296,7 @@ void sm_set_trigger_level(void)
 void sm_set_time_base(void)
 {
   //Adjust the setting based on the given input
-  uint8 newvalue = scopesettings.timeperdiv + userinterfacedata.setvalue;
+  uint8 newvalue = scopesettings.timeperdiv + setvalue;
 
   //Check if not already on the lowest setting (10nS/div)
   if((newvalue >= 0) && (newvalue <= ((sizeof(time_div_texts) / sizeof(int8 *)) - 1)))
@@ -1358,7 +1325,7 @@ void sm_set_time_base(void)
 void sm_set_channel_sensitivity(PCHANNELSETTINGS settings)
 {
   //Adjust the setting based on the given input
-  uint8 newvalue = settings->displayvoltperdiv + userinterfacedata.setvalue;
+  uint8 newvalue = settings->displayvoltperdiv + setvalue;
 
   //Check if not outside of the settings
   if((newvalue >= 0) && (newvalue <= 6))
@@ -1393,7 +1360,7 @@ void sm_set_channel_sensitivity(PCHANNELSETTINGS settings)
 void sm_set_channel_position(PCHANNELSETTINGS settings)
 {
   //Adjust the setting based on the set speed value
-  settings->traceposition += userinterfacedata.speedvalue;
+  settings->traceposition += speedvalue;
 
   //Check if still in allowed range
   if(settings->traceposition < 15)
@@ -1437,19 +1404,19 @@ void sm_select_main_menu_item(void)
   ui_unhighlight_main_menu_item();
 
   //Adjust the setting based on the set value
-  userinterfacedata.menuitem -= userinterfacedata.setvalue;
+  menuitem -= setvalue;
 
   //Keep it in range of the item list. Fixed on 11 items including 0 for now. Should make it a define.
   //Or based on the function pointer array
-  if(userinterfacedata.menuitem < 0)
+  if(menuitem < 0)
   {
     //Overflow to the other end of the list
-    userinterfacedata.menuitem = 10;
+    menuitem = 10;
   }
-  else if(userinterfacedata.menuitem > 10)
+  else if(menuitem > 10)
   {
     //Overflow to the other end of the list
-    userinterfacedata.menuitem = 0;
+    menuitem = 0;
   }
 
   //Set the highlight on the current selected item
@@ -2071,7 +2038,7 @@ void sm_slider_close(void)
   sliderdata = 0;
 
   //Check if the scale (grid) brightness option is selected
-  if(userinterfacedata.menuitem == MAIN_MENU_GRID_BRIGHTNESS)
+  if(menuitem == MAIN_MENU_GRID_BRIGHTNESS)
   {
     //If so use the Y position for that one
     y = SLIDER_GRID_YPOS;
@@ -2092,7 +2059,7 @@ void sm_slider_adjust(void)
   if(sliderdata)
   {
     //Adjust the slider data for the current action
-    *sliderdata += userinterfacedata.setvalue;
+    *sliderdata += setvalue;
 
     //Limit with the allowable range
     if(*sliderdata < 0)
@@ -2105,14 +2072,14 @@ void sm_slider_adjust(void)
     }
 
     //Check if the scale (grid) brightness option is selected
-    if(userinterfacedata.menuitem == MAIN_MENU_GRID_BRIGHTNESS)
+    if(menuitem == MAIN_MENU_GRID_BRIGHTNESS)
     {
       //If so use the Y position for that one
       y = SLIDER_GRID_YPOS;
     }
 
     //Check if the screen brightness option is selected
-    if(userinterfacedata.menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
+    if(menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
     {
       //Show the new setting of the slider
       ui_display_slider(SLIDER_XPOS, y);
@@ -2142,7 +2109,7 @@ void sm_on_off_close(void)
   onoffdata = 0;
 
   //Check if the X-Y mode option is selected
-  if(userinterfacedata.menuitem == MAIN_MENU_XY_MODE)
+  if(menuitem == MAIN_MENU_XY_MODE)
   {
     //If so use the Y position for that one
     y = ON_OFF_SETTING_XY_MODE_YPOS;
@@ -2163,7 +2130,7 @@ void sm_on_off_check(void)
     uint16 y = ON_OFF_SETTING_50_PERCENT_YPOS;
     
     //Check if the X-Y mode option is selected
-    if(userinterfacedata.menuitem == MAIN_MENU_XY_MODE)
+    if(menuitem == MAIN_MENU_XY_MODE)
     {
       //If so use the Y position for that one
       y = ON_OFF_SETTING_XY_MODE_YPOS;
@@ -2185,7 +2152,7 @@ void sm_on_off_select(void)
   uint16 y = ON_OFF_SETTING_50_PERCENT_YPOS;
   
   //Check if the X-Y mode option is selected
-  if(userinterfacedata.menuitem == MAIN_MENU_XY_MODE)
+  if(menuitem == MAIN_MENU_XY_MODE)
   {
     //If so use the Y position for that one
     y = ON_OFF_SETTING_XY_MODE_YPOS;
@@ -2200,8 +2167,11 @@ void sm_on_off_select(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void sm_open_measurements_menu(void)
+void sm_open_measurements_menu(uint32 slot)
 {
+  //Set the slot to change
+  measurementslot = slot;
+  
   //Switch to the measurements menu handling states
   navigationstate = NAV_MEASUREMENTS_MENU_HANDLING;
   fileviewstate   = FILE_VIEW_MENU_CONTROL;
@@ -2219,17 +2189,79 @@ void sm_open_measurements_menu(void)
 
 void sm_open_channel_menu(PCHANNELSETTINGS settings)
 {
-  //Switch to the measurements menu handling states
-  navigationstate = NAV_CHANNEL_MENU_HANDLING;
-  fileviewstate   = FILE_VIEW_MENU_CONTROL;
-  buttondialstate = BUTTON_DIAL_CHANNEL_MENU_HANDLING;
+  //If the same channel configuration button is pressed again close the menu
+  if(settings != currentsettings)
+  {
+    //Switch to the measurements menu handling states
+    navigationstate = NAV_CHANNEL_MENU_HANDLING;
+    fileviewstate   = FILE_VIEW_MENU_CONTROL;
+    buttondialstate = BUTTON_DIAL_CHANNEL_MENU_HANDLING;
 
-  //Disable sampling and trace displaying
-  enablesampling = SAMPLING_NOT_ENABLED;
-  enabletracedisplay = TRACE_DISPLAY_NOT_ENABLED;
-  
-  //Open the actual menu
-  ui_display_channel_menu(settings);
+    //Disable sampling and trace displaying
+    enablesampling = SAMPLING_NOT_ENABLED;
+    enabletracedisplay = TRACE_DISPLAY_NOT_ENABLED;
+
+    //Start with the top line highlighted
+    menuitem = 0;
+
+    //Set the given channel as the current one
+    currentsettings = settings;
+
+    //Open the actual menu
+    ui_display_channel_menu(settings);
+  }
+  else
+  {
+    //Clear the setting to allow reopening of the same channel
+    currentsettings = 0;
+    
+    //Return to the normal operation
+    sm_close_menu();
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_select_channel_option(void)
+{
+  switch(menuitem)
+  {
+    case 0:
+      //Select the next or the previous magnification based on setvalue
+      currentsettings->magnification += setvalue;
+      
+      //Limit on the extremes
+      if(currentsettings->magnification < 0)
+      {
+        currentsettings->magnification = 2;
+      }
+      else if(currentsettings->magnification > 2)
+      {
+        currentsettings->magnification = 0;
+      }
+      
+      //Show the new setting on the screen
+      ui_display_channel_menu_probe_magnification_select(currentsettings);
+      ui_display_channel_probe(currentsettings);
+      break;
+
+    case 1:
+      //Select the other coupling state
+      currentsettings->coupling ^= 1;
+      
+      //Show the new setting on the screen
+      ui_display_channel_menu_coupling_select(currentsettings);
+      ui_display_channel_coupling(currentsettings);
+      break;
+
+    case 2:
+      //Toggle the FFT state
+      currentsettings->fftenable ^= 1;
+      
+      //Show the new setting on the screen
+      ui_display_channel_menu_fft_on_off_select(currentsettings);      
+      break;
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2266,7 +2298,7 @@ void sm_open_brightness_setting(void)
   navigationstate = NAV_SLIDER_HANDLING;
 
   //Check if the screen brightness option is selected
-  if(userinterfacedata.menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
+  if(menuitem == MAIN_MENU_SCREEN_BRIGHTNESS)
   {
     //If so set the screen brightness variable to be adjusted
     sliderdata = &scopesettings.screenbrightness;
@@ -2300,7 +2332,7 @@ void sm_open_on_off_setting(void)
   onoffhighlighteditem = 1;
 
   //Check if the always 50 percent trigger option is selected
-  if(userinterfacedata.menuitem == MAIN_MENU_50_PERCENT)
+  if(menuitem == MAIN_MENU_50_PERCENT)
   {
     //If so set the always trigger 50 percent variable to be adjusted
     onoffdata = &scopesettings.alwaystrigger50;
@@ -2368,9 +2400,6 @@ void sm_start_usb_export(void)
 {
   //Signal open command has been processed
   toprocesscommand = 0;
-
-  //Cancel navigation actions
-  userinterfacedata.navigationfunctions = 0;
 
   //Reset menu state since it is no longer open
   scopesettings.menustate = 0;

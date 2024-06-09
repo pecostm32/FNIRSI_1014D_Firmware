@@ -658,7 +658,7 @@ void ui_display_selected_text(void)
   {
     //Determine the positions for displaying the text based on the selected cursor and it's position
     //X and Y are fixed based on horizontal or vertical cursor lines
-    switch(userinterfacedata.selectedcursor)
+    switch(selectedcursor)
     {
       case CURSOR_TIME_LEFT:
       case CURSOR_TIME_RIGHT:
@@ -674,7 +674,7 @@ void ui_display_selected_text(void)
     }
 
     //Determine the positions for displaying the text based on the selected cursor and it's position
-    switch(userinterfacedata.selectedcursor)
+    switch(selectedcursor)
     {
       case CURSOR_TIME_LEFT:
         //Position the text to the left of the cursor
@@ -987,7 +987,7 @@ void ui_display_move_speed(void)
   display_copy_icon_fg_color(move_speed_icon, 330, 13, 16, 16);
   
   //Set the needed text based on the selected speed
-  if(scopesettings.movespeed == 0)
+  if(scopesettings.movespeed == MOVE_SPEED_FAST)
   {
     //Fast speed selected
     icon = fast_text_icon;
@@ -1716,7 +1716,7 @@ void ui_display_main_menu(void)
   display_fill_rect(6, 115, 181, 343);
 
   //Calculate the y position for the highlight box based on the selected menu item
-  y = 118 + (userinterfacedata.menuitem * 31);
+  y = 118 + (menuitem * 31);
   
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
@@ -1742,7 +1742,7 @@ void ui_unhighlight_main_menu_item(void)
   int y;
   
   //Calculate the y position for clearing the box based on the selected menu item
-  y = 118 + (userinterfacedata.menuitem * 31);
+  y = 118 + (menuitem * 31);
   
   //Fill the section with the lighter background of the menu area
   display_set_fg_color(0x00101010);
@@ -1755,7 +1755,7 @@ void ui_unhighlight_main_menu_item(void)
   y += 4;
   
   //Draw the icon and belonging text for the selected item
-  display_copy_icon_fg_color(main_menu_icons[userinterfacedata.menuitem], 14, y, 166, 18);
+  display_copy_icon_fg_color(main_menu_icons[menuitem], 14, y, 166, 18);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1767,7 +1767,7 @@ void ui_highlight_main_menu_item(void)
   //Clear the previous selection first
   
   //Calculate the y position for the highlight box based on the selected menu item
-  y = 118 + (userinterfacedata.menuitem * 31);
+  y = 118 + (menuitem * 31);
   
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
@@ -1779,7 +1779,7 @@ void ui_highlight_main_menu_item(void)
   y += 4;
   
   //Draw the icon and belonging text for the selected item
-  display_copy_icon_fg_color(main_menu_icons[userinterfacedata.menuitem], 14, y, 166, 18);
+  display_copy_icon_fg_color(main_menu_icons[menuitem], 14, y, 166, 18);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1817,7 +1817,7 @@ void ui_display_channel_menu(PCHANNELSETTINGS settings)
   display_fill_rect(261, 214, 189, 89);
 
   //Need to calculate the y position for the highlight box
-  y = 275; //217 + (selected * 29);
+  y = 217 + (menuitem * 29);
   
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(264, y, settings->highlightboxdata);
@@ -1871,6 +1871,10 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
 {
   int i;
   
+  //Clear the background first
+  display_set_fg_color(0x00000000);
+  display_fill_rect(364, 222, 79, 14);
+  
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
 
@@ -1899,7 +1903,11 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
 
 void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 {
-  if(settings->coupling == 0)
+  //Clear the background first
+  display_set_fg_color(0x00000000);
+  display_fill_rect(364, 250, 79, 16);
+  
+  if(settings->coupling == 1)
   {
     //Selected item highlight box is set in channel color
     display_set_fg_color(settings->color);
@@ -1919,7 +1927,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
   //Display the AC text
   display_copy_icon_fg_color(channel_menu_AC_icon, 373, 252, 19, 12);
 
-  if(settings->coupling == 1)
+  if(settings->coupling == 0)
   {
     //Selected item highlight box is set in channel color
     display_set_fg_color(settings->color);
@@ -1944,6 +1952,10 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 
 void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
 {
+  //Clear the background first
+  display_set_fg_color(0x00000000);
+  display_fill_rect(364, 279, 79, 16);
+  
   if(settings->fftenable == 1)
   {
     //Selected item highlight box is set in channel color

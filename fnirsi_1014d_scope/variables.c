@@ -9,53 +9,17 @@
 volatile uint32 timer0ticks;
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//User interface data
-//----------------------------------------------------------------------------------------------------------------------------------
-
-USERINTERFACEDATA userinterfacedata;
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Touch data
-//----------------------------------------------------------------------------------------------------------------------------------
-
-#ifndef USE_TP_CONFIG
-uint8  tp_config_data[186];
-
-uint32 xscaler;
-uint32 yscaler;
-#endif
-
-uint8  havetouch;
-uint16 xtouch;
-uint16 ytouch;
-
-//To allow for the different touch panel configurations in the field these variables can be controlled in the display configuration file
-uint8 xswap;
-uint8 yswap;
-
-uint8 config_valid;
-
-//----------------------------------------------------------------------------------------------------------------------------------
 //State machine data
 //----------------------------------------------------------------------------------------------------------------------------------
 
-uint16 previousxtouch = 0;
-uint16 previousytouch = 0;
+uint8 selectedcursor = 0;
 
-uint16 xtouchdisplacement = 0;
-uint16 ytouchdisplacement = 0;
+int16 menuitem = 0;
 
-uint16 maxdisplacement = 0;
-
-uint8 touchstate = 0;
+int8  speedvalue = 10;
+int8  setvalue   = 1;
 
 uint32 previoustimerticks = 0;
-
-uint8 systemsettingsmenuopen = 0;
-uint8 screenbrightnessopen = 0;
-uint8 gridbrightnessopen = 0;
-uint8 calibrationopen = 0;
-
 
 uint8 lastreceivedcommand = 0;
 uint8 toprocesscommand = 0;
@@ -73,6 +37,8 @@ uint8  onoffhighlighteditem = 0;
 uint8 *onoffdata = 0;
 
 uint8 measurementslot = 0;
+
+PCHANNELSETTINGS currentsettings = 0;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Display data
@@ -126,38 +92,6 @@ uint32 disp_trigger_index;            //Trigger point in the sample buffers
 
 int32 disp_xstart;
 int32 disp_xend;
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Distances of touch point to traces and cursors
-//----------------------------------------------------------------------------------------------------------------------------------
-
-uint16 distance_channel_1;
-uint16 distance_channel_2;
-
-uint16 distance_trigger_level;
-
-uint16 distance_time_cursor_left;
-uint16 distance_time_cursor_right;
-
-uint16 distance_volt_cursor_top;
-uint16 distance_volt_cursor_bottom;
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Previous trace and cursor settings
-//----------------------------------------------------------------------------------------------------------------------------------
-
-uint16 previous_channel_1_offset;
-uint16 previous_channel_2_offset;
-
-uint16 previous_trigger_level_offset;
-
-uint16 previous_trigger_point_position;
-
-uint16 previous_left_time_cursor_position;
-uint16 previous_right_time_cursor_position;
-
-uint16 previous_top_volt_cursor_position;
-uint16 previous_bottom_volt_cursor_position;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Data for picture and waveform view mode

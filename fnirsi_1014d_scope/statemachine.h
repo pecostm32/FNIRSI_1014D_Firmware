@@ -81,6 +81,11 @@
 #define MAIN_MENU_XY_MODE             7
 
 //----------------------------------------------------------------------------------------------------------------------------------
+
+#define MOVE_SPEED_FAST              10
+#define MOVE_SPEED_SLOW               1
+
+//----------------------------------------------------------------------------------------------------------------------------------
 //Navigation states
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -224,9 +229,10 @@ void sm_on_off_close(void);
 void sm_on_off_check(void);
 void sm_on_off_select(void);
 
-void sm_open_measurements_menu(void);
+void sm_open_measurements_menu(uint32 slot);
 
 void sm_open_channel_menu(PCHANNELSETTINGS settings);
+void sm_select_channel_option(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Next functions are for executing main menu items

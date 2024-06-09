@@ -19,93 +19,6 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void scope_run_stop_text(void)
-{
-  //Check if run or stop mode
-  if(scopesettings.runstate == 0)
-  {
-    //Run mode. Black box
-    display_set_fg_color(0x00000000);
-  }
-  else
-  {
-    //Stop mode. Red box
-    display_set_fg_color(0x00FF0000);
-  }
-
-  //Fill the box
-  display_fill_rect(RUN_STOP_TEXT_XPOS, RUN_STOP_TEXT_YPOS, RUN_STOP_TEXT_WIDTH, RUN_STOP_TEXT_HEIGHT);
-
-  //Select the font for the text
-  display_set_font(&font_3);
-
-  //Check if run or stop mode
-  if(scopesettings.runstate == 0)
-  {
-    //Run mode. White text
-    display_set_fg_color(0x00FFFFFF);
-    display_text(RUN_STOP_TEXT_XPOS + 4, RUN_STOP_TEXT_YPOS + 1, "RUN");
-  }
-  else
-  {
-    //Stop mode. Black text
-    display_set_fg_color(0x00000000);
-    display_text(RUN_STOP_TEXT_XPOS + 1, RUN_STOP_TEXT_YPOS + 1, "STOP");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_draw_grid(void)
-{
-  uint32 color;
-  register uint32 i;
-
-  //Only draw the grid when something will show (not in the original code)
-  if(scopesettings.gridbrightness > 3)
-  {
-    //Calculate a grey shade based on the grid brightness setting
-    color = (scopesettings.gridbrightness * 255) / 100;
-    color = (color << 16) | (color << 8) | color;
-
-    //Set the color for drawing
-    display_set_fg_color(color);
-
-    //Draw the edge
-    display_draw_rect(2, 46, 726, 404);
-
-    //Draw the center lines
-    display_draw_horz_line(249,  2, 726);
-    display_draw_vert_line(364, 46, 448);
-
-    //Draw the ticks on the x line
-    for(i=4;i<726;i+=5)
-    {
-      display_draw_vert_line(i, 247, 251);
-    }
-
-    //Draw the ticks on the y line
-    for(i=49;i<448;i+=5)
-    {
-      display_draw_horz_line(i, 362, 366);
-    }
-
-    //Draw the horizontal dots
-    for(i=99;i<448;i+=50)
-    {
-      display_draw_horz_dots(i, 4, 726, 5);
-    }
-
-    //Draw the vertical dots
-    for(i=14;i<726;i+=50)
-    {
-      display_draw_vert_dots(i, 49, 448, 5);
-    }
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
 void scope_calculate_trigger_vertical_position()
 {
   PCHANNELSETTINGS settings;
@@ -152,8 +65,8 @@ void scope_acquire_trace_data(void)
 {
   uint32 data;
 
-  //Check if running and not in a trace or cursor displacement state
-  if((scopesettings.runstate == 0) && (touchstate == 0))
+  //Check if running
+  if(scopesettings.runstate == 0)
   {
     //Set the trigger level
     fpga_set_trigger_level();
@@ -557,26 +470,6 @@ uint32 scope_do_channel_calibration(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-#if 0
-void scope_do_50_percent_trigger_setup(void)
-{
-  //Check which channel is the active trigger channel
-  if(scopesettings.triggerchannel == 0)
-  {
-    //Use the channel 1 center value
-    scopesettings.triggerlevel = scopesettings.channel1.center;
-  }
-  else
-  {
-    //Use the channel 2 center value
-    scopesettings.triggerlevel = scopesettings.channel2.center;
-  }
-
-  //Set the trigger vertical position position to match the new trigger level
-  scope_calculate_trigger_vertical_position();
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
 
 void scope_do_auto_setup(void)
 {
@@ -603,7 +496,7 @@ void scope_do_auto_setup(void)
   scopesettings.triggermode = 0;
   
   //Show it on the display
-  scope_trigger_settings(0);
+  ui_display_trigger_mode();
   
   //Also set the FPGA to the AUTO trigger mode
   fpga_set_trigger_mode();
@@ -612,7 +505,7 @@ void scope_do_auto_setup(void)
   scopesettings.runstate = 0;
   
   //Show this on the screen
-  scope_run_stop_text();
+  ui_display_run_stop_text();
   //End. 09-03-2022
 
   //Set number of samples
@@ -754,7 +647,7 @@ void scope_do_auto_setup(void)
   fpga_set_sample_rate(scopesettings.samplerate);
 
   //Show the new settings
-  scope_acqusition_settings(0);
+  ui_display_time_per_division();
 
   //Check the channels on valid voltage readings with the already done conversion, but only when valid frequency
   if(settings->frequencyvalid)
@@ -892,7 +785,7 @@ void scope_do_auto_setup(void)
     scopesettings.channel1.displayvoltperdiv = scopesettings.channel1.samplevoltperdiv;
     
     //Update the display
-    scope_channel_settings(&scopesettings.channel1, 0);
+    ui_display_channel_settings(&scopesettings.channel1);
   }
 
   //Check if channel 2 is enabled and set the new settings if so
@@ -905,11 +798,11 @@ void scope_do_auto_setup(void)
     scopesettings.channel2.displayvoltperdiv = scopesettings.channel2.samplevoltperdiv;
     
     //Update the display
-    scope_channel_settings(&scopesettings.channel2, 0);
+    ui_display_channel_settings(&scopesettings.channel2);
   }
 
   //Adjust the trigger level to 50% setting
-  scope_do_50_percent_trigger_setup();
+  sm_do_50_percent_trigger_setup();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -970,7 +863,6 @@ uint32 scope_check_channel_range(PCHANNELSETTINGS settings)
   return(notdone);
 }
 
-#endif
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void scope_display_trace_data(void)
@@ -1332,468 +1224,17 @@ void scope_display_channel_trace(PCHANNELSETTINGS settings)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_measurements(void)
-{
-#if 0  
-  //Check if channel1 is active
-  if(scopesettings.channel1.enable)
-  {
-    //Display the enabled measurements if it is active
-    scope_display_channel_measurements(&scopesettings.channel1, scopesettings.measuresstate[0], 5, CHANNEL1_COLOR);
-  }
-
-  //Check if channel2 is active
-  if(scopesettings.channel2.enable)
-  {
-    //Display the enabled measurements if it is active
-    scope_display_channel_measurements(&scopesettings.channel2, scopesettings.measuresstate[1], 366, CHANNEL2_COLOR);
-  }
-#endif  
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-#if 0
-const MEASUREMENTFUNCTION measurementfunctions[12] =
-{
-  scope_display_vmax,
-  scope_display_vmin,
-  scope_display_vavg,
-  scope_display_vrms,
-  scope_display_vpp,
-  scope_display_vp,
-  scope_display_freq,
-  scope_display_cycle,
-  scope_display_time_plus,
-  scope_display_time_min,
-  scope_display_duty_plus,
-  scope_display_duty_min
-};
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_channel_measurements(PCHANNELSETTINGS settings, uint8 *measuresstate, uint32 xstart, uint32 color)
-{
-  int i;
-  int x,xe,y;
-
-  x  = xstart;
-  xe = xstart + 359;
-  y  = 456;
-  
-  //Process the twelve possible measurements for this channel
-  for(i=0;i<12;i++)
-  {
-    //Check if the current one is enabled
-    if(measuresstate[i])
-    {
-      //Set gray background for the measurements tile
-      display_set_fg_color(0x00404040);
-
-      //Fill rounded rectangle for the tile
-      display_fill_rounded_rect(x, y, 118, 22, 2);
-
-      //Set the channel color for the name part
-      display_set_fg_color(color);
-      
-      //Fill rounded rectangle for the name part
-      display_fill_rounded_rect(x + 3, y + 3, 45, 16, 2);
-      
-      //Use black text and font_0 for the name
-      display_set_fg_color(0x00000000);
-      display_set_font(&font_0);
-      display_text(x + 6, y + 3, (char *)measurement_names[i]);
-
-      //Measurement in white text
-      display_set_fg_color(0x00FFFFFF);
-      
-      //Erase any previous text
-      measurementtext[0] = 0;
-      
-      //Display the data for this measurement
-      measurementfunctions[i](settings);
-      
-      //Display the formated data
-      display_text(x + 55, y + 3, measurementtext);
-
-      //Select next column
-      x += 120;
-      
-      //Check if past the last for this row
-      if(x > xe)
-      {
-        //Back to beginning of the rows
-        x = xstart;
-        
-        //Up to the row above
-        y -= 24;
-      }
-    }
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vmax(PCHANNELSETTINGS settings)
-{
-  //For the maximum take of the center ADC value
-  scope_display_voltage(settings, settings->max - 128);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vmin(PCHANNELSETTINGS settings)
-{
-  //For the minimum take of the center ADC value
-  scope_display_voltage(settings, settings->min - 128);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vavg(PCHANNELSETTINGS settings)
-{
-  //For the average take of the center ADC value
-  scope_display_voltage(settings, settings->average - 128);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vrms(PCHANNELSETTINGS settings)
-{
-  //The rms has already been centered during the summation so use it as is
-  scope_display_voltage(settings, settings->rms);
-
-#if 0
-  //This code has moved to FPGA file and has been improved
-  //Determine the two absolute extremes
-  int32 min = 128 - settings->min;
-  int32 max = settings->max - 128;
-  int32 vrms = max;
-  
-  //Use the biggest of the two
-  if(min > max)
-  {
-    vrms = min;
-  }
-  
-  //Calculate the root mean square
-  vrms = (vrms * 7071) / 10000;
-  
-  //Use the below the center value when it is the biggest
-  scope_display_voltage(settings, vrms);
-#endif
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vpp(PCHANNELSETTINGS settings)
-{
-  //For the peak peak just use the value as is
-  scope_display_voltage(settings, settings->peakpeak);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_vp(PCHANNELSETTINGS settings)
-{
-  //Determine the two absolute extremes
-  int32 min = 128 - settings->min;
-  int32 max = settings->max - 128;
-  
-  //Display the biggest of the two
-  if(min > max)
-  {
-    //Use the below the center value when it is the biggest
-    scope_display_voltage(settings, min);
-  }
-  else
-  {
-    //Use the above the center value when it is the biggest
-    scope_display_voltage(settings, max);
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_freq(PCHANNELSETTINGS settings)
-{
-  if(settings->frequencyvalid)
-  {
-    //Format the frequency for displaying
-    scope_print_value(measurementtext, settings->frequency, freq_calc_data[scopesettings.samplerate].freq_scale, "", "Hz");
-  }
-  else
-  {
-    strcpy(measurementtext, "xxxHz");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_cycle(PCHANNELSETTINGS settings)
-{
-  //Only when the frequency is valid calculate the time
-  if(settings->frequencyvalid)
-  {
-    //Format the time for displaying
-    scope_print_value(measurementtext, (((uint64)settings->periodtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "", "s");
-  }
-  else
-  {
-    strcpy(measurementtext, "xxxs");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_time_plus(PCHANNELSETTINGS settings)
-{
-  //Only when the frequency is valid calculate the time
-  if(settings->frequencyvalid)
-  {
-    //Format the time for displaying
-    scope_print_value(measurementtext, (((uint64)settings->hightime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "", "s");
-  }
-  else
-  {
-    strcpy(measurementtext, "xxxs");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_time_min(PCHANNELSETTINGS settings)
-{
-  //Only when the frequency is valid calculate the time
-  if(settings->frequencyvalid)
-  {
-    //Format the time for displaying
-    scope_print_value(measurementtext, (((uint64)settings->lowtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20), time_calc_data[scopesettings.samplerate].time_scale, "", "s");
-  }
-  else
-  {
-    strcpy(measurementtext, "xxxs");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_duty_plus(PCHANNELSETTINGS settings)
-{
-  char *buffer;
-  
-  //Only when the frequency is valid calculate the time
-  if(settings->frequencyvalid)
-  {
-    //Format the time for displaying
-    buffer = scope_print_decimal(measurementtext, (((uint64)settings->hightime * 1000) / settings->periodtime), 1, 0);
-    
-    //Add the duty cycle sign
-    strcpy(buffer, "%");
-    
-  }
-  else
-  {
-    strcpy(measurementtext, "xx%");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_duty_min(PCHANNELSETTINGS settings)
-{
-  char *buffer;
-  
-  //Only when the frequency is valid calculate the time
-  if(settings->frequencyvalid)
-  {
-    //Format the time for displaying
-    buffer = scope_print_decimal(measurementtext, (((uint64)settings->lowtime * 1000) / settings->periodtime), 1, 0);
-    
-    //Add the duty cycle sign
-    strcpy(buffer, "%");
-    
-  }
-  else
-  {
-    strcpy(measurementtext, "xx%");
-  }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Simple non optimized function for string copy that returns the position of the terminator
-//----------------------------------------------------------------------------------------------------------------------------------
-
-char *strcpy(char *dst, const char *src)
-{
-  while(*src)
-  {
-    *dst++ = *src++;
-  }
-
-  //Terminate the copy
-  *dst = 0;
-
-  return(dst);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_display_voltage(PCHANNELSETTINGS settings, int32 value)
-{
-  PVOLTCALCDATA vcd;
-  int32         volts;
-  
-  //Calculate the voltage based on the channel settings
-  vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
-
-  //Adjust the data for the correct voltage per div setting
-  volts = (value * signal_adjusters[settings->samplevoltperdiv]) >> VOLTAGE_SHIFTER;
-
-  //Scale the data based on the two volt per div settings when they differ
-  //This is needed when the screen is frozen and zooming is applied
-  if(settings->displayvoltperdiv != settings->samplevoltperdiv)
-  {
-    //Scaling factor is based on the two volts per division settings
-    volts = (volts * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
-  }
-  
-  //Multiply with the scaling factor for the channel settings
-  volts *= vcd->mul_factor;
-
-  //Format the voltage for displaying
-  scope_print_value(measurementtext, volts, vcd->volt_scale, "", "V");
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-
-void scope_print_value(char *buffer, int32 value, uint32 scale, char *header, char *sign)
-{
-  uint32 negative = 0;
-  
-  //Copy the header into the string buffer
-  buffer = strcpy(buffer, header);
-
-  //Check if negative value
-  if(value < 0)
-  {
-    //Negate if so and signal negative sign needed
-    value = -value;
-    negative = 1;
-  }
-  
-  //Need to find the magnitude scale for the input
-  //The calculations are based on fixed point
-  while(value >= 100000)
-  {
-    //Skip to the next magnitude
-    scale++;
-
-    //Bring the value in range
-    value /= 1000;
-  }
-
-  //Format the remainder for displaying. Only 3 digits are allowed to be displayed
-  if(value < 1000)
-  {
-    //Less then 1000 means x.yy
-    buffer = scope_print_decimal(buffer, value, 2, negative);
-  }
-  else if(value < 10000)
-  {
-    //More then 1000 but less then 10000 means xx.y
-    value /= 10;
-    buffer = scope_print_decimal(buffer, value, 1, negative);
-  }
-  else
-  {
-    //More then 10000 and less then 100000 means xxx
-    value /= 100;
-    buffer = scope_print_decimal(buffer, value, 0, negative);
-  }
-
-  //Make sure scale is not out of range
-  if(scale > 7)
-  {
-    scale = 7;
-  }
-
-  //Add the magnitude scaler
-  buffer = strcpy(buffer, magnitude_scaler[scale]);
-
-  //Add the type of measurement sign
-  strcpy(buffer, sign);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-char *scope_print_decimal(char *buffer, int32 value, uint32 decimals, uint32 negative)
-{
-  char   b[12];
-  uint32 i = 12;   //Start beyond the array since the index is pre decremented
-  uint32 s;
-
-  //For value 0 no need to do the work
-  if(value == 0)
-  {
-    //Value is zero so just set 0 character
-    b[--i] = '0';
-  }
-  else
-  {
-    //Process the digits
-    while(value)
-    {
-      //Set current digit to decreased index
-      b[--i] = (value % 10) + '0';
-
-      //Check if decimal point needs to be placed
-      if(i == 12 - decimals)
-      {
-        //If so put it in
-        b[--i] = '.';
-      }
-
-      //Take of the current digit
-      value /= 10;
-    }
-  }
-
-  //Check if negative number and if so put a minus in front of it
-  if(negative)
-    b[--i] = '-';
-  
-  //Determine the size of the string
-  s = 12 - i;
-
-  //Copy to the buffer
-  memcpy(buffer, &b[i], s);
-
-  //terminate the string
-  buffer[s] = 0;
-
-  //Return the position of the terminator to allow appending
-  return(&buffer[s]);
-}
-#endif
-//----------------------------------------------------------------------------------------------------------------------------------
 // Configuration data functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void scope_load_configuration_data(void)
 {
-#if 0
-  //Get the settings data form the flash memory
-  sys_spi_flash_read(0x001FD000, (uint8 *)settingsworkbuffer, sizeof(settingsworkbuffer));
-#else
   //Load the settings data from its sector on the SD card
   if(sd_card_read(SETTINGS_SECTOR, 1, (uint8 *)settingsworkbuffer) != SD_OK)
   {
     settingsworkbuffer[2] = 0;
     settingsworkbuffer[3] = 0;
   }
-#endif
 
   //Restore the settings from the loaded data
   scope_restore_config_data();
@@ -1846,13 +1287,8 @@ void scope_save_configuration_data(void)
   //Save the settings for writing to the flash
   scope_save_config_data();
 
-#if 0
-  //Write it to the flash
-  sys_spi_flash_write(0x001FD000, (uint8 *)settingsworkbuffer, sizeof(settingsworkbuffer));
-#else
   //Write the data to its sector on the SD card
   sd_card_write(SETTINGS_SECTOR, 1, (uint8 *)settingsworkbuffer);
-#endif
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1889,8 +1325,7 @@ void scope_reset_config_data(void)
   scopesettings.triggerverticalposition   = 200;
 
   //Set move speed to fast
-  scopesettings.movespeed = 0;
-  userinterfacedata.movespeed = 10;
+  scopesettings.movespeed = MOVE_SPEED_FAST;
 
   //Set time base to 20uS/div
   scopesettings.timeperdiv = 12;
@@ -2187,20 +1622,12 @@ void scope_restore_config_data(void)
     scopesettings.channel2.adc1compensation = *ptr++;
     scopesettings.channel2.adc2compensation = *ptr++;
     
-    //Update the user interface data based on the retrieved settings
-    //Set the actual movement speed in the user interface data
-    if(scopesettings.movespeed == 0)
+    //Checks needed on the validity of the settings????
+    if((scopesettings.movespeed != MOVE_SPEED_FAST) && (scopesettings.movespeed != MOVE_SPEED_SLOW))
     {
-      //Fast speed selected means taking 10 pixel steps
-      userinterfacedata.movespeed = 10;
+      //Default to fast
+      scopesettings.movespeed = MOVE_SPEED_FAST;
     }
-    else
-    {
-      //Slow speed selected means taking 1 pixel steps
-      userinterfacedata.movespeed = 1;
-    }
-    
-    //Navigation function pointers need to be set based on the cursor measurements
   }
   else
   {
