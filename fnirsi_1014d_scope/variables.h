@@ -95,6 +95,8 @@
 #define MEASUREMENT_SETTING_OFFSET      160
 #define CALIBRATION_SETTING_OFFSET      200
 
+#define SETTING_SECTOR_ID_HIGH       0x3413
+#define SETTING_SECTOR_ID_LOW        0x3031
 #define SETTING_SECTOR_VERSION_HIGH  0x0100
 #define SETTING_SECTOR_VERSION_LOW   0x0001
 
@@ -218,7 +220,7 @@
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #define THUMBNAIL_SAMPLE_MULTIPLIER   10000
-#define THUMBNAIL_X_DIVIDER           42899
+#define THUMBNAIL_X_DIVIDER           41834
 #define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT / 
 
 #define THUMBNAIL_TRACE_HEIGHT           94
@@ -486,6 +488,8 @@ struct tagScopeSettings
   uint8 xymodedisplay;
   uint8 confirmationmode;
   
+  uint8 selectedcursor;
+
   uint8 timecursorsenable;
   uint8 voltcursorsenable;
   uint8 capturecursorsenable;
@@ -630,8 +634,6 @@ extern TEXTDATA          channel_2_box_text;
 //----------------------------------------------------------------------------------------------------------------------------------
 //State machine data
 //----------------------------------------------------------------------------------------------------------------------------------
-
-extern uint8 selectedcursor;
 
 extern int16 menuitem;
 
@@ -826,26 +828,7 @@ extern FONTDATA font_4;
 extern const uint8 trigger_rising_edge_icon[];
 extern const uint8 trigger_falling_edge_icon[];
 
-extern const uint8 system_settings_icon[];
-extern const uint8 picture_view_icon[];
-extern const uint8 waveform_view_icon[];
-extern const uint8 usb_icon[];
-extern const uint8 screen_brightness_icon[];
-extern const uint8 grid_brightness_icon[];
-extern const uint8 trigger_50_percent_icon[];
-extern const uint8 baseline_calibration_icon[];
-extern const uint8 x_y_mode_display_icon[];
-extern const uint8 confirmation_icon[];
-extern const uint8 return_arrow_icon[];
-extern const uint8 left_pointer_icon[];
-extern const uint8 right_pointer_icon[];
-extern const uint8 top_pointer_icon[];
 extern const uint8 select_sign_icon[];
-extern const uint8 waste_bin_icon[];
-extern const uint8 previous_picture_icon[];
-extern const uint8 next_picture_icon[];
-
-//----------------------------------------------------------------------------------------------------------------------------------
 
 extern const uint8 peco_logo_icon[];
 
@@ -856,8 +839,6 @@ extern const uint8 moving_text_icon[];
 
 extern const uint8 run_text_icon[];
 extern const uint8 stop_text_icon[];
-
-extern const uint8 channel_menu_icon[];
 
 extern const uint8 waiting_text_icon[];
 extern const uint8 triggered_text_icon[];

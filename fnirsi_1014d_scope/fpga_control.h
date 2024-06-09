@@ -62,7 +62,6 @@ void   fpga_check_ready(void);
 
 void   fpga_enable_system(void);
 
-
 void   fpga_set_channel_enable(PCHANNELSETTINGS settings);
 void   fpga_set_channel_coupling(PCHANNELSETTINGS settings);
 void   fpga_set_channel_voltperdiv(PCHANNELSETTINGS settings);

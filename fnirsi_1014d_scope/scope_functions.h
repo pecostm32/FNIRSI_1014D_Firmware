@@ -12,8 +12,6 @@
 // Signal data processing functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void scope_calculate_trigger_vertical_position();
-
 void scope_acquire_trace_data(void);
 
 void scope_process_trigger(uint32 count);
@@ -21,11 +19,11 @@ void scope_process_trigger(uint32 count);
 uint32 scope_do_baseline_calibration(void);
 uint32 scope_do_channel_calibration(void);
 
-void scope_do_50_percent_trigger_setup(void);
-
 void scope_do_auto_setup(void);
 
 uint32 scope_check_channel_range(PCHANNELSETTINGS settings);
+
+void scope_calculate_trigger_vertical_position(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 // Signal data display functions

@@ -37,8 +37,19 @@ void sm_init(void)
   enablesampling     = SAMPLING_ENABLED;
   enabletracedisplay = TRACE_DISPLAY_ENABLED;
 
-  //For the user input only the basic scope control buttons and rotary dials are active
-  navigationstate = NAV_NO_ACTION;
+  //Check on cursors enabled to see which state needs to be set
+  if((scopesettings.timecursorsenable) || (scopesettings.voltcursorsenable))
+  {
+    //At least one cursor is enabled so allow handling them
+    navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
+  }
+  else
+  {
+    //For basic scope operation no navigation actions needed
+    navigationstate = NAV_NO_ACTION;
+  }
+  
+  //For the user input only the basic scope control buttons and rotary dials are active after startup
   fileviewstate   = FILE_VIEW_NO_ACTION;
   buttondialstate = BUTTON_DIAL_NORMAL_HANDLING;
 }
@@ -224,7 +235,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the left time cursor if enabled
       if(scopesettings.timecursorsenable)
       {
-        selectedcursor = CURSOR_TIME_LEFT;
+        scopesettings.selectedcursor = CURSOR_TIME_LEFT;
       }
       break;
 
@@ -232,7 +243,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the right time cursor if enabled
       if(scopesettings.timecursorsenable)
       {
-        selectedcursor = CURSOR_TIME_RIGHT;
+        scopesettings.selectedcursor = CURSOR_TIME_RIGHT;
       }
       break;
 
@@ -240,7 +251,7 @@ void sm_handle_time_volt_cursor(void)
       //Select the top volt cursor if enabled
       if(scopesettings.voltcursorsenable)
       {
-        selectedcursor = CURSOR_VOLT_TOP;
+        scopesettings.selectedcursor = CURSOR_VOLT_TOP;
       }
       break;
 
@@ -248,13 +259,13 @@ void sm_handle_time_volt_cursor(void)
       //Select the bottom volt cursor if enabled
       if(scopesettings.voltcursorsenable)
       {
-        selectedcursor = CURSOR_VOLT_BOTTOM;
+        scopesettings.selectedcursor = CURSOR_VOLT_BOTTOM;
       }
       break;
 
     case UIC_ROTARY_SEL_ADD:
     case UIC_ROTARY_SEL_SUB:
-      switch(selectedcursor)
+      switch(scopesettings.selectedcursor)
       {
         case CURSOR_TIME_LEFT:
           //Adjust the setting based on the set speed value
@@ -762,93 +773,19 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_H_CUR:
-      //Toggle the horizontal cursor state
-      scopesettings.timecursorsenable ^= 1;
-
-      //Enable the navigation state for the cursor handling
-      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
-
-      //Take needed actions when the cursor is enabled
-      if(scopesettings.timecursorsenable)
-      {
-        //Select the left cursor to start with
-        selectedcursor = CURSOR_TIME_LEFT;
-      }
-      else
-      {
-        //When the time cursor gets disabled check if the voltage cursor is enabled
-        if(scopesettings.voltcursorsenable)
-        {
-          //Select the top volt cursor if not on the bottom volt cursor
-          if(selectedcursor != CURSOR_VOLT_BOTTOM)
-          {
-            //Select the top volt cursor
-            selectedcursor = CURSOR_VOLT_TOP;
-          }
-        }
-        else
-        {
-          //No more cursor enabled so no more action in the navigation part
-          navigationstate = NAV_NO_ACTION;
-        }
-      }
+      sm_toggle_time_cursor();
       break;
 
     case UIC_BUTTON_V_CUR:
-      //Toggle the vertical cursor state
-      scopesettings.voltcursorsenable ^= 1;
-
-      //Enable the navigation state for the cursor handling
-      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
-
-      //Take needed actions when the cursor is enabled
-      if(scopesettings.voltcursorsenable)
-      {
-        //Select the top volt cursor to start with
-        selectedcursor = CURSOR_VOLT_TOP;
-      }
-      else
-      {
-        //When the volt cursor gets disabled check if the time cursor is enabled
-        if(scopesettings.timecursorsenable)
-        {
-          //Select the left time cursor if not on the right time cursor
-          if(selectedcursor != CURSOR_TIME_RIGHT)
-          {
-            //Select the left time cursor
-            selectedcursor = CURSOR_TIME_LEFT;
-          }
-        }
-        else
-        {
-          //No more cursor enabled so no more action in the navigation part
-          navigationstate = NAV_NO_ACTION;
-        }
-      }
+      sm_toggle_volt_cursor();
       break;
 
     case UIC_BUTTON_MOVE_SPEED:
-      //Set the new movement speed based on what the previous value was
-      if(scopesettings.movespeed == MOVE_SPEED_FAST)
-      {
-        //Slow speed selected means taking 1 pixel steps
-        scopesettings.movespeed = MOVE_SPEED_SLOW;
-      }
-      else
-      {
-        //Fast speed selected means taking 10 pixel steps
-        scopesettings.movespeed = MOVE_SPEED_FAST;
-      }
-
-      //Display the new speed on the screen
-      ui_display_move_speed();
+      sm_switch_move_speed();
       break;
 
     case UIC_BUTTON_CH1_ENABLE:
-      scopesettings.channel1.enable ^= 1;
-
-      //Update the information part to show the channel is either disabled or enabled
-      ui_display_channel_settings(&scopesettings.channel1);
+      sm_toggle_channel_enable(&scopesettings.channel1);
       break;
 
     case UIC_BUTTON_CH1_CONF:
@@ -856,10 +793,7 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_CH2_ENABLE:
-      scopesettings.channel2.enable ^= 1;
-
-      //Update the information part to show the channel is either disabled or enabled
-      ui_display_channel_settings(&scopesettings.channel2);
+      sm_toggle_channel_enable(&scopesettings.channel2);
       break;
 
     case UIC_BUTTON_CH2_CONF:
@@ -1022,100 +956,23 @@ void sm_button_dial_wave_view_handling(void)
       break;
 
     case UIC_BUTTON_H_CUR:
-      //Toggle the horizontal cursor state
-      scopesettings.timecursorsenable ^= 1;
-
-      //Enable the navigation state for the cursor handling
-      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
-
-      //Take needed actions when the cursor is enabled
-      if(scopesettings.timecursorsenable)
-      {
-        //Select the left cursor to start with
-        selectedcursor = CURSOR_TIME_LEFT;
-      }
-      else
-      {
-        //When the time cursor gets disabled check if the voltage cursor is enabled
-        if(scopesettings.voltcursorsenable)
-        {
-          //Select the top volt cursor if not on the bottom volt cursor
-          if(selectedcursor != CURSOR_VOLT_BOTTOM)
-          {
-            //Select the top volt cursor
-            selectedcursor = CURSOR_VOLT_TOP;
-          }
-        }
-        else
-        {
-          //No more cursor enabled so no more action in the navigation part
-          navigationstate = NAV_NO_ACTION;
-        }
-      }
+      sm_toggle_time_cursor();
       break;
 
     case UIC_BUTTON_V_CUR:
-      //Toggle the vertical cursor state
-      scopesettings.voltcursorsenable ^= 1;
-
-      //Enable the navigation state for the cursor handling
-      navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
-
-      //Take needed actions when the cursor is enabled
-      if(scopesettings.voltcursorsenable)
-      {
-        //Select the top volt cursor to start with
-        selectedcursor = CURSOR_VOLT_TOP;
-      }
-      else
-      {
-        //When the volt cursor gets disabled check if the time cursor is enabled
-        if(scopesettings.timecursorsenable)
-        {
-          //Select the left time cursor if not on the right time cursor
-          if(selectedcursor != CURSOR_TIME_RIGHT)
-          {
-            //Select the left time cursor
-            selectedcursor = CURSOR_TIME_LEFT;
-          }
-        }
-        else
-        {
-          //No more cursor enabled so no more action in the navigation part
-          navigationstate = NAV_NO_ACTION;
-        }
-      }
+      sm_toggle_volt_cursor();
       break;
 
     case UIC_BUTTON_MOVE_SPEED:
-      //Set the new movement speed based on what the previous value was
-      if(scopesettings.movespeed == MOVE_SPEED_FAST)
-      {
-        //Slow speed selected means taking 1 pixel steps
-        scopesettings.movespeed = MOVE_SPEED_SLOW;
-      }
-      else
-      {
-        //Fast speed selected means taking 10 pixel steps
-        scopesettings.movespeed = MOVE_SPEED_FAST;
-      }
-
-      //Display the new speed on the screen
-      ui_display_move_speed();
+      sm_switch_move_speed();
       break;
 
     case UIC_BUTTON_CH1_ENABLE:
-      scopesettings.channel1.enable ^= 1;
-
-      //Update the information part to show the channel is either disabled or enabled
-      ui_display_channel_settings(&scopesettings.channel1);
+      sm_toggle_channel_enable(&scopesettings.channel1);
       break;
 
     case UIC_BUTTON_CH2_ENABLE:
-      scopesettings.channel2.enable ^= 1;
-
-      //Update the information part to show the channel is either disabled or enabled
-      ui_display_channel_settings(&scopesettings.channel2);
+      sm_toggle_channel_enable(&scopesettings.channel2);
       break;
 
     case UIC_ROTARY_CH1_POS_ADD:
@@ -1251,6 +1108,97 @@ void sm_restore_navigation_handling(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_toggle_time_cursor(void)
+{
+  //Toggle the horizontal cursor state
+  scopesettings.timecursorsenable ^= 1;
+
+  //Enable the navigation state for the cursor handling
+  navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
+
+  //Take needed actions when the cursor is enabled
+  if(scopesettings.timecursorsenable)
+  {
+    //Select the left cursor to start with
+    scopesettings.selectedcursor = CURSOR_TIME_LEFT;
+  }
+  else
+  {
+    //When the time cursor gets disabled check if the voltage cursor is enabled
+    if(scopesettings.voltcursorsenable)
+    {
+      //Select the top volt cursor if not on the bottom volt cursor
+      if(scopesettings.selectedcursor != CURSOR_VOLT_BOTTOM)
+      {
+        //Select the top volt cursor
+        scopesettings.selectedcursor = CURSOR_VOLT_TOP;
+      }
+    }
+    else
+    {
+      //No more cursor enabled so no more action in the navigation part
+      navigationstate = NAV_NO_ACTION;
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_toggle_volt_cursor(void)
+{
+  //Toggle the vertical cursor state
+  scopesettings.voltcursorsenable ^= 1;
+
+  //Enable the navigation state for the cursor handling
+  navigationstate = NAV_TIME_VOLT_CURSOR_HANDLING;
+
+  //Take needed actions when the cursor is enabled
+  if(scopesettings.voltcursorsenable)
+  {
+    //Select the top volt cursor to start with
+    scopesettings.selectedcursor = CURSOR_VOLT_TOP;
+  }
+  else
+  {
+    //When the volt cursor gets disabled check if the time cursor is enabled
+    if(scopesettings.timecursorsenable)
+    {
+      //Select the left time cursor if not on the right time cursor
+      if(scopesettings.selectedcursor != CURSOR_TIME_RIGHT)
+      {
+        //Select the left time cursor
+        scopesettings.selectedcursor = CURSOR_TIME_LEFT;
+      }
+    }
+    else
+    {
+      //No more cursor enabled so no more action in the navigation part
+      navigationstate = NAV_NO_ACTION;
+    }
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_switch_move_speed(void)
+{
+  //Set the new movement speed based on what the previous value was
+  if(scopesettings.movespeed == MOVE_SPEED_FAST)
+  {
+    //Slow speed selected means taking 1 pixel steps
+    scopesettings.movespeed = MOVE_SPEED_SLOW;
+  }
+  else
+  {
+    //Fast speed selected means taking 10 pixel steps
+    scopesettings.movespeed = MOVE_SPEED_FAST;
+  }
+
+  //Display the new speed on the screen
+  ui_display_move_speed();
+}
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void sm_set_trigger_position(void)
@@ -1318,6 +1266,17 @@ void sm_set_time_base(void)
     //Show he new setting on the display
     ui_display_time_per_division();
   }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_toggle_channel_enable(PCHANNELSETTINGS settings)
+{
+  //Toggle the enable
+  settings->enable ^= 1;
+
+  //Update the information part to show the channel is either disabled or enabled
+  ui_display_channel_settings(settings);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

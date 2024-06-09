@@ -18,47 +18,7 @@
 #include <string.h>
 
 //----------------------------------------------------------------------------------------------------------------------------------
-
-void scope_calculate_trigger_vertical_position()
-{
-  PCHANNELSETTINGS settings;
-
-  //Select the channel based on the current trigger channel
-  if(scopesettings.triggerchannel == 0)
-  {
-    settings = &scopesettings.channel1;
-  }
-  else
-  {
-    settings = &scopesettings.channel2;
-  }
-
-  int32 position;
-
-  //Center the trigger level around 0 point
-  position = scopesettings.triggerlevel - 128;
-
-  //Adjust it for the current volt per div setting
-  position = (position * signal_adjusters[settings->displayvoltperdiv]) >> VOLTAGE_SHIFTER;
-
-  //Add the trace center to it
-  position = settings->traceposition + position;
-
-  //Limit to extremes
-  if(position < 0)
-  {
-    position = 0;
-  }
-  else if(position > 401)
-  {
-    position = 401;
-  }
-
-  //Set as new position
-  scopesettings.triggerverticalposition = position;
-}
-
-
+// Signal data processing functions
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void scope_acquire_trace_data(void)
@@ -77,7 +37,7 @@ void scope_acquire_trace_data(void)
     //Sampling with trigger circuit enabled
     scopesettings.samplemode = 1;
 
-    //Start the conversion and wait until done or touch panel active
+    //Start the conversion and wait until done or user input given
     fpga_do_conversion();
 
 #if 0    
@@ -865,6 +825,49 @@ uint32 scope_check_channel_range(PCHANNELSETTINGS settings)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+void scope_calculate_trigger_vertical_position(void)
+{
+  PCHANNELSETTINGS settings;
+
+  //Select the channel based on the current trigger channel
+  if(scopesettings.triggerchannel == 0)
+  {
+    settings = &scopesettings.channel1;
+  }
+  else
+  {
+    settings = &scopesettings.channel2;
+  }
+
+  int32 position;
+
+  //Center the trigger level around 0 point
+  position = scopesettings.triggerlevel - 128;
+
+  //Adjust it for the current volt per div setting
+  position = (position * signal_adjusters[settings->displayvoltperdiv]) >> VOLTAGE_SHIFTER;
+
+  //Add the trace center to it
+  position = settings->traceposition + position;
+
+  //Limit to extremes
+  if(position < 0)
+  {
+    position = 0;
+  }
+  else if(position > 401)
+  {
+    position = 401;
+  }
+
+  //Set as new position
+  scopesettings.triggerverticalposition = position;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+// Signal data display functions
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void scope_display_trace_data(void)
 {
   //See if it is possible to rework this to fixed point. A 32 bit mantissa is not accurate enough though
@@ -978,8 +981,6 @@ void scope_display_trace_data(void)
     //Check if channel1 is enabled
     if(scopesettings.channel1.enable)
     {
-      //This can be reduced in parameters by using the channel structure as input and add the color as item in the structure
-
       //Go and do the actual trace drawing
       scope_display_channel_trace(&scopesettings.channel1);
     }
@@ -1113,8 +1114,8 @@ int32 scope_get_y_sample(PCHANNELSETTINGS settings, int32 index)
     sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
   }
   
-  //Offset the sample on the screen
-  sample = settings->traceposition + sample;
+  //Offset the sample on the screen and correct it for the pointer center
+  sample = settings->traceposition + sample - 7;
 
   //Limit sample on min displayable
   if(sample < 0)
@@ -1232,12 +1233,17 @@ void scope_load_configuration_data(void)
   //Load the settings data from its sector on the SD card
   if(sd_card_read(SETTINGS_SECTOR, 1, (uint8 *)settingsworkbuffer) != SD_OK)
   {
-    settingsworkbuffer[2] = 0;
-    settingsworkbuffer[3] = 0;
+    //Load a default set on failure
+    scope_reset_config_data();
+    
+    //Save it to the SD card
+    scope_save_configuration_data();
   }
-
-  //Restore the settings from the loaded data
-  scope_restore_config_data();
+  else
+  {
+    //Restore the settings from the loaded data
+    scope_restore_config_data();
+  }
 
   //Set the FPGA commands for channel 1
   scopesettings.channel1.enablecommand     = 0x02;
@@ -1358,6 +1364,9 @@ void scope_reset_config_data(void)
   scopesettings.measurementitems[5].channel         = 1;
   scopesettings.measurementitems[5].index           = 6;                            //Freq
 
+  //Select default cursor
+  scopesettings.selectedcursor = CURSOR_TIME_LEFT;
+  
   //Turn time cursor off and set some default positions
   scopesettings.timecursorsenable   = 0;
   scopesettings.timecursor1position = 183;
@@ -1393,8 +1402,10 @@ void scope_save_config_data(void)
   uint16 *ptr;
 
   //Set a version number for checking if the settings match the current firmware
-  settingsworkbuffer[2] = SETTING_SECTOR_VERSION_HIGH;
-  settingsworkbuffer[3] = SETTING_SECTOR_VERSION_LOW;
+  settingsworkbuffer[2] = SETTING_SECTOR_ID_HIGH;
+  settingsworkbuffer[3] = SETTING_SECTOR_ID_LOW;
+  settingsworkbuffer[4] = SETTING_SECTOR_VERSION_HIGH;
+  settingsworkbuffer[5] = SETTING_SECTOR_VERSION_LOW;
   
   //Point to the channel 1 settings
   ptr = &settingsworkbuffer[CHANNEL1_SETTING_OFFSET];
@@ -1446,6 +1457,9 @@ void scope_save_config_data(void)
 
   //Point to the cursor settings
   ptr = &settingsworkbuffer[CURSOR_SETTING_OFFSET];
+  
+  //Save the current selected cursor
+  *ptr++ = scopesettings.selectedcursor;
   
   //Save the time cursor settings
   *ptr++ = scopesettings.timecursorsenable;
@@ -1513,8 +1527,13 @@ void scope_restore_config_data(void)
     checksum += settingsworkbuffer[index];
   }
   
-  //Check if the checksum is a match as well as the version number
-  if((settingsworkbuffer[0] == (checksum >> 16)) && (settingsworkbuffer[1] == (checksum & 0xFFFF)) && (settingsworkbuffer[2] == SETTING_SECTOR_VERSION_HIGH) && (settingsworkbuffer[3] == SETTING_SECTOR_VERSION_LOW))
+  //Check if the checksum is a match as well as the id and version number
+  if((settingsworkbuffer[0] == (checksum >> 16))            &&
+     (settingsworkbuffer[1] == (checksum & 0xFFFF))         &&
+     (settingsworkbuffer[2] == SETTING_SECTOR_ID_HIGH)      &&
+     (settingsworkbuffer[3] == SETTING_SECTOR_ID_LOW)       &&
+     (settingsworkbuffer[4] == SETTING_SECTOR_VERSION_HIGH) &&
+     (settingsworkbuffer[5] == SETTING_SECTOR_VERSION_LOW))
   {
     //Point to the channel 1 settings
     ptr = &settingsworkbuffer[CHANNEL1_SETTING_OFFSET];
@@ -1567,6 +1586,9 @@ void scope_restore_config_data(void)
     //Point to the cursor settings
     ptr = &settingsworkbuffer[CURSOR_SETTING_OFFSET];
 
+    //Restore the current selected cursor
+    scopesettings.selectedcursor = *ptr++;
+    
     //Restore the time cursor settings
     scopesettings.timecursorsenable   = *ptr++;
     scopesettings.timecursor1position = *ptr++;

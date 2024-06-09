@@ -184,10 +184,17 @@ void sm_button_dial_channel_menu_handling(void);
 void sm_close_menu(void);
 void sm_restore_navigation_handling(void);
 
+void sm_toggle_time_cursor(void);
+void sm_toggle_volt_cursor(void);
+
+void sm_switch_move_speed(void);
+
 void sm_set_trigger_position(void);
 void sm_set_trigger_level(void);
 
 void sm_set_time_base(void);
+
+void sm_toggle_channel_enable(PCHANNELSETTINGS settings);
 
 void sm_set_channel_sensitivity(PCHANNELSETTINGS settings);
 void sm_set_channel_position(PCHANNELSETTINGS settings);

@@ -12,8 +12,6 @@ volatile uint32 timer0ticks;
 //State machine data
 //----------------------------------------------------------------------------------------------------------------------------------
 
-uint8 selectedcursor = 0;
-
 int16 menuitem = 0;
 
 int8  speedvalue = 10;

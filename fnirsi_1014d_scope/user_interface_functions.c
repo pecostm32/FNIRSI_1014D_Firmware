@@ -658,7 +658,7 @@ void ui_display_selected_text(void)
   {
     //Determine the positions for displaying the text based on the selected cursor and it's position
     //X and Y are fixed based on horizontal or vertical cursor lines
-    switch(selectedcursor)
+    switch(scopesettings.selectedcursor)
     {
       case CURSOR_TIME_LEFT:
       case CURSOR_TIME_RIGHT:
@@ -674,7 +674,7 @@ void ui_display_selected_text(void)
     }
 
     //Determine the positions for displaying the text based on the selected cursor and it's position
-    switch(selectedcursor)
+    switch(scopesettings.selectedcursor)
     {
       case CURSOR_TIME_LEFT:
         //Position the text to the left of the cursor
@@ -2960,6 +2960,7 @@ void ui_prepare_setup_for_file(void)
   index = CURSOR_SETTING_OFFSET;
   
   //Copy the cursor settings
+  ptr[index++] = scopesettings.selectedcursor;
   ptr[index++] = scopesettings.timecursorsenable;
   ptr[index++] = scopesettings.voltcursorsenable;
   ptr[index++] = scopesettings.timecursor1position;
@@ -3078,6 +3079,7 @@ void ui_restore_setup_from_file(void)
   index = CURSOR_SETTING_OFFSET;
   
   //Copy the cursor settings
+  scopesettings.selectedcursor      = ptr[index++];
   scopesettings.timecursorsenable   = ptr[index++];
   scopesettings.voltcursorsenable   = ptr[index++];
   scopesettings.timecursor1position = ptr[index++];
@@ -4445,7 +4447,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
     uint8 *buffer1 = thumbnaildata->channel1data;
     uint8 *buffer2 = thumbnaildata->channel2data;
     
-    //Copy and scale every 4th sample for this channel
+    //Copy and scale every 4th sample for the channels
     for(;index<last;index+=4)
     {
       //Adjust the samples to fit the thumbnail screen. Channel 1 is x, channel 2 is y
@@ -4460,7 +4462,6 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
 {
   int32  index;
-  uint32 pattern;
   int32  sample;
 
   //Point to the first and second trace point for easy access
@@ -4479,8 +4480,8 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   }
 
   //Down sample the points in to the given buffer
-  //This yields a max of 182 points, which is more then is displayed on the thumbnail screen
-  for(index=disp_xstart,pattern=0;index<=disp_xend;index+=4,pattern++)
+  //This yields a max of 176 points, which is more then is displayed on the thumbnail screen
+  for(index=disp_xstart;index<=disp_xend;index+=4)
   {
     //Take of the trace screen top offset to get the actual sample value. Can be negative when the trace is outside the displayable region
     sample = (int32)thumbnailtracedata[index] - TRACE_WINDOW_BORDER_YPOS;
@@ -4501,15 +4502,8 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
       sample = (sample * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
     }
     
-    //FIll the buffer with the samples
+    //Fill the buffer with the samples
     *buffer++ = (uint8)sample;
-    
-    //Skip one more sample every third loop
-    if(pattern == 2)
-    {
-      pattern = -1;
-      index++;
-    }
   }
 }
 
