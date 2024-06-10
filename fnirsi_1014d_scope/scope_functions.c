@@ -26,8 +26,11 @@ void scope_acquire_trace_data(void)
   uint32 data;
 
   //Check if running
-  if(scopesettings.runstate == 0)
+  if(scopesettings.runstate == RUN_STATE_RUNNING)
   {
+    //Show the user waiting for a trigger
+    ui_display_waiting_triggered_text(0);
+    
     //Set the trigger level
     fpga_set_trigger_level();
 
@@ -40,20 +43,18 @@ void scope_acquire_trace_data(void)
     //Start the conversion and wait until done or user input given
     fpga_do_conversion();
 
-#if 0    
-    //Check if cut short with touch
-    if(havetouch)
+    //Check if cut short with user input
+    if(toprocesscommand)
     {
       //If so skip the rest
       return;
     }
-#endif
     
     //Check if in single mode
     if(scopesettings.triggermode == 1)
     {
       //Switch to stopped
-      scopesettings.runstate = 1;
+      scopesettings.runstate = RUN_STATE_STOPPED;
 
       //Show this on the screen
       ui_display_run_stop_text();
@@ -62,6 +63,13 @@ void scope_acquire_trace_data(void)
     //Get trigger point information
     //Later on used to send to the FPGA with command 0x1F
     data = fpga_prepare_for_transfer();
+    
+    
+    //Check if there was a trigger and show it on the screen if so
+    if(fpga_had_trigger())
+    {
+      ui_display_waiting_triggered_text(1);
+    }
     
     //After 800 samples the FPGA starts checking on a trigger, and it can run past the end of the buffer back to the beginning
     //To determine the starting point of from where to read the data it is possible to extend it to this 800 samples as the before
@@ -321,7 +329,7 @@ uint32 scope_do_channel_calibration(void)
       //Wait 25ms before sampling
       timer0_delay(25);
 
-      //Start the conversion and wait until done or touch panel active
+      //Start the conversion and wait until done
       fpga_do_conversion();
 
       //Get the data from a sample run
@@ -337,7 +345,7 @@ uint32 scope_do_channel_calibration(void)
       //Wait 25ms before sampling
       timer0_delay(25);
 
-      //Start the conversion and wait until done or touch panel active
+      //Start the conversion and wait until done
       fpga_do_conversion();
 
       //Get the data from a sample run
@@ -387,7 +395,7 @@ uint32 scope_do_channel_calibration(void)
     //Wait 50ms before sampling
     timer0_delay(50);
 
-    //Start the conversion and wait until done or touch panel active
+    //Start the conversion and wait until done
     fpga_do_conversion();
 
     //Get the data from a sample run
@@ -462,7 +470,7 @@ void scope_do_auto_setup(void)
   fpga_set_trigger_mode();
   
   //To make sure the scope will be running after auto set, set the run mode to running
-  scopesettings.runstate = 0;
+  scopesettings.runstate = RUN_STATE_RUNNING;
   
   //Show this on the screen
   ui_display_run_stop_text();
@@ -515,7 +523,7 @@ void scope_do_auto_setup(void)
     //Set the matching time base
     fpga_set_time_base(sample_rate_time_per_div[samplerate_for_autosetup[samplerate]]);
 
-    //Start the conversion and wait until done or touch panel active
+    //Start the conversion and wait until done
     fpga_do_conversion();
 
     //Get the data from a sample run
@@ -963,7 +971,7 @@ void scope_display_trace_data(void)
 
   //Clear the trace portion of the screen
   display_set_fg_color(0x00000000);
-  display_fill_rect(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH, TRACE_MAX_HEIGHT);
+  display_fill_rect(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH - 1, TRACE_MAX_HEIGHT - 1);
 
   //Check if not in waveform view mode with grid disabled
   if((scopesettings.waveviewmode == 0) || scopesettings.gridenable == 0)
@@ -1114,8 +1122,8 @@ int32 scope_get_y_sample(PCHANNELSETTINGS settings, int32 index)
     sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
   }
   
-  //Offset the sample on the screen and correct it for the pointer center
-  sample = settings->traceposition + sample - 7;
+  //Offset the sample on the screen
+  sample = settings->traceposition + sample;
 
   //Limit sample on min displayable
   if(sample < 0)
@@ -1273,7 +1281,7 @@ void scope_load_configuration_data(void)
   scopesettings.channel2.adc1command       = 0x22;
   scopesettings.channel2.adc2command       = 0x23;
 
-  //Set the menu and button data for channel 2
+  //Set the menu data for channel 2
   scopesettings.channel2.color            = CHANNEL2_COLOR;
   scopesettings.channel2.highlightboxdata = &channel_2_highlight_box;
   scopesettings.channel2.boxdata          = &channel_2_box;
@@ -1284,6 +1292,9 @@ void scope_load_configuration_data(void)
   //Set the trace and display buffer pointers for channel 2
   scopesettings.channel2.tracebuffer = (uint8 *)channel2tracebuffer;
   scopesettings.channel2.tracepoints = channel2pointsbuffer;
+  
+  //Start in running state
+  scopesettings.runstate = RUN_STATE_RUNNING;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

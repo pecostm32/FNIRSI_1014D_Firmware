@@ -813,24 +813,27 @@ void sm_button_dial_normal_handling(void)
       scopesettings.triggermode++;
       scopesettings.triggermode %= 3;
 
-      //Display the new mode on the screen
+      //Display the new mode on the screen and set it in the FPGA
       ui_display_trigger_mode();
+      fpga_set_trigger_mode();
       break;
 
     case UIC_BUTTON_TRIG_EDGE:
       //Toggle the trigger edge
       scopesettings.triggeredge ^= 1;
 
-      //Display the new edge on the screen
+      //Display the new edge on the screen and activate it in the FPGA
       ui_display_trigger_edge();
+      fpga_set_trigger_edge();
       break;
 
     case UIC_BUTTON_TRIG_CHX:
       //Toggle the trigger edge
       scopesettings.triggerchannel ^= 1;
 
-      //Display the new edge on the screen
+      //Display the new edge on the screen and activate it in the FPGA
       ui_display_trigger_channel();
+      fpga_set_trigger_channel();
       break;
 
     case UIC_BUTTON_TRIG_50_PERCENT:
@@ -1073,6 +1076,9 @@ void sm_button_dial_channel_menu_handling(void)
 
 void sm_close_menu(void)
 {
+  //Clear the current channel setting to allow reopening of the same channel after close
+  currentsettings = 0;
+  
   //Enable sampling and display tracing
   enablesampling = SAMPLING_ENABLED;
   enabletracedisplay = TRACE_DISPLAY_ENABLED;
@@ -1227,15 +1233,15 @@ void sm_set_trigger_level(void)
   scopesettings.triggerverticalposition += speedvalue;
 
   //Check if still in allowed range
-  if(scopesettings.triggerverticalposition < 15)
+  if(scopesettings.triggerverticalposition < VERTICAL_POINTER_POS_MIN)
   {
     //Limit it on the minimum range if needed
-    scopesettings.triggerverticalposition = 15;
+    scopesettings.triggerverticalposition = VERTICAL_POINTER_POS_MIN;
   }
-  else if(scopesettings.triggerverticalposition > 399)
+  else if(scopesettings.triggerverticalposition > VERTICAL_POINTER_POS_MAX)
   {
     //Limit it on maximum range if needed
-    scopesettings.triggerverticalposition = 399;
+    scopesettings.triggerverticalposition = VERTICAL_POINTER_POS_MAX;
   }
 }
 
@@ -1252,9 +1258,9 @@ void sm_set_time_base(void)
     //Go down in time by adding one to the setting
     scopesettings.timeperdiv = newvalue;
 
-    //For time per div set with tapping on the screen the direct relation between the time per div and the sample rate is set
+    //For time per div set with the dial the direct relation between the time per div and the sample rate is set
     //but only when the scope is running. Otherwise the sample rate of the acquired buffer still is valid.
-    if(scopesettings.runstate == 0)
+    if(scopesettings.runstate == RUN_STATE_RUNNING)
     {
       //Set the sample rate that belongs to the selected time per div setting
       scopesettings.samplerate = time_per_div_sample_rate[scopesettings.timeperdiv];
@@ -1297,7 +1303,7 @@ void sm_set_channel_sensitivity(PCHANNELSETTINGS settings)
 
     //Only update the FPGA in run mode
     //For waveform view mode the stop state is forced and can't be changed
-    if(scopesettings.runstate == 0)
+    if(scopesettings.runstate == RUN_STATE_RUNNING)
     {
       //Copy the display setting to the sample setting
       settings->samplevoltperdiv = settings->displayvoltperdiv;
@@ -1322,15 +1328,15 @@ void sm_set_channel_position(PCHANNELSETTINGS settings)
   settings->traceposition += speedvalue;
 
   //Check if still in allowed range
-  if(settings->traceposition < 15)
+  if(settings->traceposition < VERTICAL_POINTER_POS_MIN)
   {
     //Limit it on the minimum range if needed
-    settings->traceposition = 15;
+    settings->traceposition = VERTICAL_POINTER_POS_MIN;
   }
-  else if(settings->traceposition > 399)
+  else if(settings->traceposition > VERTICAL_POINTER_POS_MAX)
   {
     //Limit it on maximum range if needed
-    settings->traceposition = 399;
+    settings->traceposition = VERTICAL_POINTER_POS_MAX;
   }
 }
 
@@ -2171,9 +2177,6 @@ void sm_open_channel_menu(PCHANNELSETTINGS settings)
   }
   else
   {
-    //Clear the setting to allow reopening of the same channel
-    currentsettings = 0;
-    
     //Return to the normal operation
     sm_close_menu();
   }

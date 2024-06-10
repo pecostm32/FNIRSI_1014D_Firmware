@@ -1,7 +1,9 @@
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #include "fpga_control.h"
+#include "uart.h"
 #include "fnirsi_1014d_scope.h"
+#include "statemachine.h"
 #include "timer.h"
 #include "variables.h"
 
@@ -516,16 +518,15 @@ void fpga_do_conversion(void)
   
   //Send check on triggered or buffer full command to the FPGA
   fpga_write_cmd(0x0A);
-  
+
   //Check if sampling with trigger system enabled
   if(scopesettings.samplemode == 1)
   {
-    //Wait for the FPGA to signal triggered or touch panel is touched
-    while(((fpga_read_byte() & 1) == 0)) // && (havetouch == 0))   Need something here for user interface handling???
-    {
-      //Scan the touch panel
-//      tp_i2c_read_status();
-    }
+    //Make sure the last command is erased
+    toprocesscommand = 0;
+  
+    //Wait for the FPGA to signal triggered or user input is given
+    while(((fpga_read_byte() & 1) == 0) && (uart1_get_user_input() == 0));
     
     //Disable trigger system???
     fpga_write_cmd(0x0F);
@@ -533,7 +534,7 @@ void fpga_do_conversion(void)
   }
   else
   {
-    //Wait for the FPGA to signal triggered or buffer full
+    //Without trigger wait until the buffer is filled
     while((fpga_read_byte() & 1) == 0);
   }
 }
@@ -588,6 +589,16 @@ uint32 isqrt(uint32 n)
   }
 
   return c;
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+uint8 fpga_had_trigger(void)
+{
+  //Write the command for reading the trigger state
+  fpga_write_cmd(0x18);
+  
+  return(fpga_read_byte());
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

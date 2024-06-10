@@ -47,7 +47,7 @@ void ui_setup_main_screen(void)
   display_set_fg_color(0x00000000);
 
   //Clear the screen
-  display_fill_rect(0, 0, 800, 480);
+  display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //Fill in all the items on the screen
   ui_draw_outline();
@@ -59,7 +59,7 @@ void ui_setup_main_screen(void)
   ui_display_channel_settings(&scopesettings.channel1);
   ui_display_channel_settings(&scopesettings.channel2);
   ui_display_time_per_division();
-  ui_display_waiting_triggered_text();
+  ui_display_waiting_triggered_text(0);
   ui_display_measurements();
   
   //Show version information
@@ -83,7 +83,7 @@ void ui_setup_view_screen(void)
   viewactive = VIEW_ACTIVE;
 
   //Set scope run state to running to have it sample fresh data on exit
-  scopesettings.runstate = 0;
+  scopesettings.runstate = RUN_STATE_RUNNING;
 
   //Only needed for waveform view. Picture viewing does not change the scope settings
   if(viewtype == VIEW_TYPE_WAVEFORM)
@@ -161,32 +161,32 @@ void ui_setup_usb_screen(void)
 {
   //Clear the whole screen
   display_set_fg_color(0x00000000);
-  display_fill_rect(0, 0, 800, 480);
+  display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //Set the light color for the equipment borders
   display_set_fg_color(0x00AAAAAA);
 
   //Draw the computer screen
   display_fill_rounded_rect(470, 115, 250, 190, 2);
-  display_fill_rect(580, 305, 31, 21);
+  display_fill_rect(580, 305, 30, 20);
   display_fill_rounded_rect(550, 325, 90, 10, 2);
-  display_fill_rect(550, 331, 90, 5);
+  display_fill_rect(550, 331, 89, 4);
 
   //Draw the scope
   display_fill_rounded_rect(80, 200, 180, 135, 2);
 
   //Draw the cable
-  display_fill_rect(210, 188, 11, 13);
-  display_fill_rect(213, 154, 5, 37);
-  display_fill_rect(213, 150, 153, 5);
-  display_fill_rect(361, 154, 5, 107);
-  display_fill_rect(361, 260, 99, 5);
-  display_fill_rect(458, 257, 13, 11);
+  display_fill_rect(210, 188, 10, 12);
+  display_fill_rect(213, 154, 4, 36);
+  display_fill_rect(213, 150, 152, 4);
+  display_fill_rect(361, 154, 4, 106);
+  display_fill_rect(361, 260, 98, 4);
+  display_fill_rect(458, 257, 12, 10);
 
   //Fill in the screens with a blue color
   display_set_fg_color(0x00000055);
-  display_fill_rect(477, 125, 236, 164);
-  display_fill_rect(88, 210, 164, 113);
+  display_fill_rect(477, 125, 235, 163);
+  display_fill_rect(88, 210, 163, 112);
 
   //Draw a dark border around the blue screens
   display_set_fg_color(0x00111111);
@@ -201,10 +201,6 @@ void ui_setup_usb_screen(void)
 
   //Stop the USB interface
   usb_device_disable();
-
-  //Clear the whole screen
-  display_set_fg_color(0x00000000);
-  display_fill_rect(0, 0, 800, 480);
   
   //Redraw the screen
   ui_setup_main_screen();
@@ -309,8 +305,8 @@ void ui_draw_outline(void)
   
   //Draw the top and bottom edges of the measurement sections
   display_set_fg_color(0x00303430);
-  display_fill_rect(711,   0, 84, 3);
-  display_fill_rect(711, 477, 84, 3);
+  display_fill_rect(711,   0, 83, 2);
+  display_fill_rect(711, 477, 83, 2);
   
   //Next lines are shorter and shifted
   xs1 = 712;
@@ -397,7 +393,7 @@ void ui_display_run_stop_text(void)
   display_set_bg_color(0x00000000);
   
   //Select the icon based on the selected edge
-  if(scopesettings.runstate == 0)
+  if(scopesettings.runstate == RUN_STATE_RUNNING)
   {
     //Run state selected
     icon = run_text_icon;
@@ -414,31 +410,28 @@ void ui_display_run_stop_text(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_waiting_triggered_text(void)
+void ui_display_waiting_triggered_text(uint32 state)
 {
   const uint8 *icon;
-  uint32       xpos;
   
   //Using an icon might be a simpler and faster option
   display_set_fg_color(0x00F8FCF8);
   display_set_bg_color(0x00000000);
   
   //Select the icon based on the trigger state
-  if(scopesettings.triggerstate == 0)
+  if(state == 0)
   {
     //Waiting for trigger
     icon = waiting_text_icon;
-    xpos = 654;
   }
   else
   {
     //Triggered
     icon = triggered_text_icon;
-    xpos = 652;
   }
   
   //Display the text icon with infill of the background since the other text icon needs to be overwritten
-  display_copy_icon_use_colors(icon, xpos, 464, 54, 14);
+  display_copy_icon_use_colors(icon, 652, 464, 54, 14);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -515,14 +508,14 @@ void ui_draw_pointers(void)
       {
         position = VERTICAL_POINTER_TOP;
       }
-      //Limit on the bottom of the displayable region (pointer is 15 pixels high)
+      //Limit on the bottom of the displayable region
       else if(position > VERTICAL_POINTER_BOTTOM)
       {
         position = VERTICAL_POINTER_BOTTOM;
       }
 
       //Draw the pointer
-      display_left_pointer(VERTICAL_POINTER_LEFT, position, '1');
+      display_left_pointer(VERTICAL_POINTER_LEFT, position - VERTICAL_POINTER_OFFSET, '1');
     }
     else
     {
@@ -566,7 +559,7 @@ void ui_draw_pointers(void)
     }
 
     //Draw the pointer
-    display_left_pointer(VERTICAL_POINTER_LEFT, position, '2');
+    display_left_pointer(VERTICAL_POINTER_LEFT, position - VERTICAL_POINTER_OFFSET, '2');
   }
 
   //Need to think about trigger position in 200mS - 20mS/div settings. Not sure if they work or need to be done in software
@@ -611,7 +604,7 @@ void ui_draw_pointers(void)
     display_set_font(&font_3);
 
     //Draw the pointer
-    display_right_pointer(VERTICAL_POINTER_RIGHT, position, 'T');
+    display_right_pointer(VERTICAL_POINTER_RIGHT, position - VERTICAL_POINTER_OFFSET, 'T');
   }
 }
 
@@ -959,7 +952,7 @@ void ui_display_time_per_division(void)
 {
   //Clear the old text before printing the new text
   display_set_fg_color(0x00000000);
-  display_fill_rect(153, 465, 66, 15);
+  display_fill_rect(153, 465, 65, 14);
   
   //Text is RGB 565 based white
   display_set_fg_color(0x00F8FCF8);
@@ -1265,8 +1258,8 @@ void ui_display_measurements(void)
     dy = i * MEASUREMENT_Y_DISPLACEMENT;
     
     //Clear the background first
-    display_set_fg_color(0x00000000);
-    display_fill_rect(706, 8 + dy, 93, 69);
+    display_set_fg_color(0x000000000);
+    display_fill_rect(707, 9 + dy, 92, 61);
     
     //Get the channel information for displaying the box in the channel color
     settings = scopesettings.measurementitems[i].channelsettings;
@@ -1317,7 +1310,7 @@ void ui_update_measurements(void)
     
     //Clear the display field first
     display_set_fg_color(0x00000000);
-    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 84, 21);
+    display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 83, 20);
     
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
@@ -1325,7 +1318,7 @@ void ui_update_measurements(void)
 
     //Copy this item to the main screen
     display_set_screen_buffer((uint16 *)maindisplaybuffer);
-    display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 83, 21);
+    display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 84, 21);
   }
   
   //Switch back to the separate display buffer to allow further actions on the trace display
@@ -1713,7 +1706,7 @@ void ui_display_main_menu(void)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(6, 115, 181, 343);
+  display_fill_rect(6, 115, 180, 342);
 
   //Calculate the y position for the highlight box based on the selected menu item
   y = 118 + (menuitem * 31);
@@ -1746,7 +1739,7 @@ void ui_unhighlight_main_menu_item(void)
   
   //Fill the section with the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(9, y, 175, 26);
+  display_fill_rect(9, y, 174, 25);
   
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
@@ -1814,7 +1807,7 @@ void ui_display_channel_menu(PCHANNELSETTINGS settings)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(261, 214, 189, 89);
+  display_fill_rect(261, 214, 188, 88);
 
   //Need to calculate the y position for the highlight box
   y = 217 + (menuitem * 29);
@@ -1892,7 +1885,7 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
   display_set_fg_color(settings->color);
   
   //Highlight the selected item
-  display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 4, 14);
+  display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 3, 13);
   
   //Display the selected text in black
   display_set_fg_color(0x00000000);
@@ -1905,7 +1898,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 {
   //Clear the background first
   display_set_fg_color(0x00000000);
-  display_fill_rect(364, 250, 79, 16);
+  display_fill_rect(364, 250, 78, 15);
   
   if(settings->coupling == 1)
   {
@@ -1913,7 +1906,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(367, 250, 30, 16);
+    display_fill_rect(367, 250, 29, 15);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1933,7 +1926,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(407, 250, 30, 16);
+    display_fill_rect(407, 250, 29, 15);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1954,7 +1947,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
 {
   //Clear the background first
   display_set_fg_color(0x00000000);
-  display_fill_rect(364, 279, 79, 16);
+  display_fill_rect(364, 279, 78, 15);
   
   if(settings->fftenable == 1)
   {
@@ -1962,7 +1955,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(367, 279, 30, 16);
+    display_fill_rect(367, 279, 29, 15);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -1982,7 +1975,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_set_fg_color(settings->color);
 
     //Highlight the selected item
-    display_fill_rect(407, 279, 30, 16);
+    display_fill_rect(407, 279, 29, 15);
     
     //Display the selected text in black
     display_set_fg_color(0x00000000);
@@ -2045,7 +2038,7 @@ void ui_display_cursor_measurements(void)
     display_set_fg_color(0x00404040);
 
     //Draw rectangle for the texts depending on what is enabled.
-    display_fill_rect(6, 59, 102, height);
+    display_fill_rect(6, 59, 101, height - 1);
     
     //Make it a on one corner rounded thing
     display_draw_horz_line(height + 59, 6, 106);
@@ -2270,10 +2263,10 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
     display_set_fg_color(0x00000000);
 
     //Start with no slider
-    display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH, SLIDER_LINE_HEIGHT);
+    display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH - 1, SLIDER_LINE_HEIGHT - 1);
 
     //And remove the position text
-    display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH, SLIDER_TEXT_HEIGHT);
+    display_fill_rect(xt - 1, yt + 1, SLIDER_TEXT_WIDTH - 1, SLIDER_TEXT_HEIGHT - 1);
 
     //Check if there is a line to draw
     if(ws)
@@ -2281,7 +2274,7 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
       //Draw the first part of the slider bar in a green color
       //Fill rect needs a reduction of 1 in both width and height
       display_set_fg_color(0x0000FF00);
-      display_fill_rect(xs, ys, ws, SLIDER_LINE_HEIGHT);
+      display_fill_rect(xs, ys, ws - 1, SLIDER_LINE_HEIGHT - 1);
     }
 
     //Display the position with wite text
@@ -2436,7 +2429,7 @@ void ui_display_measurements_menu(void)
   
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
-  display_fill_rect(380, 114, 314, 333);
+  display_fill_rect(380, 114, 313, 332);
 
   //Draw the menu outline slightly lighter then the background
   display_set_fg_color(0x00303430);
@@ -3756,7 +3749,7 @@ int32 ui_load_trace_data(void)
             if((result = ui_check_waveform_file()) == 0)
             {
               //Switch to stopped and waveform viewing mode
-              scopesettings.runstate = 1;
+              scopesettings.runstate = RUN_STATE_STOPPED;
               scopesettings.waveviewmode = 1;
 
               //Allow redrawing of the trace display
@@ -4037,16 +4030,16 @@ void ui_display_thumbnails(void)
       y = ypos + 1;
 
       //Fill in the top bar
-      display_copy_icon_full_color(thumbnail_top_bar_icon, xpos, y, 169, 9);
+      display_copy_icon_full_color(thumbnail_top_bar_icon, xpos + 2, y + 1, 169, 9);
 
       //Fill in the side bar
-      display_copy_icon_full_color(thumbnail_side_bar_icon, xpos + 171, y, 26, 118);
+      display_copy_icon_full_color(thumbnail_side_bar_icon, xpos + 173, y, 26, 118);
       
       //Check on highlighted item
       if(index == viewcurrentindex)
       {
         display_set_fg_color(0x00707070);
-        display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 31, VIEW_ITEM_HEIGHT - 26);
+        display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 33, VIEW_ITEM_HEIGHT - 29);
       }
       
       //Draw a grid
@@ -4589,10 +4582,10 @@ void ui_thumbnail_draw_pointer(uint32 xpos, uint32 ypos, uint32 direction, uint3
   }
 
   //Draw the body
-  display_fill_rect(x1, y1, w, h);
+  display_fill_rect(x1, y1, w - 1, h - 1);
 
   //Draw the point
-  display_fill_rect(x2, y2, 1, 1);
+  display_fill_rect(x2, y2, 0, 0);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -4676,7 +4669,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
 
   //Draw the background in grey
   display_set_fg_color(0x00202020);
-  display_fill_rect(260, 210, 280, 60);
+  display_fill_rect(260, 210, 279, 59);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00303030);
@@ -4791,7 +4784,7 @@ int32 ui_handle_confirm_delete(void)
   //display the confirm delete menu
   //Draw the background in some shade of red
   display_set_fg_color(0x00A04020);
-  display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
+  display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH - 1, HCD_HEIGHT - 1);
 
   //Draw the border in a lighter grey
   display_set_fg_color(0x00404040);
@@ -4896,7 +4889,7 @@ void ui_show_calibration_message(uint32 state)
       break;
 
     case CALIBRATION_STATE_FAIL:
-      display_copy_icon_fg_color(failed_text_icon, CALIBRATION_MSG_XPOS + 28, CALIBRATION_MSG_YPOS + 14, 41, 14);
+      display_copy_icon_fg_color(failed_text_icon, CALIBRATION_MSG_XPOS + 28, CALIBRATION_MSG_YPOS + 9, 41, 14);
       break;
   }
 }

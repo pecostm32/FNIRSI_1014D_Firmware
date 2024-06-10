@@ -80,6 +80,8 @@ void   fpga_do_conversion(void);
 
 uint16 fpga_prepare_for_transfer(void);
 
+uint8  fpga_had_trigger(void);
+
 void   fpga_read_sample_data(PCHANNELSETTINGS settings, uint32 triggerpoint);
 void   fpga_read_adc_data(PCHANNELSETTINGS settings);
 

@@ -16,7 +16,7 @@
 //Version info
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define VERSION_STRING             "V0.001"
+#define VERSION_STRING             "V0.002"
 
 #define VERSION_STRING_XPOS             240
 #define VERSION_STRING_YPOS               4
@@ -30,15 +30,15 @@
 #define VIEW_NOT_ACTIVE                   0
 #define VIEW_ACTIVE                       1
 
-#define VIEW_ITEM_XSTART                  1
+#define VIEW_ITEM_XSTART                  0
 #define VIEW_ITEM_YSTART                  0
-#define VIEW_ITEM_WIDTH                 199
+#define VIEW_ITEM_WIDTH                 200
 #define VIEW_ITEM_HEIGHT                120
 
 #define VIEW_ITEM_TRACE_POINTS          182
 
-#define VIEW_ITEM_XNEXT                 199
-#define VIEW_ITEM_YNEXT                 120
+#define VIEW_ITEM_XNEXT                 VIEW_ITEM_WIDTH
+#define VIEW_ITEM_YNEXT                 VIEW_ITEM_HEIGHT
 
 #define VIEW_ITEM_XLAST                 790
 
@@ -97,12 +97,12 @@
 
 #define SETTING_SECTOR_ID_HIGH       0x3413
 #define SETTING_SECTOR_ID_LOW        0x3031
-#define SETTING_SECTOR_VERSION_HIGH  0x0100
+#define SETTING_SECTOR_VERSION_HIGH  0x0000
 #define SETTING_SECTOR_VERSION_LOW   0x0001
 
 #define WAVEFORM_FILE_ID1        0x4F434550    //PECO
 #define WAVEFORM_FILE_ID2        0x34313031    //1014
-#define WAVEFORM_FILE_VERSION    0x01000001    //Version 1.0.0.1
+#define WAVEFORM_FILE_VERSION    0x00000001    //Version 0.0.0.1
 
 #define WAVEFORM_FILE_ERROR             200
 
@@ -139,6 +139,9 @@
 
 #define FILE_BORDER_COLOR                0x00CC8947
 
+
+#define RUN_STATE_STOPPED                 0
+#define RUN_STATE_RUNNING                 1
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Trace window properties
@@ -198,7 +201,12 @@
 #define VERTICAL_POINTER_WIDTH           21
 #define VERTICAL_POINTER_HEIGHT          15
 #define VERTICAL_POINTER_TOP             TRACE_VERTICAL_START
-#define VERTICAL_POINTER_BOTTOM          (TRACE_VERTICAL_END - VERTICAL_POINTER_HEIGHT)
+#define VERTICAL_POINTER_BOTTOM          TRACE_VERTICAL_END
+
+#define VERTICAL_POINTER_OFFSET          (VERTICAL_POINTER_HEIGHT / 2)
+
+#define VERTICAL_POINTER_POS_MIN         1
+#define VERTICAL_POINTER_POS_MAX         TRACE_MAX_HEIGHT
 
 #define VERTICAL_POINTER_LEFT            (TRACE_HORIZONTAL_START)
 #define VERTICAL_POINTER_RIGHT           (TRACE_HORIZONTAL_END - VERTICAL_POINTER_WIDTH)
@@ -364,7 +372,7 @@ struct tagChannelSettings
   uint8  fftenable;
   
   //Trace on screen position
-  uint16 traceposition;
+  int16  traceposition;
 
   //New setting for controlling the ground level of the ADC differential input
   uint16 dcoffset;
@@ -468,7 +476,7 @@ struct tagScopeSettings
   uint8 triggerstate;
   
   int16  triggerhorizontalposition;    //Position on screen of the trigger point in the signal displaying
-  uint16 triggerverticalposition;      //Screen position of the trigger level indicator
+  int16  triggerverticalposition;      //Screen position of the trigger level indicator
   uint16 triggerlevel;                 //Actual trigger level set to the FPGA
   
   uint8 samplemode;                    //New for mode select in the fpga_do_conversion function

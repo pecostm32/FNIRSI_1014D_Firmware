@@ -115,7 +115,7 @@ void ui_display_trigger_y_position(void);
 void ui_display_trigger_x_position(void);
 
 void ui_display_time_per_division(void);
-void ui_display_waiting_triggered_text(void);
+void ui_display_waiting_triggered_text(uint32 state);
 
 void ui_display_channel_settings(PCHANNELSETTINGS settings);
 

@@ -172,6 +172,9 @@ int main(void)
       //Go through the trace data and make it ready for displaying
       scope_acquire_trace_data();
     }
+    
+    //Check if the user provided input and handle it
+    sm_handle_user_input();
 
     //Only display trace data when enabled. Gets disabled when a menu is open or when file viewing, except when viewing a wave file
     if(enabletracedisplay)
@@ -179,9 +182,6 @@ int main(void)
       //Display the trace data and the other enabled screen items
       scope_display_trace_data();
     }
-    
-    //Check if the user provided input and handle it
-    sm_handle_user_input();
   }
 }
 
