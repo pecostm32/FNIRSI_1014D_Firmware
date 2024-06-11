@@ -494,6 +494,10 @@ void fpga_do_conversion(void)
     fpga_write_cmd(0x0F);
     fpga_write_byte(0x01);
   }
+
+  //Set the FPGA for dual ADC mode
+  fpga_write_cmd(0x29);
+  fpga_write_byte(0x01);
   
   //Set the FPGA for short time base mode
   fpga_write_cmd(0x28);
