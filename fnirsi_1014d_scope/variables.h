@@ -87,6 +87,10 @@
 
 #define VIEW_NUMBER_OF_SETTINGS         200
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//File related definitions
+//----------------------------------------------------------------------------------------------------------------------------------
+
 #define CHANNEL1_SETTING_OFFSET          10
 #define CHANNEL2_SETTING_OFFSET          40
 #define TRIGGER_SETTING_OFFSET           70
@@ -139,6 +143,9 @@
 
 #define FILE_BORDER_COLOR                0x00CC8947
 
+//----------------------------------------------------------------------------------------------------------------------------------
+//Scope related definitions
+//----------------------------------------------------------------------------------------------------------------------------------
 
 #define RUN_STATE_STOPPED                 0
 #define RUN_STATE_RUNNING                 1
@@ -261,42 +268,8 @@
 #define VIEW_FILENAME_YPOS             458
 
 //----------------------------------------------------------------------------------------------------------------------------------
-//
-//The below needs to be cleaned up and filled in for new settings
-//
-//Menu positions and dimensions
-//----------------------------------------------------------------------------------------------------------------------------------
-//Run and stop text
-
-#define RUN_STOP_TEXT_XPOS                  97
-#define RUN_STOP_TEXT_YPOS                  12
-#define RUN_STOP_TEXT_WIDTH                 39
-#define RUN_STOP_TEXT_HEIGHT                19
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Channel voltage per division buttons
-
-#define CH1_VOLT_DIV_MENU_YPOS              99
-#define CH2_VOLT_DIV_MENU_YPOS             264
-
-//----------------------------------------------------------------------------------------------------------------------------------
-//Acquisition button and menu
-
-#define ACQ_BUTTON_XPOS                    380
-#define ACQ_BUTTON_YPOS                      5
-#define ACQ_BUTTON_WIDTH                    30
-#define ACQ_BUTTON_HEIGHT                   35
-
-#define ACQ_BUTTON_BG_WIDTH                103
-#define ACQ_BUTTON_BG_HEIGHT                35
-
-#define ACQ_MENU_XPOS          ACQ_BUTTON_XPOS
-#define ACQ_MENU_YPOS                       46
-#define ACQ_MENU_WIDTH                     304
-#define ACQ_MENU_HEIGHT                    336
-
-//----------------------------------------------------------------------------------------------------------------------------------
 //Sampling system
+//----------------------------------------------------------------------------------------------------------------------------------
 
 #define MAX_SAMPLE_BUFFER_SIZE            3000
 #define UINT32_SAMPLE_BUFFER_SIZE         (MAX_SAMPLE_BUFFER_SIZE / 4)
@@ -427,7 +400,7 @@ struct tagChannelSettings
   
   //Sample gathering options
   uint8 checkfirstadc;
-  uint8 enabletrigger;
+  uint8 triggeronchannel;
   
   //FPGA commands
   uint8 enablecommand;            //Needs to be set to 0x02 for channel 1 and 0x03 for channel 2
@@ -553,8 +526,8 @@ struct tagScreenTimeCalcData
 
 struct tagVoltCalcData
 {
-  uint32 mul_factor;
-  uint8  volt_scale;
+  int32 mul_factor;
+  uint8 volt_scale;
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------

@@ -804,8 +804,11 @@ void sm_button_dial_normal_handling(void)
       //Reset the trigger position and level to center positions
       scopesettings.triggerhorizontalposition = 342;
 
-      //Setting is done based on the selected trigger channel
-      sm_do_50_percent_trigger_setup();
+      //Set the trigger vertical position position to match the new trigger level
+      scope_set_50_percent_trigger();
+      
+      //Show the new setting on the screen
+      ui_display_trigger_horizontal_position();
       break;
 
     case UIC_BUTTON_TRIG_MODE:
@@ -830,15 +833,22 @@ void sm_button_dial_normal_handling(void)
     case UIC_BUTTON_TRIG_CHX:
       //Toggle the trigger edge
       scopesettings.triggerchannel ^= 1;
+      
+      //Set the flag in the active channel for locking it on position movement
+      scopesettings.channel1.triggeronchannel = 1 ^ scopesettings.triggerchannel;
+      scopesettings.channel2.triggeronchannel = 0 ^ scopesettings.triggerchannel;
 
       //Display the new edge on the screen and activate it in the FPGA
       ui_display_trigger_channel();
       fpga_set_trigger_channel();
+      
+      //Set the trigger level pointer to match the newly selected channel
+      scope_calculate_trigger_vertical_position();
       break;
 
     case UIC_BUTTON_TRIG_50_PERCENT:
-      //Setting is done based on the selected trigger channel
-      sm_do_50_percent_trigger_setup();
+      //Set the trigger vertical position position to match the new trigger level
+      scope_set_50_percent_trigger();
       break;
 
     case UIC_BUTTON_F1:
@@ -978,6 +988,14 @@ void sm_button_dial_wave_view_handling(void)
       sm_toggle_channel_enable(&scopesettings.channel2);
       break;
 
+    case UIC_BUTTON_TRIG_ORIG:
+      //Reset the trigger position to center of the trace window
+      scopesettings.triggerhorizontalposition = 342;
+      
+      //Show the new setting on the screen
+      ui_display_trigger_horizontal_position();
+      break;
+      
     case UIC_ROTARY_CH1_POS_ADD:
     case UIC_ROTARY_CH1_POS_SUB:
       sm_set_channel_position(&scopesettings.channel1);
@@ -1141,6 +1159,11 @@ void sm_toggle_time_cursor(void)
         scopesettings.selectedcursor = CURSOR_VOLT_TOP;
       }
     }
+    else if(scopesettings.waveviewmode)
+    {
+      //When viewing a wave file, return to the handling state for that
+      navigationstate = NAV_ITEM_VIEW_HANDLING;
+    }
     else
     {
       //No more cursor enabled so no more action in the navigation part
@@ -1177,6 +1200,11 @@ void sm_toggle_volt_cursor(void)
         scopesettings.selectedcursor = CURSOR_TIME_LEFT;
       }
     }
+    else if(scopesettings.waveviewmode)
+    {
+      //When viewing a wave file, return to the handling state for that
+      navigationstate = NAV_ITEM_VIEW_HANDLING;
+    }
     else
     {
       //No more cursor enabled so no more action in the navigation part
@@ -1212,6 +1240,13 @@ void sm_set_trigger_position(void)
   //Adjust the setting based on the given value
   scopesettings.triggerhorizontalposition += speedvalue;
 
+  //This needs to change to either the screen limits when there are less samples available (depends on zoom)
+  //or on the number of samples available, so maybe there is a way of calculating the full range in screen pixels
+  //and use these as min or max. Best to use global variables for this that need to be set every time a new sample batch is read
+  //or when file view mode is entered, or the time/div setting is changed
+  
+  //Need left and right arrows for when outside the visible window
+  
   //Check if still in allowed range
   if(scopesettings.triggerhorizontalposition < 0)
   {
@@ -1223,6 +1258,8 @@ void sm_set_trigger_position(void)
     //Limit it on maximum range if needed
     scopesettings.triggerhorizontalposition = 685;
   }
+  
+  ui_display_trigger_horizontal_position();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1243,6 +1280,9 @@ void sm_set_trigger_level(void)
     //Limit it on maximum range if needed
     scopesettings.triggerverticalposition = VERTICAL_POINTER_POS_MAX;
   }
+  
+  //Show the new value on the screen
+  ui_display_trigger_vertical_position();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1271,6 +1311,7 @@ void sm_set_time_base(void)
 
     //Show he new setting on the display
     ui_display_time_per_division();
+    ui_display_trigger_horizontal_position();
   }
 }
 
@@ -1300,6 +1341,14 @@ void sm_set_channel_sensitivity(PCHANNELSETTINGS settings)
 
     //Show the new setting on the screen
     ui_display_channel_sensitivity(settings);
+    ui_display_channel_position(settings);
+    
+    
+    //If the trigger is on this channel the trigger position needs to be updated
+    if(settings->triggeronchannel)
+    {
+      ui_display_trigger_vertical_position();
+    }
 
     //Only update the FPGA in run mode
     //For waveform view mode the stop state is forced and can't be changed
@@ -1324,6 +1373,8 @@ void sm_set_channel_sensitivity(PCHANNELSETTINGS settings)
 
 void sm_set_channel_position(PCHANNELSETTINGS settings)
 {
+  int16 delta = settings->traceposition;
+  
   //Adjust the setting based on the set speed value
   settings->traceposition += speedvalue;
 
@@ -1338,26 +1389,27 @@ void sm_set_channel_position(PCHANNELSETTINGS settings)
     //Limit it on maximum range if needed
     settings->traceposition = VERTICAL_POINTER_POS_MAX;
   }
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void sm_do_50_percent_trigger_setup(void)
-{
-  //Check which channel is the active trigger channel
-  if(scopesettings.triggerchannel == 0)
+  
+  //Show the new position value on the screen
+  ui_display_channel_position(settings);
+  
+  //Check if the trigger is active on this channel
+  if(settings->triggeronchannel)
   {
-    //Use the channel 1 center value
-    scopesettings.triggerlevel = scopesettings.channel1.center;
-  }
-  else
-  {
-    //Use the channel 2 center value
-    scopesettings.triggerlevel = scopesettings.channel2.center;
-  }
-
-  //Set the trigger vertical position position to match the new trigger level
-  scope_calculate_trigger_vertical_position();
+    //Calculate the actual movement made for adjusting the trigger level position on the screen
+    delta = settings->traceposition - delta;
+  
+    //Check if there was any movement
+    if(delta)
+    {
+      //Move the trigger pointer without worry about limit on the trace window
+      //It won't be displayed if outside the trace window, having the real level remain the same
+      scopesettings.triggerverticalposition += delta;
+  
+      //Show the new value on the screen
+      ui_display_trigger_vertical_position();
+    }
+  }  
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2205,6 +2257,14 @@ void sm_select_channel_option(void)
       //Show the new setting on the screen
       ui_display_channel_menu_probe_magnification_select(currentsettings);
       ui_display_channel_probe(currentsettings);
+      ui_display_channel_sensitivity(currentsettings);
+      ui_display_channel_position(currentsettings);
+      
+      //If the trigger is on this channel the position information needs to change
+      if(currentsettings->triggeronchannel)
+      {
+        ui_display_trigger_vertical_position();
+      }
       break;
 
     case 1:

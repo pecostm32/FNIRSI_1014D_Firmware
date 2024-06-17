@@ -199,8 +199,6 @@ void sm_toggle_channel_enable(PCHANNELSETTINGS settings);
 void sm_set_channel_sensitivity(PCHANNELSETTINGS settings);
 void sm_set_channel_position(PCHANNELSETTINGS settings);
 
-void sm_do_50_percent_trigger_setup(void);
-
 void sm_select_main_menu_item(void);
 
 void sm_open_file_view(void);

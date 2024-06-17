@@ -408,17 +408,17 @@ const uint32 timebase_settings[24] =
     2500,   //500us/div
     2500,   //200us/div
     3000,   //100us/div
-    5596,   // 50us/div
-    9692,   // 20us/div
-   21980,   // 10us/div
-   21980,   //  5us/div
-   83420,   //  2us/div
-  206300,   //  1us/div
-  411100,   //500ns/div
-  411100,   //200ns/div
-  411100,   //100ns/div
-  411100,   // 50ns/div
-  411100,   // 20ns/div
+    6096,   // 50us/div
+   14288,   // 20us/div
+   22480,   // 10us/div
+   22480,   //  5us/div
+   83920,   //  2us/div
+  206800,   //  1us/div
+  411600,   //500ns/div
+  411600,   //200ns/div
+  411600,   //100ns/div
+  411600,   // 50ns/div
+  411600,   // 20ns/div
   411100,   // 10ns/div
   411100,   //  5ns/div
 };

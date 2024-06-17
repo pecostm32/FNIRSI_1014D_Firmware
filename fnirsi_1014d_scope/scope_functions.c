@@ -25,8 +25,8 @@ void scope_acquire_trace_data(void)
 {
   uint32 data;
 
-  //Check if running
-  if(scopesettings.runstate == RUN_STATE_RUNNING)
+  //Check if running and at least one channel enabled
+  if((scopesettings.runstate == RUN_STATE_RUNNING) && (scopesettings.channel1.enable || scopesettings.channel2.enable))
   {
     //Show the user waiting for a trigger
     ui_display_waiting_triggered_text(0);
@@ -101,16 +101,6 @@ void scope_acquire_trace_data(void)
     {
       //Get the samples for channel 1
       fpga_read_sample_data(&scopesettings.channel1, data);
-
-      //Check if always 50% trigger is enabled and the trigger is on this channel
-      if(scopesettings.alwaystrigger50 && (scopesettings.triggerchannel == 0))
-      {
-        //Use the channel 1 center value as trigger level
-        scopesettings.triggerlevel = scopesettings.channel1.center;
-
-        //Set the trigger vertical position position to match the new trigger level
-        scope_calculate_trigger_vertical_position();
-      }
     }
 
     //Check if channel 2 is enabled
@@ -118,18 +108,15 @@ void scope_acquire_trace_data(void)
     {
       //Get the samples for channel 2
       fpga_read_sample_data(&scopesettings.channel2, data);
-
-      //Check if always 50% trigger is enabled and the trigger is on this channel
-      if(scopesettings.alwaystrigger50 && scopesettings.triggerchannel)
-      {
-        //Use the channel 2 center value as trigger level
-        scopesettings.triggerlevel = scopesettings.channel2.center;
-
-        //Set the trigger vertical position position to match the new trigger level
-        scope_calculate_trigger_vertical_position();
-      }
     }
 
+    //Check if always 50% trigger is enabled
+    if(scopesettings.alwaystrigger50)
+    {
+      //Set the trigger vertical position position to match the new trigger level
+      scope_set_50_percent_trigger();
+    }
+    
 
     //Need to improve on this for a more stable displaying. On the low sample rate settings it seems to flip between two positions.
     //Determine the trigger position based on the selected trigger channel
@@ -770,7 +757,7 @@ void scope_do_auto_setup(void)
   }
 
   //Adjust the trigger level to 50% setting
-  sm_do_50_percent_trigger_setup();
+  scope_set_50_percent_trigger();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -835,7 +822,46 @@ uint32 scope_check_channel_range(PCHANNELSETTINGS settings)
 
 void scope_calculate_trigger_vertical_position(void)
 {
+  PCHANNELSETTINGS oldsettings;
+  PCHANNELSETTINGS newsettings;
+  int32            delta;
+  int32            volts;
+
+  //Select the channel based on the current trigger channel
+  if(scopesettings.triggerchannel == 0)
+  {
+    newsettings = &scopesettings.channel1;
+    oldsettings = &scopesettings.channel2;
+    
+  }
+  else
+  {
+    newsettings = &scopesettings.channel2;
+    oldsettings = &scopesettings.channel1;
+  }
+
+  //Get the delta of the old trigger channel position versus the trigger level position
+  delta = scopesettings.triggerverticalposition - oldsettings->traceposition;
+  
+  //Multiply with the scaling factor for the old settings to get the level expressed in volts
+  volts = delta * volt_calc_data[oldsettings->magnification][oldsettings->displayvoltperdiv].mul_factor;
+  
+  //Convert it back into a position delta based on the new trigger channel settings
+  delta = volts / volt_calc_data[newsettings->magnification][newsettings->displayvoltperdiv].mul_factor;
+  
+  //Add the new channel trace position to get the new trigger position
+  scopesettings.triggerverticalposition = newsettings->traceposition + delta;
+  
+  //Show the new value on the screen
+  ui_display_trigger_vertical_position();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void scope_set_50_percent_trigger(void)
+{
   PCHANNELSETTINGS settings;
+  int32            position;
 
   //Select the channel based on the current trigger channel
   if(scopesettings.triggerchannel == 0)
@@ -847,29 +873,20 @@ void scope_calculate_trigger_vertical_position(void)
     settings = &scopesettings.channel2;
   }
 
-  int32 position;
-
+  //Set the active channel center as the new trigger level
+  scopesettings.triggerlevel = settings->center;
+  
   //Center the trigger level around 0 point
   position = scopesettings.triggerlevel - 128;
 
   //Adjust it for the current volt per div setting
   position = (position * signal_adjusters[settings->displayvoltperdiv]) >> VOLTAGE_SHIFTER;
 
-  //Add the trace center to it
-  position = settings->traceposition + position;
-
-  //Limit to extremes
-  if(position < 0)
-  {
-    position = 0;
-  }
-  else if(position > 401)
-  {
-    position = 401;
-  }
-
-  //Set as new position
-  scopesettings.triggerverticalposition = position;
+  //Add the trace center to it and set as new trigger position
+  scopesettings.triggerverticalposition = settings->traceposition + position;
+  
+  //Show the new value on the screen
+  ui_display_trigger_vertical_position();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1037,10 +1054,7 @@ void scope_display_trace_data(void)
   }
 
   //Draw the cursors with their text and measurement display
-  ui_draw_time_cursors();
-  ui_draw_volt_cursors();
-  ui_display_selected_text();
-  ui_display_cursor_measurements();
+  ui_display_cursors();
 
   //Draw the signal center, trigger level and trigger position pointers
   ui_draw_pointers();
@@ -1292,6 +1306,11 @@ void scope_load_configuration_data(void)
   //Set the trace and display buffer pointers for channel 2
   scopesettings.channel2.tracebuffer = (uint8 *)channel2tracebuffer;
   scopesettings.channel2.tracepoints = channel2pointsbuffer;
+  
+  //Set the trigger on the channel flag in the active channel for locking it on position movement
+  scopesettings.channel1.triggeronchannel = 1 ^ scopesettings.triggerchannel;
+  scopesettings.channel2.triggeronchannel = 0 ^ scopesettings.triggerchannel;
+  
   
   //Start in running state
   scopesettings.runstate = RUN_STATE_RUNNING;

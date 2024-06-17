@@ -25,6 +25,8 @@ uint32 scope_check_channel_range(PCHANNELSETTINGS settings);
 
 void scope_calculate_trigger_vertical_position(void);
 
+void scope_set_50_percent_trigger(void);
+
 //----------------------------------------------------------------------------------------------------------------------------------
 // Signal data display functions
 //----------------------------------------------------------------------------------------------------------------------------------

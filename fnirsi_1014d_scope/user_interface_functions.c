@@ -61,7 +61,7 @@ void ui_setup_main_screen(void)
   ui_display_time_per_division();
   ui_display_waiting_triggered_text(0);
   ui_display_measurements();
-  
+
   //Show version information
   display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_2);
@@ -91,7 +91,7 @@ void ui_setup_view_screen(void)
     //Save the current settings
     ui_save_setup(&savedscopesettings1);
   }
-  
+
   //Initialize the view mode variables
   //Used for indicating if select all or select button is active
   viewselectmode = 0;
@@ -201,18 +201,18 @@ void ui_setup_usb_screen(void)
 
   //Stop the USB interface
   usb_device_disable();
-  
+
   //Redraw the screen
   ui_setup_main_screen();
   scope_display_trace_data();
-  
+
   //Re-sync the system files
   ui_sync_thumbnail_files();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-const uint32 shade_colors[] = 
+const uint32 shade_colors[] =
 {
   0x00303430,
   0x00303030,
@@ -231,7 +231,7 @@ const uint32 shade_colors[] =
   0x00080808
 };
 
-const uint32 measurement_shade_colors[] = 
+const uint32 measurement_shade_colors[] =
 {
   0x00282C28,
   0x00282428,
@@ -251,37 +251,37 @@ void ui_draw_outline(void)
   int xs3 = BOTTOM_SHADE_START;
   int xe3 = BOTTOM_SHADE_END;
   int x,y,yt,yb;
-  
+
   const uint32 *color = shade_colors;
-  
+
   //Set the color for drawing the signal display shade
   display_set_fg_color(0x00202020);
 
   //Draw the outer edge for a bit of shading effect
   display_draw_rect(TRACE_WINDOW_BORDER_XPOS - 1, TRACE_WINDOW_BORDER_YPOS - 1, TRACE_WINDOW_BORDER_WIDTH + 2, TRACE_WINDOW_BORDER_HEIGHT + 2);
-  
+
   //Set the color for drawing the signal display outline
   display_set_fg_color(0x00646464);
 
   //Draw the inner edge, the actual brighter border of the trace window
   display_draw_rect(TRACE_WINDOW_BORDER_XPOS, TRACE_WINDOW_BORDER_YPOS, TRACE_WINDOW_BORDER_WIDTH, TRACE_WINDOW_BORDER_HEIGHT);
-  
+
   //Set the vertical starting positions for drawing the shades
   yt=TRACE_WINDOW_BORDER_YPOS - 1;
   yb=TRACE_WINDOW_BORDER_YPOS + TRACE_WINDOW_BORDER_HEIGHT;
-  
+
   //Draw top and bottom side shades
   for(;yt>((TRACE_WINDOW_BORDER_YPOS - 1) - (sizeof(shade_colors)/sizeof(uint32)));yt--,yb++)
   {
     display_set_fg_color(*color);
-    
+
     //Two separate set of lines spaced apart on the top of the outline
     display_draw_horz_line(yt, xs1, xe1);
     display_draw_horz_line(yt, xs2, xe2);
-    
+
     //One set of lines on the bottom of the outline
     display_draw_horz_line(yb, xs3, xe3);
-    
+
     //Make a trapezium by shortening and displacing the lines
     xs1++;
     xe1--;
@@ -289,32 +289,32 @@ void ui_draw_outline(void)
     xe2--;
     xs3++;
     xe3--;
-    
+
     //Select the next color to use
     color++;
   }
-  
+
   //Create the black cutouts in the bottom shade
   display_set_fg_color(0x00000000);
-  
+
   //A range of cutouts with an 10 pixel interval
   for(x=BOTTOM_SHADE_CUTOUT_START;x<BOTTOM_SHADE_CUTOUT_END;x+=BOTTOM_SHADE_CUTOUT_STEP)
   {
     display_draw_rect(x, BOTTOM_SHADE_CUTOUT_TOP, BOTTOM_SHADE_CUTOUT_WIDTH, BOTTOM_SHADE_CUTOUT_HEIGHT);
   }
-  
+
   //Draw the top and bottom edges of the measurement sections
   display_set_fg_color(0x00303430);
   display_fill_rect(711,   0, 83, 2);
   display_fill_rect(711, 477, 83, 2);
-  
+
   //Next lines are shorter and shifted
   xs1 = 712;
   xe1 = 793;
-  
+
   //Less lines based on the colors from this table
   color = measurement_shade_colors;
-  
+
   //Draw the shortening lines with the colors from the given table
   for(yt = 3,yb = 476;yt<(3 + (sizeof(measurement_shade_colors)/sizeof(uint32)));yt++,yb--)
   {
@@ -331,34 +331,34 @@ void ui_draw_outline(void)
     //Select the next color to use
     color++;
   }
-  
+
   //Draw the five measurement separators
   for(y=80;y<410;y+=80)
   {
-    //Draw the center line with the brightest color of the set 
+    //Draw the center line with the brightest color of the set
     display_set_fg_color(0x00303430);
     display_draw_horz_line(y, 711, 794);
-    
+
     //Next lines are shorter and shifted
     xs1 = 712;
     xe1 = 793;
-    
+
     //Less lines based on the colors from this table
     color = measurement_shade_colors;
-    
+
     //Draw the shortening lines with the colors from the given table
     for(yt = y - 1,yb = y + 1;yb<(y + (sizeof(measurement_shade_colors)/sizeof(uint32)) + 1);yt--,yb++)
     {
       display_set_fg_color(*color);
-      
+
       //Lines above and below the center line
       display_draw_horz_line(yt, xs1, xe1);
       display_draw_horz_line(yb, xs1, xe1);
-      
+
       //Make a trapezium by shortening and displacing the lines
       xs1++;
       xe1--;
-      
+
       //Select the next color to use
       color++;
     }
@@ -374,10 +374,10 @@ void ui_display_logo(void)
 
   //Draw the darker logo shifted a single pixel in both x and y direction
   display_copy_icon_fg_color_y_gradient(peco_logo_icon, 7, 8, 76, 20);
-  
+
   //Setup a gradient for the actual logo text. Much lighter then the shading
   display_set_fg_y_gradient(gradientbuffer, 7, 27, 0x00FF6060, 0x00CC0000);
-  
+
   //Draw the actual logo on the available location
   display_copy_icon_fg_color_y_gradient(peco_logo_icon, 6, 7, 76, 20);
 };
@@ -387,11 +387,11 @@ void ui_display_logo(void)
 void ui_display_run_stop_text(void)
 {
   const uint8 *icon;
-  
+
   //Set the colors for clearing the background and filling in the text
   display_set_fg_color(0x00F8FCF8);
   display_set_bg_color(0x00000000);
-  
+
   //Select the icon based on the selected edge
   if(scopesettings.runstate == RUN_STATE_RUNNING)
   {
@@ -403,7 +403,7 @@ void ui_display_run_stop_text(void)
     //Stop state selected
     icon = stop_text_icon;
   }
-  
+
   //Display the text icon with infill of the background since the other text icon needs to be overwritten
   display_copy_icon_use_colors(icon, 6, 33, 35, 13);
 }
@@ -413,11 +413,11 @@ void ui_display_run_stop_text(void)
 void ui_display_waiting_triggered_text(uint32 state)
 {
   const uint8 *icon;
-  
+
   //Using an icon might be a simpler and faster option
   display_set_fg_color(0x00F8FCF8);
   display_set_bg_color(0x00000000);
-  
+
   //Select the icon based on the trigger state
   if(state == 0)
   {
@@ -429,7 +429,7 @@ void ui_display_waiting_triggered_text(uint32 state)
     //Triggered
     icon = triggered_text_icon;
   }
-  
+
   //Display the text icon with infill of the background since the other text icon needs to be overwritten
   display_copy_icon_use_colors(icon, 652, 464, 54, 14);
 }
@@ -440,7 +440,7 @@ void ui_draw_grid(void)
 {
   uint32 color;
   register uint32 i;
-  
+
   //Only draw the grid when something will show (not in the original code)
   if(scopesettings.gridbrightness > 3)
   {
@@ -485,12 +485,12 @@ void ui_draw_grid(void)
 
 void ui_draw_pointers(void)
 {
-  uint32 position;
+  int32 position;
 
   //Text is displayed in black and with font_0
   display_set_bg_color(0x00000000);
   display_set_font(&font_0);
-  
+
   //Draw channel 1 pointer when it is enabled
   if(scopesettings.channel1.enable)
   {
@@ -562,9 +562,6 @@ void ui_draw_pointers(void)
     display_left_pointer(VERTICAL_POINTER_LEFT, position - VERTICAL_POINTER_OFFSET, '2');
   }
 
-  //Need to think about trigger position in 200mS - 20mS/div settings. Not sure if they work or need to be done in software
-  //The original scope does not show them for 50mS and 20mS/div
-
   //Draw trigger position and level pointer when in normal display mode
   if(scopesettings.xymodedisplay == 0)
   {
@@ -586,69 +583,92 @@ void ui_draw_pointers(void)
     //y position for the trigger level pointer
     position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
 
-    //Limit on the top of the displayable region
-    if(position < VERTICAL_POINTER_TOP)
-    {
-      position = VERTICAL_POINTER_TOP;
-    }
-    //Limit on the bottom of the displayable region
-    else if(position > VERTICAL_POINTER_BOTTOM)
-    {
-      position = VERTICAL_POINTER_BOTTOM;
-    }
-
     //Need to reset the fore ground color because the display_top_pointer copies the background color over it
     display_set_fg_color(TRIGGER_COLOR);
-    
-    //The trigger level id uses a different font
-    display_set_font(&font_3);
 
-    //Draw the pointer
-    display_right_pointer(VERTICAL_POINTER_RIGHT, position - VERTICAL_POINTER_OFFSET, 'T');
+    //Only print when part or whole of the pointer is visible within the trace window
+    if((position >= (VERTICAL_POINTER_TOP - VERTICAL_POINTER_OFFSET)) && (position < (VERTICAL_POINTER_BOTTOM + VERTICAL_POINTER_OFFSET)))
+    {
+      //The trigger level id uses a different font
+      display_set_font(&font_3);
+
+      //Draw the pointer
+      display_right_pointer(VERTICAL_POINTER_RIGHT, position - VERTICAL_POINTER_OFFSET, 'T');
+    }
+    else if(position < VERTICAL_POINTER_TOP)
+    {
+      //When the pointer is above the top of the window show it to the user with an arrow pointing up
+      ui_display_trigger_arrow(0);
+    }
+    else
+    {
+      //When the pointer is below the bottom of the window show it to the user with an arrow pointing down
+      ui_display_trigger_arrow(1);
+    }
   }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_draw_time_cursors(void)
+void ui_display_cursors(void)
 {
-  //Only draw the lines when enabled
-  if(scopesettings.timecursorsenable)
+  uint32 height = 5;
+  uint32 ch1ypos = 64;
+  uint32 ch2ypos = 64;
+  uint32 delta;
+  int32  x,y;
+
+  //Only display something when at least one cursor and a channel is enabled
+  if((scopesettings.timecursorsenable || scopesettings.voltcursorsenable || scopesettings.capturecursorsenable) && (scopesettings.channel1.enable || scopesettings.channel2.enable))
   {
-    //Set the color for the dashed lines
-    display_set_fg_color(CURSORS_COLOR);
+    //Only draw the time cursor lines when enabled
+    if(scopesettings.timecursorsenable)
+    {
+      //Set the color for the dashed lines
+      display_set_fg_color(CURSORS_COLOR);
 
-    //Draw the lines
-    display_draw_vert_dashes(scopesettings.timecursor1position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
-    display_draw_vert_dashes(scopesettings.timecursor2position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
-  }
-}
+      //Draw the lines
+      display_draw_vert_dashes(scopesettings.timecursor1position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
+      display_draw_vert_dashes(scopesettings.timecursor2position, TRACE_VERTICAL_START, TRACE_VERTICAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
 
-//----------------------------------------------------------------------------------------------------------------------------------
+      //Setup for the measurements information
+      //Add height for two text lines
+      height += 32;
 
-void ui_draw_volt_cursors(void)
-{
-  //Only draw the lines when enabled
-  if(scopesettings.voltcursorsenable)
-  {
-    //Set the color for the dashed lines
-    display_set_fg_color(CURSORS_COLOR);
+      //Shift the voltage text positions down
+      ch1ypos += 32;
+      ch2ypos += 32;
+    }
 
-    //Draw the lines
-    display_draw_horz_dashes(scopesettings.voltcursor1position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
-    display_draw_horz_dashes(scopesettings.voltcursor2position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
-  }
-}
+    //Only draw the volt cursor lines when enabled
+    if(scopesettings.voltcursorsenable)
+    {
+      //Set the color for the dashed lines
+      display_set_fg_color(CURSORS_COLOR);
 
-//----------------------------------------------------------------------------------------------------------------------------------
+      //Draw the lines
+      display_draw_horz_dashes(scopesettings.voltcursor1position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
+      display_draw_horz_dashes(scopesettings.voltcursor2position, TRACE_HORIZONTAL_START, TRACE_HORIZONTAL_END, CURSOR_LINE_LENGTH, CURSOR_SPACE_LENGTH);
 
-void ui_display_selected_text(void)
-{
-  int32 x,y;
-  
-  //Only display the text when a cursor is enabled
-  if((scopesettings.timecursorsenable) || (scopesettings.voltcursorsenable) || (scopesettings.capturecursorsenable))
-  {
+      //Setup for the measurements information
+      //Check if channel 1 is enabled
+      if(scopesettings.channel1.enable)
+      {
+        //Add height for one text line
+        height += 16;
+
+        //Shift the channel 2 voltage text down
+        ch2ypos += 16;
+      }
+
+      //Check if channel 2 is enabled
+      if(scopesettings.channel2.enable)
+      {
+        //Add height for one text line
+        height += 16;
+      }
+    }
+
     //Determine the positions for displaying the text based on the selected cursor and it's position
     //X and Y are fixed based on horizontal or vertical cursor lines
     switch(scopesettings.selectedcursor)
@@ -657,12 +677,12 @@ void ui_display_selected_text(void)
       case CURSOR_TIME_RIGHT:
       case CURSOR_CAPTURE_LEFT:
       case CURSOR_CAPTURE_RIGHT:
-        y = 441;
+        y = CURSOR_SELECTED_TEXT_Y;
         break;
 
       case CURSOR_VOLT_TOP:
       case CURSOR_VOLT_BOTTOM:
-        x = 655;
+        x = CURSOR_SELECTED_TEXT_X;
         break;
     }
 
@@ -671,81 +691,164 @@ void ui_display_selected_text(void)
     {
       case CURSOR_TIME_LEFT:
         //Position the text to the left of the cursor
-        x = scopesettings.timecursor1position - 51;
-        
+        x = scopesettings.timecursor1position - CURSOR_SELECTED_TEXT_WIDTH;
+
         //Check if beyond the left border
-        if(x < 6)
+        if(x <= TRACE_HORIZONTAL_START)
         {
           //If so move the text to the right side of the cursor
-          x = scopesettings.timecursor1position + 3;
+          x = scopesettings.timecursor1position + CURSOR_SELECTED_TEXT_OFFSET;
         }
         break;
 
       case CURSOR_TIME_RIGHT:
         //Position the text to the right of the cursor
-        x = scopesettings.timecursor2position + 3;
-        
+        x = scopesettings.timecursor2position + CURSOR_SELECTED_TEXT_OFFSET;
+
         //Check if beyond the right border
-        if(x > 656)
+        if(x > (TRACE_HORIZONTAL_END - CURSOR_SELECTED_TEXT_WIDTH))
         {
           //If so move the text to the left side of the cursor
-          x = scopesettings.timecursor2position - 51;
+          x = scopesettings.timecursor2position - CURSOR_SELECTED_TEXT_WIDTH;
         }
         break;
 
       case CURSOR_VOLT_TOP:
         //Position the text above the cursor
-        y = scopesettings.voltcursor1position - 15;
-        
+        y = scopesettings.voltcursor1position - CURSOR_SELECTED_TEXT_HEIGHT;
+
         //Check if above the top of the screen
-        if(y < 58)
+        if(y < TRACE_VERTICAL_START)
         {
           //If so position it below the cursor
-          y = scopesettings.voltcursor1position + 3;
+          y = scopesettings.voltcursor1position + CURSOR_SELECTED_TEXT_OFFSET;
         }
         break;
 
       case CURSOR_VOLT_BOTTOM:
         //Position the text below the cursor
-        y = scopesettings.voltcursor2position + 3;
-        
+        y = scopesettings.voltcursor2position + CURSOR_SELECTED_TEXT_OFFSET;
+
         //Check if below the bottom of the screen
-        if(y > 445)
+        if(y > (TRACE_VERTICAL_END - CURSOR_SELECTED_TEXT_HEIGHT))
         {
           //If so position it above the cursor
-          y = scopesettings.voltcursor2position - 15;
+          y = scopesettings.voltcursor2position - CURSOR_SELECTED_TEXT_HEIGHT;
         }
         break;
 
       case CURSOR_CAPTURE_LEFT:
         //Position the text to the left of the cursor
-        x = scopesettings.capturecursor1position - 51;
-        
+        x = scopesettings.capturecursor1position - CURSOR_SELECTED_TEXT_WIDTH;
+
         //Check if beyond the left border
-        if(x < 6)
+        if(x <= TRACE_HORIZONTAL_START)
         {
           //If so move the text to the right side of the cursor
-          x = scopesettings.capturecursor1position + 3;
+          x = scopesettings.capturecursor1position + CURSOR_SELECTED_TEXT_OFFSET;
         }
         break;
 
       case CURSOR_CAPTURE_RIGHT:
         //Position the text to the right of the cursor
-        x = scopesettings.capturecursor2position + 3;
-        
+        x = scopesettings.capturecursor2position + CURSOR_SELECTED_TEXT_OFFSET;
+
         //Check if beyond the right border
-        if(x > 656)
+        if(x > (TRACE_HORIZONTAL_END - CURSOR_SELECTED_TEXT_WIDTH))
         {
           //If so move the text to the left side of the cursor
-          x = scopesettings.capturecursor2position - 51;
+          x = scopesettings.capturecursor2position - CURSOR_SELECTED_TEXT_WIDTH;
         }
         break;
     }
-    
+
     //The selected text is displayed in white and with basic font
     display_set_fg_color(0x00FFFFFF);
     display_set_font(&font_1);
     display_text(x, y, "Selected");
+
+    //Fill in the information window
+    //Set gray background for the cursor measurements
+    display_set_fg_color(0x00404040);
+
+    //Draw rectangle for the texts depending on what is enabled.
+    display_fill_rect(6, 59, 101, height - 1);
+
+    //Make it a on one corner rounded thing
+    display_draw_horz_line(height + 59, 6, 106);
+    display_draw_horz_line(height + 60, 6, 106);
+    display_draw_horz_line(height + 61, 6, 105);
+    display_draw_horz_line(height + 62, 6, 103);
+
+    //Use white text and font_0
+    display_set_fg_color(0x00FFFFFF);
+    display_set_font(&font_0);
+
+    //Check if time cursor is enabled
+    if(scopesettings.timecursorsenable)
+    {
+      //Time texts are always on the top two lines
+      //Get the time delta based on the cursor positions
+      delta = scopesettings.timecursor2position - scopesettings.timecursor1position;
+
+      //Get the time calculation data for this time base setting.
+      PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
+
+      //For the time multiply with the scaling factor and display based on the time scale
+      delta *= tcd->mul_factor;
+
+      //Format the time for displaying
+      ui_cursor_print_value(globaldisplaytext, delta, tcd->time_scale, "T = ", "s");
+      display_text(13, 64, globaldisplaytext);
+
+      //Calculate the frequency for this time. Need to adjust for it to stay within 32 bits
+      delta /= 10;
+      delta = 1000000000 / delta;
+
+      //Format the frequency for displaying
+      ui_cursor_print_value(globaldisplaytext, delta, tcd->freq_scale, "F = ", "Hz");
+      display_text(13, 80, globaldisplaytext);
+    }
+
+    //Check if volt cursor is enabled
+    if(scopesettings.voltcursorsenable)
+    {
+      PVOLTCALCDATA vcd;
+      uint32        volts;
+
+      //Get the volts delta based on the cursor positions
+      delta = scopesettings.voltcursor2position - scopesettings.voltcursor1position;
+
+      //Check if channel 1 is enabled
+      if(scopesettings.channel1.enable)
+      {
+        //Calculate the voltage based on the channel 1 settings
+        vcd = (PVOLTCALCDATA)&volt_calc_data[scopesettings.channel1.magnification][scopesettings.channel1.displayvoltperdiv];
+
+        //Multiply with the scaling factor for the channel 1 settings
+        volts = delta * vcd->mul_factor;
+
+        //Channel 1 text has a variable position
+        //Format the voltage for displaying
+        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V1 = ", "V");
+        display_text(13, ch1ypos, globaldisplaytext);
+      }
+
+      //Check if channel 2 is enabled
+      if(scopesettings.channel2.enable)
+      {
+        //Calculate the voltage based on the channel 2 settings
+        vcd = (PVOLTCALCDATA)&volt_calc_data[scopesettings.channel2.magnification][scopesettings.channel2.displayvoltperdiv];
+
+        //Multiply with the scaling factor for the channel 2 settings
+        volts = delta * vcd->mul_factor;
+
+        //Channel 2 text has a variable position
+        //Format the voltage for displaying
+        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V2 = ", "V");
+        display_text(13, ch2ypos, globaldisplaytext);
+      }
+    }
   }
 }
 
@@ -780,12 +883,12 @@ TEXTDATA trigger_bottom_box_text =
 {
   7,
   0,
-  0x00F8FCF8,
+  0x00FFFFFF,
   &font_1,
   "H"
 };
 
-SHADEDRECTDATA trigger_x_pos_box =
+SHADEDRECTDATA trigger_horizontal_pos_box =
 {
   94,
   14,
@@ -793,11 +896,11 @@ SHADEDRECTDATA trigger_x_pos_box =
   0x00000000
 };
 
-TEXTDATA trigger_x_pos_box_text =
+TEXTDATA trigger_horizontal_pos_box_text =
 {
   5,
   0,
-  0x00F8FCF8,
+  0x00888888,
   &font_1,
   "POS :"
 };
@@ -807,33 +910,32 @@ TEXTDATA trigger_x_pos_box_text =
 void ui_display_trigger_settings(void)
 {
   //Mark it as the trigger settings area
-  display_draw_shaded_rect(127, 6, &trigger_top_box, &trigger_top_box_text);
-  
+  display_draw_shaded_rect(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS, &trigger_top_box, &trigger_top_box_text);
+
   //The fixed texts are drawn in a grey shade and basic font
   display_set_fg_color(0x00888888);
   display_set_font(&font_1);
-  
+
   //Modified character 0x3A (:) for having it one pixel higher then normal to
   //match the original firmware where it is printed separately to do the same
   //Selected trigger channel text
-  display_text(127, 23, "CHS :");
+  display_text(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS + 17, "CHS :");
 
-  //Trigger y (level) position text
-  display_text(127, 37, "POS :");
+  //Trigger vertical (level) position text
+  display_text(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS + 31, "POS :");
 
   //Time per division text in the bottom information section
-  display_text(125, 465, "DIV :");
-  
+  display_text(BOTTOM_TRIGGER_INFO_XPOS + 122, BOTTOM_TRIGGER_INFO_YPOS, "DIV :");
+
   //Setup the bottom information section
-  display_draw_shaded_rect(3, 465, &trigger_bottom_box, &trigger_bottom_box_text);
-  display_draw_shaded_rect(26, 465, &trigger_x_pos_box, &trigger_x_pos_box_text);
+  display_draw_shaded_rect(BOTTOM_TRIGGER_INFO_XPOS, BOTTOM_TRIGGER_INFO_YPOS, &trigger_bottom_box, &trigger_bottom_box_text);
 
   //Fill in the variable sections
   ui_display_trigger_mode();
   ui_display_trigger_channel();
   ui_display_trigger_edge();
-  ui_display_trigger_y_position();
-  ui_display_trigger_x_position();
+  ui_display_trigger_vertical_position();
+  ui_display_trigger_horizontal_position();
   ui_display_time_per_division();
 }
 
@@ -862,7 +964,7 @@ void ui_display_trigger_mode(void)
   if(scopesettings.triggermode < 3)
   {
     //Display the shaded rectangle with the selected text
-    display_draw_shaded_rect(149, 6, &trigger_mode_box, &trigger_mode_texts[scopesettings.triggermode]);
+    display_draw_shaded_rect(TOP_TRIGGER_INFO_XPOS + 22, TOP_TRIGGER_INFO_YPOS, &trigger_mode_box, &trigger_mode_texts[scopesettings.triggermode]);
   }
 }
 
@@ -888,7 +990,7 @@ void ui_display_trigger_channel(void)
   if(scopesettings.triggerchannel < 2)
   {
     //Display the shaded rectangle with the selected text
-    display_draw_shaded_rect(162, 24, &trigger_channel_boxes[scopesettings.triggerchannel], &trigger_channel_texts[scopesettings.triggerchannel]);
+    display_draw_shaded_rect(TOP_TRIGGER_INFO_XPOS + 35, TOP_TRIGGER_INFO_YPOS + 18, &trigger_channel_boxes[scopesettings.triggerchannel], &trigger_channel_texts[scopesettings.triggerchannel]);
   }
 }
 
@@ -897,11 +999,11 @@ void ui_display_trigger_channel(void)
 void ui_display_trigger_edge(void)
 {
   const uint8 *icon;
-  
+
   //Using an icon might be a simpler and faster option
   display_set_fg_color(0x00F8FCF8);
   display_set_bg_color(0x00000000);
-  
+
   //Select the icon based on the selected edge
   if(scopesettings.triggeredge == 0)
   {
@@ -913,37 +1015,81 @@ void ui_display_trigger_edge(void)
     //falling edge
     icon = trigger_falling_edge_icon;
   }
-  
+
   //Display the edge icon with infill of the background since the other icon needs to be overwritten
-  display_copy_icon_use_colors(icon, 198, 24, 7, 12);
+  display_copy_icon_use_colors(icon, TOP_TRIGGER_INFO_XPOS + 71, TOP_TRIGGER_INFO_YPOS + 18, 7, 12);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_trigger_x_position(void)
+void ui_display_trigger_vertical_position(void)
 {
-  //Have to clear the section first
-  //Needs interpretation of the position against a set time level????
-  
-  //Reading is based on center line of the grid being 0s and the channels time per division setting ??
-  //is taken into account to calculate the current position of the pointer.
-  
-  //When not on screen show *********
+  PCHANNELSETTINGS settings;
+  PVOLTCALCDATA    vcd;
+  int32            delta;
+  int32            volts;
+
+  //Select the channel based on the current trigger channel
+  if(scopesettings.triggerchannel == 0)
+  {
+    settings = &scopesettings.channel1;
+  }
+  else
+  {
+    settings = &scopesettings.channel2;
+  }
+
+  //Clear the background first
+  display_set_fg_color(0x00000000);
+  display_fill_rect(TOP_TRIGGER_INFO_XPOS + 33, TOP_TRIGGER_INFO_YPOS + 32, 49, 11);
+
+  //Get the voltage calculation data for the given channel
+  vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
+
+  //Calculate the delta of the trigger channel position versus the trigger level position
+  delta = scopesettings.triggerverticalposition - settings->traceposition;
+
+  //Multiply with the scaling factor for the given channel to get the level expressed in volts
+  volts = delta * vcd->mul_factor;
+
+  //Format the voltage for displaying
+  ui_msm_print_value(globaldisplaytext, volts, vcd->volt_scale, "V");
+
+  //The text is drawn in white and basic font
+  display_set_fg_color(0x00FFFFFF);
+  display_set_font(&font_1);
+
+  //Show it in the top of the screen trigger section
+  display_right_aligned_text(TOP_TRIGGER_INFO_XPOS + 80, TOP_TRIGGER_INFO_YPOS + 31, globaldisplaytext);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_trigger_y_position(void)
+void ui_display_trigger_horizontal_position(void)
 {
-  //Have to clear the section first
-  //Needs interpretation of the position against a set voltage level????
+  int32 delta = TRACE_HORIZONTAL_END - scopesettings.triggerhorizontalposition;
+
+  //Clear the old text first by re drawing the box
+  display_draw_shaded_rect(BOTTOM_TRIGGER_INFO_XPOS + 23, BOTTOM_TRIGGER_INFO_YPOS, &trigger_horizontal_pos_box, &trigger_horizontal_pos_box_text);
+
+  //Get the time delta based on the center of the pointers position
+  delta = TRACE_HORIZONTAL_CENTER - delta + 8;
+      
+  //Get the time calculation data for this time base setting.
+  PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
+
+  //For the time multiply with the scaling factor and display based on the time scale
+  delta *= tcd->mul_factor;
+
+  //Format the time for displaying
+  ui_msm_print_value(globaldisplaytext, delta, tcd->time_scale, "s");
   
-  //Reading is based on center line of the grid being 0V and the channels voltage per division setting
-  //is taken into account to calculate the current position of the pointer. Not very useful and should
-  //be changed to showing the actual trigger level in relation to the signal
+  //The text is drawn in white with a basic font
+  display_set_font(&font_1);
+  display_set_fg_color(0x00FFFFFF);
   
-  //When not on screen show *********
-  
+  //Display the selected sensitivity
+  display_right_aligned_text(BOTTOM_TRIGGER_INFO_XPOS + 113, BOTTOM_TRIGGER_INFO_YPOS, globaldisplaytext);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -952,17 +1098,17 @@ void ui_display_time_per_division(void)
 {
   //Clear the old text before printing the new text
   display_set_fg_color(0x00000000);
-  display_fill_rect(153, 465, 65, 14);
-  
-  //Text is RGB 565 based white
-  display_set_fg_color(0x00F8FCF8);
+  display_fill_rect(BOTTOM_TRIGGER_INFO_XPOS + 148, BOTTOM_TRIGGER_INFO_YPOS, 50, 14);
+
+  //Text is displayed in white and basic font
+  display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_1);
-  
+
   //Only display the text when in the setting is range of the text array
   if(scopesettings.timeperdiv < (sizeof(time_div_texts) / sizeof(int8 *)))
   {
     //Display the in the bottom information section using the table
-    display_text(155, 465, (char *)time_div_texts[scopesettings.timeperdiv]);
+    display_right_aligned_text(BOTTOM_TRIGGER_INFO_XPOS + 188, BOTTOM_TRIGGER_INFO_YPOS, (char *)time_div_texts[scopesettings.timeperdiv]);
   }
 }
 
@@ -971,14 +1117,14 @@ void ui_display_time_per_division(void)
 void ui_display_move_speed(void)
 {
   const uint8 *icon;
-  
+
   //Text is slightly off white
   display_set_fg_color(0x00F8FCF8);
   display_set_bg_color(0x00000000);
-  
+
   //Draw the icon for this section
   display_copy_icon_fg_color(move_speed_icon, 330, 13, 16, 16);
-  
+
   //Set the needed text based on the selected speed
   if(scopesettings.movespeed == MOVE_SPEED_FAST)
   {
@@ -990,7 +1136,7 @@ void ui_display_move_speed(void)
     //Slow speed selected
     icon = slow_text_icon;
   }
-  
+
   //Display the speed text with infill of the background since the other text needs to be overwritten
   display_copy_icon_use_colors(icon, 351, 15, 30, 13);
   display_copy_icon_fg_color(moving_text_icon, 383, 15, 54, 17);
@@ -1081,14 +1227,14 @@ void ui_display_channel_settings(PCHANNELSETTINGS settings)
     boxdata = &channel_disabled_box;
     settings->boxtext->color = 0x00888888;
   }
-  
+
   //Mark it as the channel settings area
   display_draw_shaded_rect(settings->infoxpos, settings->infoypos, boxdata, settings->boxtext);
-  
+
   //The fixed texts are drawn in a grey shade and basic font
   display_set_fg_color(0x00888888);
   display_set_font(&font_1);
-  
+
   //Modified character 0x3A (:) for having it one pixel higher then normal to
   //match the original firmware where it is printed separately to do the same
   //Volts per division text
@@ -1096,7 +1242,7 @@ void ui_display_channel_settings(PCHANNELSETTINGS settings)
 
   //Position text is placed 13 pixels lower then the volts per division text
   y += 13;
-  
+
   //Channel position text
   display_text(x, y, "POS :");
 
@@ -1139,7 +1285,7 @@ void ui_display_channel_probe(PCHANNELSETTINGS settings)
     //When disabled the disabled color is used
     channel_probe_texts[settings->magnification].color = 0x00888888;
   }
-  
+
   //Display the shaded rectangle with the selected text
   display_draw_shaded_rect(settings->infoxpos + 22, settings->infoypos, &channel_probe_box, &channel_probe_texts[settings->magnification]);
 }
@@ -1148,9 +1294,9 @@ void ui_display_channel_probe(PCHANNELSETTINGS settings)
 
 void ui_display_channel_coupling(PCHANNELSETTINGS settings)
 {
-  int x = settings->infoxpos + 70;
-  int y = settings->infoypos;
-  
+  int32 x = settings->infoxpos + 70;
+  int32 y = settings->infoypos;
+
   //Clear the old text first
   display_set_fg_color(0x00000000);
   display_fill_rect(x - 1, y + 2, 18, 10);
@@ -1166,10 +1312,10 @@ void ui_display_channel_coupling(PCHANNELSETTINGS settings)
     //When disabled the disabled color is used
     display_set_fg_color(0x00888888);
   }
-  
+
   //The text is drawn a basic font
   display_set_font(&font_1);
-  
+
   //Check on which coupling is set
   if(settings->coupling == 0)
   {
@@ -1187,12 +1333,57 @@ void ui_display_channel_coupling(PCHANNELSETTINGS settings)
 
 void ui_display_channel_sensitivity(PCHANNELSETTINGS settings)
 {
-  int x = settings->infoxpos + 43;
-  int y = settings->infoypos + 17;
-  
+  int32 x = settings->infoxpos + 31;
+  int32 y = settings->infoypos + 17;
+
   //Clear the old text first
   display_set_fg_color(0x00000000);
-  display_fill_rect(x - 1, y + 2, 45, 10);
+  display_fill_rect(x - 1, y + 2, 57, 10);
+
+  //Colors are different when disabled or enabled
+  if(settings->enable)
+  {
+    //For the enabled channel the channel color is used
+    display_set_fg_color(settings->color);
+  }
+  else
+  {
+    //When disabled the disabled color is used
+    display_set_fg_color(0x00888888);
+  }
+
+  //The text is drawn with a basic font
+  display_set_font(&font_1);
+
+  //Display the selected sensitivity
+  display_right_aligned_text(x + 54, y, volt_div_texts[settings->magnification][settings->displayvoltperdiv]);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_display_channel_position(PCHANNELSETTINGS settings)
+{
+  PVOLTCALCDATA vcd;
+  int32         volts;
+  int32         delta = TRACE_VERTICAL_END - settings->traceposition;
+  int32         x     = settings->infoxpos + 31;
+  int32         y     = settings->infoypos + 30;
+
+  //Clear the old text first
+  display_set_fg_color(0x00000000);
+  display_fill_rect(x - 1, y + 2, 57, 10);
+
+  //Get the voltage calculation data for the given channel
+  vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
+
+  //Get the delta between the actual position and the window center
+  delta = TRACE_VERTICAL_CENTER - delta;
+
+  //Multiply with the scaling factor for the given channel to get the level expressed in volts
+  volts = delta * vcd->mul_factor;
+
+  //Format the voltage for displaying
+  ui_msm_print_value(globaldisplaytext, volts, vcd->volt_scale, "V");
   
   //Colors are different when disabled or enabled
   if(settings->enable)
@@ -1205,29 +1396,17 @@ void ui_display_channel_sensitivity(PCHANNELSETTINGS settings)
     //When disabled the disabled color is used
     display_set_fg_color(0x00888888);
   }
-  
-  //The text is drawn a basic font
+
+  //The text is drawn with a basic font
   display_set_font(&font_1);
-  
+
   //Display the selected sensitivity
-  display_text(x, y, volt_div_texts[settings->magnification][settings->displayvoltperdiv]);
+  display_right_aligned_text(x + 54, y, globaldisplaytext);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_channel_position(PCHANNELSETTINGS settings)
-{
-  //Have to clear the section first
-  //Needs interpretation of the position against a set voltage level????
-  
-  //Reading is based on center line of the grid being 0V and the channels voltage per division setting
-  //is taken into account to calculate the current position of the pointer.
-  
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-const MEASUREMENTFUNCTION measurement_functions[] = 
+const MEASUREMENTFUNCTION measurement_functions[] =
 {
   ui_display_vmax,
   ui_display_vmin,
@@ -1243,7 +1422,6 @@ const MEASUREMENTFUNCTION measurement_functions[] =
   ui_display_duty_min
 };
 
-
 //----------------------------------------------------------------------------------------------------------------------------------
 //For this function it is necessary that the measurementitems in the scopesettings are properly initialized
 
@@ -1251,35 +1429,35 @@ void ui_display_measurements(void)
 {
   PCHANNELSETTINGS settings;
   int i,y,dy;
-  
+
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
     dy = i * MEASUREMENT_Y_DISPLACEMENT;
-    
+
     //Clear the background first
     display_set_fg_color(0x000000000);
     display_fill_rect(707, 9 + dy, 92, 61);
-    
+
     //Get the channel information for displaying the box in the channel color
     settings = scopesettings.measurementitems[i].channelsettings;
-    
+
     //Setup the base position
     y = MEASUREMENT_INFO_Y + dy;
-    
+
     //Mark it as the channel settings area
     display_draw_shaded_rect(MEASUREMENT_CHANNEL_BOX_X, y, settings->boxdata, settings->boxtext);
 
     //The fixed texts are drawn in a grey shade and basic font
     display_set_fg_color(0x00888888);
     display_set_font(&font_2);
-    
+
     //Display the measurement label
     display_text(MEASUREMENT_LABEL_X, y, measurement_names[scopesettings.measurementitems[i].index]);
 
     //Set the y position for the measurement
     y += 21;
-    
+
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
     measurement_functions[scopesettings.measurementitems[i].index](y, settings);
@@ -1295,23 +1473,23 @@ void ui_update_measurements(void)
 
   //Use the first display buffer as source to copy to the main screen buffer
   display_set_source_buffer(displaybuffer1);
-  
+
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
     //Draw the item in the first display buffer to avoid flicker on the screen
     display_set_screen_buffer(displaybuffer1);
-    
+
     //Get the channel information for displaying the value
     settings = scopesettings.measurementitems[i].channelsettings;
-    
+
     //Setup the base position
     y = MEASUREMENT_INFO_Y + (i * MEASUREMENT_Y_DISPLACEMENT) + 21;
-    
+
     //Clear the display field first
     display_set_fg_color(0x00000000);
     display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 83, 20);
-    
+
     //Call the set function for displaying the actual value and
     //pass the information for this measurement to the function for displaying it
     measurement_functions[scopesettings.measurementitems[i].index](y, settings);
@@ -1320,7 +1498,7 @@ void ui_update_measurements(void)
     display_set_screen_buffer((uint16 *)maindisplaybuffer);
     display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 84, 21);
   }
-  
+
   //Switch back to the separate display buffer to allow further actions on the trace display
   display_set_screen_buffer(displaybuffer1);
 }
@@ -1331,7 +1509,7 @@ void ui_display_vmax(uint32 ypos, PCHANNELSETTINGS settings)
 {
   //show sign either positive or negative on x location 719 followed by the value, but only when the value
   //is above 99. If less the value starts 13 pixels to the right
-  
+
   //For the maximum take of the center ADC value
   ui_display_voltage(ypos, settings, settings->max - 128, 1);
 }
@@ -1375,7 +1553,7 @@ void ui_display_vp(uint32 ypos, PCHANNELSETTINGS settings)
   //Determine the two absolute extremes
   int32 min = 128 - settings->min;
   int32 max = settings->max - 128;
-  
+
   //Display the biggest of the two
   if(min > max)
   {
@@ -1394,7 +1572,7 @@ void ui_display_vp(uint32 ypos, PCHANNELSETTINGS settings)
 void ui_display_freq(uint32 ypos, PCHANNELSETTINGS settings)
 {
   uint32 frequency = 0;
-  
+
   if(settings->frequencyvalid)
   {
     frequency = settings->frequency;
@@ -1409,7 +1587,7 @@ void ui_display_freq(uint32 ypos, PCHANNELSETTINGS settings)
 void ui_display_cycle(uint32 ypos, PCHANNELSETTINGS settings)
 {
   uint32 time = 0;
-  
+
   if(settings->frequencyvalid)
   {
     time = (((uint64)settings->periodtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20);
@@ -1424,7 +1602,7 @@ void ui_display_cycle(uint32 ypos, PCHANNELSETTINGS settings)
 void ui_display_time_plus(uint32 ypos, PCHANNELSETTINGS settings)
 {
   uint32 time = 0;
-  
+
   if(settings->frequencyvalid)
   {
     time = (((uint64)settings->hightime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20);
@@ -1439,7 +1617,7 @@ void ui_display_time_plus(uint32 ypos, PCHANNELSETTINGS settings)
 void ui_display_time_min(uint32 ypos, PCHANNELSETTINGS settings)
 {
   uint32 time = 0;
-  
+
   if(settings->frequencyvalid)
   {
     time = (((uint64)settings->lowtime * time_calc_data[scopesettings.samplerate].mul_factor) >> 20);
@@ -1470,7 +1648,7 @@ void ui_display_duty_min(uint32 ypos, PCHANNELSETTINGS settings)
 void ui_display_duty_cycle(uint32 ypos, PCHANNELSETTINGS settings, uint32 value)
 {
   uint32 percentage = 0;
-  
+
   if(settings->frequencyvalid)
   {
     percentage = (((uint64)value * 100) / settings->periodtime);
@@ -1486,11 +1664,11 @@ void ui_display_duty_cycle(uint32 ypos, PCHANNELSETTINGS settings, uint32 value)
     //Format the duty cycle for displaying
     ui_print_decimal(MEASUREMENT_VALUE_X, ypos, percentage, 0);
   }
-  
+
   //The designator text is drawn in white and small font
   display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_1);
-  
+
   //Display the designator on the screen
   display_text(MEASUREMENT_DESIGNATOR_X + 5, ypos + 5, "%");
 }
@@ -1501,7 +1679,7 @@ void ui_display_voltage(uint32 ypos, PCHANNELSETTINGS settings, int32 value, uin
 {
   PVOLTCALCDATA vcd;
   int32         volts;
-  
+
   //Calculate the voltage based on the channel settings
   vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
 
@@ -1515,7 +1693,7 @@ void ui_display_voltage(uint32 ypos, PCHANNELSETTINGS settings, int32 value, uin
     //Scaling factor is based on the two volts per division settings
     volts = (volts * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
   }
-  
+
   //Multiply with the scaling factor for the channel settings
   volts *= vcd->mul_factor;
 
@@ -1530,7 +1708,7 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
   char   *buffer = globaldisplaytext;
   uint32  x = MEASUREMENT_VALUE_X;
   uint32  d;
-  
+
   //Only when sign is needed print it and adjust the x position for it
   if(signedvalue)
   {
@@ -1549,17 +1727,17 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
       //Display the minus sign on a fixed location
       display_copy_icon_full_color(measurement_minus_icon, x, ypos + 7, 8, 2);
     }
-    
+
     //Sign takes 10 pixels
     x += 10;
   }
-  
+
   //Check on zero value to avoid unneeded processing
   if(value == 0)
   {
     //Value is zero so just set 0 character
     display_copy_icon_full_color(measurement_digit_icons[0], MEASUREMENT_ZERO_X, ypos, 13, 16);
-    
+
     //Set the x position for printing the designator on the screen
     x = MEASUREMENT_DESIGNATOR_X;
   }
@@ -1598,20 +1776,20 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
     //Draw the value on the display with the needed decimals
     x = ui_print_decimal(x, ypos, value, d);
   }
-  
+
   //The non signed values have the designator a bit further to the right than the last digit
   if(signedvalue == 0)
   {
     //Set the x position for printing the designator on the screen
     x += 11;
-  }  
-  
+  }
+
   //Make sure scale is not out of range
   if(scale > 7)
   {
     scale = 7;
   }
-  
+
   //When there is a magnifier and the value is zero non signed, the text needs to shift to the left
   if((scale != 4) && (value == 0) && (signedvalue == 0))
   {
@@ -1623,11 +1801,11 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
 
   //Add the type of measurement designator
   strcpy(buffer, designator);
-  
+
   //The designator text is drawn in white and small font
   display_set_fg_color(0x00FFFFFF);
   display_set_font(&font_1);
-  
+
   //Display it on the screen
   display_text(x + 2, ypos + 5, globaldisplaytext);
 }
@@ -1639,7 +1817,7 @@ uint32 ui_print_decimal(uint32 xpos, uint32 ypos, int32 value, uint32 decimals)
   uint32 i = 10;
   uint32 r = xpos + 39;
   uint32 x;
-  
+
   //Need to calculate the needed x position based on if there is a decimal point and the number of digits are going to be printed
   //Starting point is always three digits to the right
   x = xpos + 26;
@@ -1679,7 +1857,7 @@ uint32 ui_print_decimal(uint32 xpos, uint32 ypos, int32 value, uint32 decimals)
     //Take of the current digit
     value /= 10;
   }
-  
+
   //Return the most right x position used
   return(r);
 }
@@ -1699,30 +1877,30 @@ HIGHLIGHTRECTDATA main_menu_highlight_box =
 void ui_display_main_menu(void)
 {
   int i,y;
-  
+
   //Draw the menu outline slightly lighter then the background
   display_set_fg_color(0x00303430);
   display_draw_rect(5, 114, 183, 345);
-  
+
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
   display_fill_rect(6, 115, 180, 342);
 
   //Calculate the y position for the highlight box based on the selected menu item
   y = 118 + (menuitem * 31);
-  
+
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
-  
+
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
-  
+
   //The main menu has 11 items and fixed here for now.
   for(i=0,y=122;i<11;i++)
   {
     //Draw the icon and belonging text per line
     display_copy_icon_fg_color(main_menu_icons[i], 14, y, 166, 18);
-    
+
     //Next line is 31 pixels down
     y += 31;
   }
@@ -1733,20 +1911,20 @@ void ui_display_main_menu(void)
 void ui_unhighlight_main_menu_item(void)
 {
   int y;
-  
+
   //Calculate the y position for clearing the box based on the selected menu item
   y = 118 + (menuitem * 31);
-  
+
   //Fill the section with the lighter background of the menu area
   display_set_fg_color(0x00101010);
   display_fill_rect(9, y, 174, 25);
-  
+
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
-  
+
   //Text line sits 4 pixels lower
   y += 4;
-  
+
   //Draw the icon and belonging text for the selected item
   display_copy_icon_fg_color(main_menu_icons[menuitem], 14, y, 166, 18);
 }
@@ -1756,21 +1934,21 @@ void ui_unhighlight_main_menu_item(void)
 void ui_highlight_main_menu_item(void)
 {
   int y;
-  
+
   //Clear the previous selection first
-  
+
   //Calculate the y position for the highlight box based on the selected menu item
   y = 118 + (menuitem * 31);
-  
+
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
-  
+
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
-  
+
   //Text line sits 4 pixels lower
   y += 4;
-  
+
   //Draw the icon and belonging text for the selected item
   display_copy_icon_fg_color(main_menu_icons[menuitem], 14, y, 166, 18);
 }
@@ -1800,31 +1978,31 @@ HIGHLIGHTRECTDATA channel_2_highlight_box =
 void ui_display_channel_menu(PCHANNELSETTINGS settings)
 {
   int i,y;
-  
+
   //Draw the menu outline slightly lighter then the background
   display_set_fg_color(0x00303430);
   display_draw_rect(260, 213, 191, 91);
-  
+
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
   display_fill_rect(261, 214, 188, 88);
 
   //Need to calculate the y position for the highlight box
   y = 217 + (menuitem * 29);
-  
+
   //Draw the menu high lighter box for the selected item
   display_draw_highlight_rect(264, y, settings->highlightboxdata);
 
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
-  
+
   //The channel menu has 3 settings and fixed here for now.
   for(i=0,y=221;i<3;i++)
   {
     //Draw the icon and belonging label per line
     display_copy_icon_fg_color(channel_menu_icon_icons[i], 269, y, 17, 16);
     display_copy_icon_fg_color(channel_menu_label_icons[i], 298, y, 57, 16);
-    
+
     //Next line is 29 pixels down
     y += 29;
   }
@@ -1863,11 +2041,11 @@ const uint32 channel_menu_magnification_x_positions[] =
 void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS settings)
 {
   int i;
-  
+
   //Clear the background first
   display_set_fg_color(0x00000000);
   display_fill_rect(364, 222, 79, 14);
-  
+
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
 
@@ -1880,13 +2058,13 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
       display_copy_icon_fg_color(channel_menu_magnification_icons[i], channel_menu_magnification_x_positions[i], 224, channel_menu_magnification_widths[i], 10);
     }
   }
-  
+
   //Selected item highlight box is set in channel color
   display_set_fg_color(settings->color);
-  
+
   //Highlight the selected item
   display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 3, 13);
-  
+
   //Display the selected text in black
   display_set_fg_color(0x00000000);
   display_copy_icon_fg_color(channel_menu_magnification_icons[settings->magnification], channel_menu_magnification_x_positions[settings->magnification], 224, channel_menu_magnification_widths[settings->magnification], 10);
@@ -1899,7 +2077,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
   //Clear the background first
   display_set_fg_color(0x00000000);
   display_fill_rect(364, 250, 78, 15);
-  
+
   if(settings->coupling == 1)
   {
     //Selected item highlight box is set in channel color
@@ -1907,7 +2085,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 
     //Highlight the selected item
     display_fill_rect(367, 250, 29, 15);
-    
+
     //Display the selected text in black
     display_set_fg_color(0x00000000);
   }
@@ -1916,7 +2094,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     //Not selected text is displayed in white
     display_set_fg_color(0x00FFFFFF);
   }
-  
+
   //Display the AC text
   display_copy_icon_fg_color(channel_menu_AC_icon, 373, 252, 19, 12);
 
@@ -1927,7 +2105,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 
     //Highlight the selected item
     display_fill_rect(407, 250, 29, 15);
-    
+
     //Display the selected text in black
     display_set_fg_color(0x00000000);
   }
@@ -1936,7 +2114,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     //Not selected text is displayed in white
     display_set_fg_color(0x00FFFFFF);
   }
-  
+
   //Display the DC text
   display_copy_icon_fg_color(channel_menu_DC_icon, 413, 252, 19, 12);
 }
@@ -1948,7 +2126,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
   //Clear the background first
   display_set_fg_color(0x00000000);
   display_fill_rect(364, 279, 78, 15);
-  
+
   if(settings->fftenable == 1)
   {
     //Selected item highlight box is set in channel color
@@ -1956,7 +2134,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
 
     //Highlight the selected item
     display_fill_rect(367, 279, 29, 15);
-    
+
     //Display the selected text in black
     display_set_fg_color(0x00000000);
   }
@@ -1965,7 +2143,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     //Not selected text is displayed in white
     display_set_fg_color(0x00FFFFFF);
   }
-  
+
   //Display the ON text
   display_copy_icon_fg_color(channel_menu_ON_icon, 372, 281, 21, 12);
 
@@ -1976,7 +2154,7 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
 
     //Highlight the selected item
     display_fill_rect(407, 279, 29, 15);
-    
+
     //Display the selected text in black
     display_set_fg_color(0x00000000);
   }
@@ -1985,138 +2163,9 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     //Not selected text is displayed in white
     display_set_fg_color(0x00FFFFFF);
   }
-  
+
   //Display the OFF text
   display_copy_icon_fg_color(channel_menu_OFF_icon, 409, 281, 26, 12);
-}
-
-//----------------------------------------------------------------------------------------------------------------------------------
-
-void ui_display_cursor_measurements(void)
-{
-  uint32 height = 5;
-  uint32 ch1ypos = 64;
-  uint32 ch2ypos = 64;
-  uint32 delta;
-
-  //Check if need to do anything here
-  if(scopesettings.timecursorsenable || (scopesettings.voltcursorsenable && (scopesettings.channel1.enable || scopesettings.channel2.enable)))
-  {
-    //Check if time cursor is enabled
-    if(scopesettings.timecursorsenable)
-    {
-      //Add height for two text lines
-      height += 32;
-
-      //Shift the voltage text positions down
-      ch1ypos += 32;
-      ch2ypos += 32;
-    }
-
-    //Check if volt cursor is enabled
-    if(scopesettings.voltcursorsenable)
-    {
-      //Check if channel 1 is enabled
-      if(scopesettings.channel1.enable)
-      {
-        //Add height for one text line
-        height += 16;
-
-        //Shift the channel 2 voltage text down
-        ch2ypos += 16;
-      }
-
-      //Check if channel 2 is enabled
-      if(scopesettings.channel2.enable)
-      {
-        //Add height for one text line
-        height += 16;
-      }
-    }
-
-    //Set gray background for the cursor measurements
-    display_set_fg_color(0x00404040);
-
-    //Draw rectangle for the texts depending on what is enabled.
-    display_fill_rect(6, 59, 101, height - 1);
-    
-    //Make it a on one corner rounded thing
-    display_draw_horz_line(height + 59, 6, 106);
-    display_draw_horz_line(height + 60, 6, 106);
-    display_draw_horz_line(height + 61, 6, 105);
-    display_draw_horz_line(height + 62, 6, 103);
-
-    //Use white text and font_0
-    display_set_fg_color(0x00FFFFFF);
-    display_set_font(&font_0);
-
-    //Check if time cursor is enabled
-    if(scopesettings.timecursorsenable)
-    {
-      //Time texts are always on the top two lines
-
-      //Get the time delta based on the cursor positions
-      delta = scopesettings.timecursor2position - scopesettings.timecursor1position;
-
-      //Get the time calculation data for this time base setting.
-      PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
-
-      //For the time multiply with the scaling factor and display based on the time scale
-      delta *= tcd->mul_factor;
-
-      //Format the time for displaying
-      ui_cursor_print_value(globaldisplaytext, delta, tcd->time_scale, "T = ", "s");
-      display_text(13, 64, globaldisplaytext);
-
-      //Calculate the frequency for this time. Need to adjust for it to stay within 32 bits
-      delta /= 10;
-      delta = 1000000000 / delta;
-
-      //Format the frequency for displaying
-      ui_cursor_print_value(globaldisplaytext, delta, tcd->freq_scale, "F = ", "Hz");
-      display_text(13, 80, globaldisplaytext);
-    }
-
-    //Check if volt cursor is enabled
-    if(scopesettings.voltcursorsenable)
-    {
-      PVOLTCALCDATA vcd;
-      uint32        volts;
-
-      //Get the volts delta based on the cursor positions
-      delta = scopesettings.voltcursor2position - scopesettings.voltcursor1position;
-
-      //Check if channel 1 is enabled
-      if(scopesettings.channel1.enable)
-      {
-        //Calculate the voltage based on the channel 1 settings
-        vcd = (PVOLTCALCDATA)&volt_calc_data[scopesettings.channel1.magnification][scopesettings.channel1.displayvoltperdiv];
-
-        //Multiply with the scaling factor for the channel 1 settings
-        volts = delta * vcd->mul_factor;
-
-        //Channel 1 text has a variable position
-        //Format the voltage for displaying
-        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V1 = ", "V");
-        display_text(13, ch1ypos, globaldisplaytext);
-      }
-
-      //Check if channel 2 is enabled
-      if(scopesettings.channel2.enable)
-      {
-        //Calculate the voltage based on the channel 2 settings
-        vcd = (PVOLTCALCDATA)&volt_calc_data[scopesettings.channel2.magnification][scopesettings.channel2.displayvoltperdiv];
-
-        //Multiply with the scaling factor for the channel 2 settings
-        volts = delta * vcd->mul_factor;
-
-        //Channel 2 text has a variable position
-        //Format the voltage for displaying
-        ui_cursor_print_value(globaldisplaytext, volts, vcd->volt_scale, "V2 = ", "V");
-        display_text(13, ch2ypos, globaldisplaytext);
-      }
-    }
-  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2124,7 +2173,7 @@ void ui_display_cursor_measurements(void)
 void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header, char *sign)
 {
   uint32 negative = 0;
-  
+
   //Copy the header into the string buffer
   buffer = strcpy(buffer, header);
 
@@ -2135,7 +2184,7 @@ void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header
     value = -value;
     negative = 1;
   }
-  
+
   //Need to find the magnitude scale for the input
   //The calculations are based on fixed point
   while(value >= 100000)
@@ -2212,13 +2261,13 @@ void ui_open_slider(uint16 xpos, uint16 ypos, uint32 savebackground)
     //Setup the slider menu in a separate buffer to be able to display without flicker
     display_set_screen_buffer(displaybuffer1);
   }
-  
+
   //Draw the outer box
   display_draw_shaded_rect(xpos, ypos, &slider_outer_box, 0);
 
   //Draw the inner rounded box
   display_draw_shaded_rounded_rect(xpos + SLIDER_ROUNDED_BOX_X_OFFSET, ypos + SLIDER_ROUNDED_BOX_Y_OFFSET, &slider_rounded_box);
-  
+
   //Display the actual slider
   ui_display_slider(xpos, ypos);
 
@@ -2328,7 +2377,7 @@ void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground)
     //Setup the setting menu in a separate buffer to be able to display without flicker
     display_set_screen_buffer(displaybuffer1);
   }
-  
+
   //Display the actual menu with the settings
   ui_display_on_off_setting(xpos, ypos);
 
@@ -2367,7 +2416,7 @@ void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
   {
     //Draw the outer box to clear the background
     display_draw_shaded_rect(xpos, ypos, &on_off_setting_box, 0);
-    
+
     //Need to display the highlight box on the selected item
     if(onoffhighlighteditem == 0)
     {
@@ -2401,6 +2450,43 @@ void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+void ui_display_trigger_arrow(uint32 direction)
+{
+  int32 xs = TRACE_HORIZONTAL_END - 7;
+  int32 xe = xs;
+  int32 y = TRACE_VERTICAL_START;
+  int32 step = 1;
+  int32 i;
+
+  //For a down arrow the Y needs to start at the bottom and go up
+  if(direction)
+  {
+    y = TRACE_VERTICAL_END;
+    step = -1;
+  }
+
+  for(i=0;i<5;i++)
+  {
+    display_draw_horz_line(y, xs, xe);
+
+    xs--;
+    xe++;
+    y += step;
+  }
+
+  xs = TRACE_HORIZONTAL_END - 8;
+
+  //For the down arrow the rectangle needs to start higher up
+  if(direction)
+  {
+    y -= 5;
+  }
+
+  display_fill_rect(xs, y, 2, 5);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 HIGHLIGHTRECTDATA measurement_menu_highlight_box =
 {
   141,
@@ -2426,7 +2512,7 @@ const char *measurementslotnames[] =
 void ui_display_measurements_menu(void)
 {
   uint16 x,y;
-  
+
   //Fill the lighter background of the menu area
   display_set_fg_color(0x00101010);
   display_fill_rect(380, 114, 313, 332);
@@ -2444,23 +2530,23 @@ void ui_display_measurements_menu(void)
   display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
   display_set_font(&font_3);
   display_text(531, 120, measurementslotnames[measurementslot]);
-  
+
   //Set the x position for the currently selected item based on the used channel
   x = 383 + (scopesettings.measurementitems[measurementslot].channel * 167);
-  
+
   //Set the y position for the currently selected item
   y = 142 + (scopesettings.measurementitems[measurementslot].index * 25);
-  
+
   //Draw the menu high lighter box for the selected item (Original code used three rectangles)
   display_draw_highlight_rect(x, y, &measurement_menu_highlight_box);
-  
+
   //Text is displayed in white
   display_set_fg_color(0x00FFFFFF);
-  
+
   //Display the channel header texts
   display_copy_icon_fg_color(channel_1_text_icon, 452, 121, 23, 13);
   display_copy_icon_fg_color(channel_2_text_icon, 607, 121, 26, 13);
-  
+
   //Display the list of measurement items per channel
   ui_display_measurements_menu_items(391, &scopesettings.channel1);
   ui_display_measurements_menu_items(558, &scopesettings.channel2);
@@ -2468,7 +2554,7 @@ void ui_display_measurements_menu(void)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-const MSMITEMFUNCTION measurements_menu_item_functions[] = 
+const MSMITEMFUNCTION measurements_menu_item_functions[] =
 {
   ui_msm_display_vmax,
   ui_msm_display_vmin,
@@ -2499,7 +2585,7 @@ void ui_display_measurements_menu_items(uint32 xpos, PCHANNELSETTINGS settings)
   {
     //Draw the text per line
     display_text(xpos, y, measurement_names[i]);
-    
+
     //Next line is 25 pixels down
     y += 25;
   }
@@ -2509,29 +2595,29 @@ void ui_display_measurements_menu_items(uint32 xpos, PCHANNELSETTINGS settings)
 
   //A different font is used for the equal signs
   display_set_font(&font_0);
-  
+
   //Display the equal sign for the measurements based on font_0
   for(i=0,y=149;i<(sizeof(measurement_names) / sizeof(uint8 *));i++)
   {
     //Draw the sign per line
     display_text(x, y, "=");
-    
+
     //Next line is 25 pixels down
     y += 25;
   }
 
   //The right aligned location for the value is shifted 125 pixels to the right
   x = xpos + 125;
-  
+
   //Display the values for the measurements
   for(i=0,y=147;i<(sizeof(measurements_menu_item_functions) / sizeof(MSMITEMFUNCTION));i++)
   {
     //Setup the value to display
     measurements_menu_item_functions[i](x, y, settings);
-    
+
     //Draw the value aligned on the right per line
     display_right_aligned_text(x, y, globaldisplaytext);
-    
+
     //Next line is 25 pixels down
     y += 25;
   }
@@ -2586,7 +2672,7 @@ void ui_msm_display_vp(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings)
   //Determine the two absolute extremes
   int32 min = 128 - settings->min;
   int32 max = settings->max - 128;
-  
+
   //Display the biggest of the two
   if(min > max)
   {
@@ -2668,16 +2754,16 @@ void ui_msm_display_time_min(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings
 void ui_msm_display_duty_plus(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings)
 {
   char *buffer;
-  
+
   //Only when the frequency is valid calculate the time
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
     buffer = ui_msm_print_decimal(globaldisplaytext, (((uint64)settings->hightime * 1000) / settings->periodtime), 1, 0);
-    
+
     //Add the duty cycle sign
     strcpy(buffer, "%");
-    
+
   }
   else
   {
@@ -2690,16 +2776,16 @@ void ui_msm_display_duty_plus(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setting
 void ui_msm_display_duty_min(uint32 xpos, uint32 ypos, PCHANNELSETTINGS settings)
 {
   char *buffer;
-  
+
   //Only when the frequency is valid calculate the time
   if(settings->frequencyvalid)
   {
     //Format the time for displaying
     buffer = ui_msm_print_decimal(globaldisplaytext, (((uint64)settings->lowtime * 1000) / settings->periodtime), 1, 0);
-    
+
     //Add the duty cycle sign
     strcpy(buffer, "%");
-    
+
   }
   else
   {
@@ -2713,7 +2799,7 @@ void ui_msm_display_voltage(PCHANNELSETTINGS settings, int32 value)
 {
   PVOLTCALCDATA vcd;
   int32         volts;
-  
+
   //Calculate the voltage based on the channel settings
   vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
 
@@ -2727,7 +2813,7 @@ void ui_msm_display_voltage(PCHANNELSETTINGS settings, int32 value)
     //Scaling factor is based on the two volts per division settings
     volts = (volts * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
   }
-  
+
   //Multiply with the scaling factor for the channel settings
   volts *= vcd->mul_factor;
 
@@ -2740,7 +2826,7 @@ void ui_msm_display_voltage(PCHANNELSETTINGS settings, int32 value)
 void ui_msm_print_value(char *buffer, int32 value, uint32 scale, char *designator)
 {
   uint32 negative = 0;
-  
+
   //Check if negative value
   if(value < 0)
   {
@@ -2748,7 +2834,7 @@ void ui_msm_print_value(char *buffer, int32 value, uint32 scale, char *designato
     value = -value;
     negative = 1;
   }
-  
+
   //Need to find the magnitude scale for the input
   //The calculations are based on fixed point
   while(value >= 100000)
@@ -2829,7 +2915,7 @@ char *ui_msm_print_decimal(char *buffer, int32 value, uint32 decimals, uint32 ne
   //Check if negative number and if so put a minus in front of it
   if(negative)
     b[--i] = '-';
-  
+
   //Determine the size of the string
   s = 12 - i;
 
@@ -2878,10 +2964,10 @@ void ui_prepare_setup_for_file(void)
   ptr[1] = WAVEFORM_FILE_ID1;
   ptr[2] = WAVEFORM_FILE_ID2;
   ptr[3] = WAVEFORM_FILE_VERSION;
-  
+
   //Leave space for file version and checksum data
   index = CHANNEL1_SETTING_OFFSET;
-  
+
   //Copy the needed channel 1 settings and measurements
   ptr[index++] = scopesettings.channel1.enable;
   ptr[index++] = scopesettings.channel1.displayvoltperdiv;
@@ -2903,7 +2989,7 @@ void ui_prepare_setup_for_file(void)
 
   //Leave some space for channel 1 settings changes
   index = CHANNEL2_SETTING_OFFSET;
-  
+
   //Copy the needed channel 2 settings and measurements
   ptr[index++] = scopesettings.channel2.enable;
   ptr[index++] = scopesettings.channel2.displayvoltperdiv;
@@ -2925,7 +3011,7 @@ void ui_prepare_setup_for_file(void)
 
   //Leave some space for channel 2 settings changes
   index = TRIGGER_SETTING_OFFSET;
-  
+
   //Copy the needed scope trigger settings
   ptr[index++] = scopesettings.timeperdiv;
   ptr[index++] = scopesettings.samplerate;
@@ -2940,7 +3026,7 @@ void ui_prepare_setup_for_file(void)
 
   //Leave some space for trigger information changes
   index = OTHER_SETTING_OFFSET;
-  
+
   //Copy the needed other scope settings
   ptr[index++] = scopesettings.movespeed;
   ptr[index++] = scopesettings.screenbrightness;
@@ -2951,7 +3037,7 @@ void ui_prepare_setup_for_file(void)
 
   //Leave some space for other scope settings changes
   index = CURSOR_SETTING_OFFSET;
-  
+
   //Copy the cursor settings
   ptr[index++] = scopesettings.selectedcursor;
   ptr[index++] = scopesettings.timecursorsenable;
@@ -2960,10 +3046,10 @@ void ui_prepare_setup_for_file(void)
   ptr[index++] = scopesettings.timecursor2position;
   ptr[index++] = scopesettings.voltcursor1position;
   ptr[index++] = scopesettings.voltcursor2position;
-  
+
   //Leave some space for other cursor settings changes
   index = MEASUREMENT_SETTING_OFFSET;
-  
+
     //Save the measurement slots states
   for(measurement=0;measurement<6;measurement++)
   {
@@ -2977,7 +3063,7 @@ void ui_prepare_setup_for_file(void)
   {
     checksum += ptr[index];
   }
-  
+
   //Add the sample data too
   for(index=0;index<750;index++)
   {
@@ -3000,7 +3086,7 @@ void ui_restore_setup_from_file(void)
 
   //Leave space for file version and checksum data
   index = CHANNEL1_SETTING_OFFSET;
-  
+
   //Copy the needed channel 1 settings and measurements
   scopesettings.channel1.enable            = ptr[index++];
   scopesettings.channel1.displayvoltperdiv = ptr[index++];
@@ -3022,7 +3108,7 @@ void ui_restore_setup_from_file(void)
 
   //Leave some space for channel 1 settings changes
   index = CHANNEL2_SETTING_OFFSET;
-  
+
   //Copy the needed channel 2 settings and measurements
   scopesettings.channel2.enable            = ptr[index++];
   scopesettings.channel2.displayvoltperdiv = ptr[index++];
@@ -3044,7 +3130,7 @@ void ui_restore_setup_from_file(void)
 
   //Leave some space for channel 2 settings changes
   index = TRIGGER_SETTING_OFFSET;
-  
+
   //Copy the needed scope trigger settings
   scopesettings.timeperdiv                = ptr[index++];
   scopesettings.samplerate                = ptr[index++];
@@ -3059,7 +3145,7 @@ void ui_restore_setup_from_file(void)
 
   //Leave some space for trigger information changes
   index = OTHER_SETTING_OFFSET;
-  
+
   //Copy the needed other scope settings
   scopesettings.movespeed        = ptr[index++];
   scopesettings.screenbrightness = ptr[index++];
@@ -3070,7 +3156,7 @@ void ui_restore_setup_from_file(void)
 
   //Leave some space for other scope settings changes
   index = CURSOR_SETTING_OFFSET;
-  
+
   //Copy the cursor settings
   scopesettings.selectedcursor      = ptr[index++];
   scopesettings.timecursorsenable   = ptr[index++];
@@ -3079,10 +3165,10 @@ void ui_restore_setup_from_file(void)
   scopesettings.timecursor2position = ptr[index++];
   scopesettings.voltcursor1position = ptr[index++];
   scopesettings.voltcursor2position = ptr[index++];
-  
+
   //Leave some space for other cursor settings changes
   index = MEASUREMENT_SETTING_OFFSET;
-  
+
   //Restore the measurement slots states
   for(measurement=0;measurement<6;measurement++)
   {
@@ -3108,13 +3194,13 @@ int32 ui_check_waveform_file(void)
 {
   uint32 index;
   uint32 checksum = 0;
-  
+
   //Calculate a checksum over the settings data
   for(index=1;index<VIEW_NUMBER_OF_SETTINGS;index++)
   {
     checksum += viewfilesetupdata[index];
   }
-  
+
   //Add the sample data too
   for(index=0;index<750;index++)
   {
@@ -3128,7 +3214,7 @@ int32 ui_check_waveform_file(void)
   {
     return(0);
   }
-  
+
   //Something is wrong so signal it
   return(-1);
 }
@@ -3592,7 +3678,7 @@ void ui_save_view_item_file(int32 type)
   //Copy the filename from the thumbnail filename, since the global one got written over in the saving of the thumbnail
   //Might need a re write of the message setup
   strcpy(viewfilename, viewthumbnaildata[0].filename);
-  
+
   //Open the new file. On failure signal this and quit
   result = f_open(&viewfp, viewfilename, FA_CREATE_ALWAYS | FA_WRITE);
 
@@ -3739,7 +3825,7 @@ int32 ui_load_trace_data(void)
       }
       else
       {
-        //Load the channel 1 sample data      
+        //Load the channel 1 sample data
         if((result = f_read(&viewfp, (uint8 *)channel1tracebuffer, 3000, 0)) == FR_OK)
         {
           //Load the channel 2 sample data
@@ -3754,7 +3840,7 @@ int32 ui_load_trace_data(void)
 
               //Allow redrawing of the trace display
               enabletracedisplay = TRACE_DISPLAY_ENABLED;
-              
+
               //Show the normal scope screen
               ui_setup_main_screen();
 
@@ -3833,7 +3919,7 @@ int32 ui_load_bitmap_data(void)
       {
         //Load the bitmap data directly onto the screen
         result = f_read(&viewfp, (uint8 *)maindisplaybuffer, PICTURE_DATA_SIZE, 0);
-        
+
         //Show the filename on the bottom of the picture
         display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
         display_set_font(&font_0);
@@ -3863,7 +3949,7 @@ int32 ui_load_bitmap_data(void)
   {
     //Signal unable to open the file
     ui_display_file_status_message(MESSAGE_FILE_OPEN_FAILED, 0);
-    
+
     //No need to delete the file since it won't be there
     dodelete = 0;
   }
@@ -3920,7 +4006,7 @@ void ui_sync_thumbnail_files(void)
       {
         //File exists so close it
         f_close(&viewfp);
-        
+
         //Point to the next item. Only needed if item still exists, because it is removed from the list otherwise
         viewcurrentindex++;
       }
@@ -3955,7 +4041,7 @@ void ui_initialize_and_display_thumbnails(void)
     //Set it to the last one if out of range
     viewcurrentindex = viewavailableitems - 1;
   }
-  
+
   //Need to check if the current page is still valid
   if(viewpage > viewpages)
   {
@@ -3981,12 +4067,12 @@ void ui_display_thumbnails(void)
   uint32 ypos = VIEW_ITEM_YSTART;
 
   uint32 x,y;
-  
+
   char *pagetext;
 
   //Use a separate buffer to clear the screen so it won't flicker when previous or next item is highlighted
   display_set_screen_buffer(displaybuffer1);
-  
+
   //Set black color for background
   display_set_fg_color(0x00000000);
 
@@ -4034,14 +4120,14 @@ void ui_display_thumbnails(void)
 
       //Fill in the side bar
       display_copy_icon_full_color(thumbnail_side_bar_icon, xpos + 173, y, 26, 118);
-      
+
       //Check on highlighted item
       if(index == viewcurrentindex)
       {
         display_set_fg_color(0x00707070);
         display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 33, VIEW_ITEM_HEIGHT - 29);
       }
-      
+
       //Draw a grid
       display_set_fg_color(0x00606060);
 
@@ -4051,7 +4137,7 @@ void ui_display_thumbnails(void)
 
       //Point to the current thumbnail
       thumbnaildata = &viewthumbnaildata[index];
-      
+
       //Display the thumbnail
       //Need to make a distinction between normal display and xy display mode
       if(thumbnaildata->xydisplaymode == 0)
@@ -4136,7 +4222,7 @@ void ui_display_thumbnails(void)
           sample++;
         }
       }
-      
+
       //Draw the grey trace border after the traces has been drawn to mask the out of the screen pixels
       display_set_fg_color(0x00909090);
       display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 26);
@@ -4204,7 +4290,7 @@ void ui_display_thumbnails(void)
 //Draw the pointers here
 
       }
-      
+
       //Check on select mode being enabled
       if(viewselectmode)
       {
@@ -4215,7 +4301,7 @@ void ui_display_thumbnails(void)
         //Draw an empty box to indicate select mode
         display_draw_rect(xpos + 71, ypos + 44, 32, 32);
         display_draw_rect(xpos + 72, ypos + 45, 30, 30);
-        
+
         //Check if the item is selected
         if(viewitemselected[index % VIEW_ITEMS_PER_PAGE])
         {
@@ -4233,7 +4319,7 @@ void ui_display_thumbnails(void)
       {
         display_set_fg_color(0x00FFFFFF);
       }
-      
+
       //Display the file name in the bottom left corner
       display_set_font(&font_2);
       display_text(xpos + 7, ypos + 105, thumbnaildata->filename);
@@ -4243,7 +4329,7 @@ void ui_display_thumbnails(void)
 
       //Draw the border
       display_draw_rect(xpos, ypos, VIEW_ITEM_WIDTH, VIEW_ITEM_HEIGHT);
-      
+
       //Skip to next coordinates
       xpos += VIEW_ITEM_XNEXT;
 
@@ -4260,29 +4346,29 @@ void ui_display_thumbnails(void)
       //Select next index
       index++;
     }
-    
+
     //Display page number if more then one page available
     if(viewpages)
     {
       //Show the page text in the highlight color
       display_set_fg_color(FILE_NAME_HIGHLIGHT_COLOR);
       display_set_font(&font_3);
-      
+
       //Point to after the "PAGE " text to print the page number
       pagetext = viewfilename + 5;
-      
+
       //Load in the "PAGE " text
       memcpy(viewfilename, "PAGE ", 5);
-      
+
       //Add the actual page number. Internally viewpage starts at 0
       pagetext = ui_print_decimal_number(pagetext, viewpage + 1);
-      
+
       //Put in the separator between the page number and the number of pages
       *pagetext++ = '/';
-      
+
       //Add the actual number of pages. Here also one less is used internally
       ui_print_decimal_number(pagetext, viewpages + 1);
-      
+
       //Display it on the screen
       display_text(5, 2, viewfilename);
     }
@@ -4294,7 +4380,7 @@ void ui_display_thumbnails(void)
     display_set_font(&font_4);
     display_text(254, 225, "NO ITEMS AVAILABLE");
   }
-  
+
   //Copy the new screen to the actual screen buffer
   display_set_source_buffer(displaybuffer1);
   display_set_screen_buffer((uint16 *)maindisplaybuffer);
@@ -4321,7 +4407,7 @@ void ui_display_thumbnail_data(uint32 xstart, uint32 xend, uint32 ypos, uint32 c
 
   //Position it within the thumbnail on screen
   sample1 += ypos;
-  
+
   //Do while the samples last
   for(x=xstart;x<xend;x++)
   {
@@ -4439,7 +4525,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
     uint8 *buffer1 = thumbnaildata->channel1data;
     uint8 *buffer2 = thumbnaildata->channel2data;
-    
+
     //Copy and scale every 4th sample for the channels
     for(;index<last;index+=4)
     {
@@ -4478,7 +4564,7 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
   {
     //Take of the trace screen top offset to get the actual sample value. Can be negative when the trace is outside the displayable region
     sample = (int32)thumbnailtracedata[index] - TRACE_WINDOW_BORDER_YPOS;
-    
+
     //Limit the sample to the extremes
     if(sample < 0)
     {
@@ -4494,7 +4580,7 @@ void ui_thumbnail_set_trace_data(PCHANNELSETTINGS settings, uint8 *buffer)
       //Scale the sample for the Y direction to fit the thumbnail trace screen window
       sample = (sample * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
     }
-    
+
     //Fill the buffer with the samples
     *buffer++ = (uint8)sample;
   }
@@ -4614,7 +4700,7 @@ char *ui_print_decimal_number(char *buffer, uint32 number)
       number /= 10;
     }
   }
-  
+
   //Determine the size of the decimal part
   s = 12 - i;
 
@@ -4623,9 +4709,9 @@ char *ui_print_decimal_number(char *buffer, uint32 number)
 
   //Terminate the string
   buffer[s] = 0;
-  
+
   //Return the pointer to the end of the string
-  return(buffer + s);  
+  return(buffer + s);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -4657,7 +4743,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
     //If so override the setting
     checkconfirmation = 1;
   }
-  
+
   //Need to save the screen buffer pointer and set it to the actual screen
   //When displaying trace data to avoid flickering data is drawn in a different screen buffer
   display_save_screen_buffer();
@@ -4731,11 +4817,11 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
     case MESSAGE_BMP_HEADER_MISMATCH:
       display_text(270, 220, "Bitmap header mismatch");
       break;
-      
+
     case MESSAGE_WAV_VERSION_MISMATCH:
       display_text(270, 220, "Waveform file version mismatch");
       break;
-      
+
     case MESSAGE_WAV_CHECKSUM_ERROR:
       display_text(270, 220, "Waveform file checksum error");
       break;
@@ -4755,7 +4841,7 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
     //Wait for half a second
     timer0_delay(500);
   }
-  
+
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);
   display_copy_rect_to_screen(260, 210, 280, 60);
@@ -4797,7 +4883,7 @@ int32 ui_handle_confirm_delete(void)
 
   //Wait for the user to push a button or rotate a dial on the front panel of the scope
   uart1_wait_for_user_input();
-  
+
   //Check if the user pressed the OK button
   if(lastreceivedcommand == UIC_BUTTON_NAV_OK)
   {
@@ -4809,11 +4895,11 @@ int32 ui_handle_confirm_delete(void)
     //Else set the chosen option to no
     choice = VIEW_CONFIRM_DELETE_NO;
   }
-  
+
   //Restore the original screen
   display_set_source_buffer(displaybuffer2);
   display_copy_rect_to_screen(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
-  
+
   //return the choice
   return(choice);
 }
@@ -4862,7 +4948,7 @@ void ui_show_calibration_message(uint32 state)
       //Restore the original screen to hide the start message
       display_set_source_buffer(displaybuffer2);
       display_copy_rect_to_screen(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, CALIBRATION_START_MSG_WIDTH, CALIBRATION_START_MSG_HEIGHT);
-      
+
       //When the given state is hide then nothing more to do
       if(state == CALIBRATION_STATE_HIDE)
       {
@@ -4876,7 +4962,7 @@ void ui_show_calibration_message(uint32 state)
 
   //Set the color for displaying the text
   display_set_fg_color(0x00FFFFFF);
-  
+
   //Display the intended message
   switch(state)
   {

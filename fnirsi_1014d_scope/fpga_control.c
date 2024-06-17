@@ -397,9 +397,9 @@ void fpga_swap_trigger_channel(void)
 
 void fpga_set_trigger_level(void)
 {
-  uint32 voltperdiv;
-  uint32 traceposition;
-  int32  level;
+  uint8 voltperdiv;
+  int32 traceposition;
+  int32 level;
   
   //The trace position on screen equals to ADC reading 128
   //The trigger vertical position is relative to the trace position.
@@ -420,10 +420,7 @@ void fpga_set_trigger_level(void)
   }
   
   //The difference between the two positions determines the level offset on 128, but it needs to be scaled back first
-  level = ((((int32)scopesettings.triggerverticalposition - (int32)traceposition) * 4194304) / signal_adjusters[voltperdiv]) + 128;
-
-  //Set the new level in the settings
-  scopesettings.triggerlevel = level;
+  level = ((((int32)scopesettings.triggerverticalposition - traceposition) << VOLTAGE_SHIFTER) / signal_adjusters[voltperdiv]) + 128;
 
   //Limit on extremes
   if(level < 0)
@@ -434,6 +431,9 @@ void fpga_set_trigger_level(void)
   {
     level = 255;
   }
+
+  //Set the new level in the settings
+  scopesettings.triggerlevel = level;
   
   //Send the command for setting the trigger level to the FPGA
   fpga_write_cmd(0x17);
@@ -551,16 +551,8 @@ uint16 fpga_prepare_for_transfer(void)
   
   //Send the command for getting some data from the FPGA
   fpga_write_cmd(0x14);
-  
-  //Get the data, only 4 bits for first byte
-//  data1 = fpga_read_byte() & 0x0F;
-//  data2 = fpga_read_byte();
-  
-  //Prepare the data
-//  data = (((data1 << 12) | (data2 << 4) | data1) >> 4) + 2;
-  
-  //Just read a short, and with 0x0FFF and add 2
-  //Have to see if the add 2 is needed
+
+  //Get the 12 bit location into the sample buffer where the trigger sits
   data = (fpga_read_short() & 0x0FFF) + 2;
  
   return(data & 0x0FFF);

@@ -5,22 +5,30 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define CALIBRATION_STATE_START          0
-#define CALIBRATION_STATE_BUSY           1
-#define CALIBRATION_STATE_SUCCESS        2
-#define CALIBRATION_STATE_FAIL           3
-#define CALIBRATION_STATE_HIDE           4
+#define CALIBRATION_STATE_START           0
+#define CALIBRATION_STATE_BUSY            1
+#define CALIBRATION_STATE_SUCCESS         2
+#define CALIBRATION_STATE_FAIL            3
+#define CALIBRATION_STATE_HIDE            4
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define CALIBRATION_MSG_XPOS           191
-#define CALIBRATION_MSG_YPOS           363
+#define CALIBRATION_MSG_XPOS            191
+#define CALIBRATION_MSG_YPOS            363
 
-#define CALIBRATION_START_MSG_WIDTH    173
-#define CALIBRATION_START_MSG_HEIGHT    65
+#define CALIBRATION_START_MSG_WIDTH     173
+#define CALIBRATION_START_MSG_HEIGHT     65
 
-#define CALIBRATION_MSG_WIDTH           92
-#define CALIBRATION_MSG_HEIGHT          33
+#define CALIBRATION_MSG_WIDTH            92
+#define CALIBRATION_MSG_HEIGHT           33
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+#define TOP_TRIGGER_INFO_XPOS           127
+#define TOP_TRIGGER_INFO_YPOS             6
+
+#define BOTTOM_TRIGGER_INFO_XPOS          3
+#define BOTTOM_TRIGGER_INFO_YPOS        465
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -78,6 +86,15 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+#define CURSOR_SELECTED_TEXT_WIDTH       51
+#define CURSOR_SELECTED_TEXT_HEIGHT      15
+#define CURSOR_SELECTED_TEXT_OFFSET       3
+
+#define CURSOR_SELECTED_TEXT_X          655
+#define CURSOR_SELECTED_TEXT_Y          441
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void ui_setup_display_lib(void);
 
 void ui_setup_main_screen(void);
@@ -101,9 +118,7 @@ void ui_show_open_slider(void);
 
 void ui_draw_grid(void);
 void ui_draw_pointers(void);
-void ui_draw_time_cursors(void);
-void ui_draw_volt_cursors(void);
-void ui_display_selected_text(void);              //Display the text "Selected" near the selected cursor
+void ui_display_cursors(void);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
@@ -111,8 +126,8 @@ void ui_display_trigger_settings(void);
 void ui_display_trigger_mode(void);
 void ui_display_trigger_channel(void);
 void ui_display_trigger_edge(void);
-void ui_display_trigger_y_position(void);
-void ui_display_trigger_x_position(void);
+void ui_display_trigger_vertical_position(void);
+void ui_display_trigger_horizontal_position(void);
 
 void ui_display_time_per_division(void);
 void ui_display_waiting_triggered_text(uint32 state);
@@ -139,8 +154,6 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
 void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings);
 void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings);
 
-void ui_display_cursor_measurements(void);
-
 void ui_cursor_print_value(char *buffer, int32 value, uint32 scale, char *header, char *sign);
 
 void ui_open_slider(uint16 xpos, uint16 ypos, uint32 savebackground);
@@ -150,6 +163,8 @@ void ui_display_slider(uint16 xpos, uint16 ypos);
 void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground);
 void ui_close_on_off_setting(uint16 xpos, uint16 ypos);
 void ui_display_on_off_setting(uint16 xpos, uint16 ypos);
+
+void ui_display_trigger_arrow(uint32 direction);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 // Functions for displaying the measurement values on the measurements slots
