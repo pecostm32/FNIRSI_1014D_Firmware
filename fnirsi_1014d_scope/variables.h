@@ -172,6 +172,9 @@
 #define TRACE_HORIZONTAL_CENTER         ((TRACE_MAX_WIDTH / 2) + TRACE_HORIZONTAL_START)
 #define TRACE_VERTICAL_CENTER           ((TRACE_MAX_HEIGHT / 2) + TRACE_VERTICAL_START)
 
+#define TRACE_HORIZONTAL_MIN            (TRACE_HORIZONTAL_START - 2)
+#define TRACE_HORIZONTAL_MAX            (TRACE_HORIZONTAL_END + 2)
+
 #define DOT_SPACING                      5
 #define LINE_SPACING                    50
 
@@ -438,9 +441,6 @@ struct tagScopeSettings
   CHANNELSETTINGS channel1;
   CHANNELSETTINGS channel2;
 
-  uint16 samplecount;       //Number of samples in trace buffer
-  uint16 nofsamples;        //Number of samples to read from the FPGA
-  
   uint8 samplerate;
   uint8 timeperdiv;
   uint8 triggermode;
@@ -464,7 +464,6 @@ struct tagScopeSettings
   
   int8  screenbrightness;
   int8  gridbrightness;
-  uint8 gridenable;
   uint8 alwaystrigger50;
   uint8 xymodedisplay;
   uint8 confirmationmode;
@@ -670,14 +669,17 @@ extern uint16 settingsworkbuffer[256];
 //New variables for trace displaying
 extern double disp_xpos_per_sample;
 extern double disp_sample_step;
+extern double disp_xrange;
 
 extern int32 disp_first_sample;
 
-extern uint32 disp_have_trigger;
-extern uint32 disp_trigger_index;
+extern int32 disp_trigger_index;
 
 extern int32 disp_xstart;
 extern int32 disp_xend;
+
+extern int32 trigger_position_min;
+extern int32 trigger_position_max;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Calibration data

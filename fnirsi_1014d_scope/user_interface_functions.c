@@ -110,7 +110,6 @@ void ui_setup_view_screen(void)
 
 void ui_close_view_screen(void)
 {
-  //This is only needed when an actual waveform has been viewed, but that needs an extra flag
   //Only needed for waveform view. Picture viewing does not change the scope settings
   if(viewtype == VIEW_TYPE_WAVEFORM)
   {
@@ -137,6 +136,7 @@ void ui_close_view_screen(void)
 
     //Setup the trigger system in the FPGA based on the loaded scope settings
     fpga_set_sample_rate(scopesettings.samplerate);
+    fpga_set_time_base(scopesettings.timeperdiv);
     fpga_set_trigger_channel();
     fpga_set_trigger_edge();
     fpga_set_trigger_level();
@@ -534,7 +534,7 @@ void ui_draw_pointers(void)
       }
 
       //Draw the pointer
-      display_top_pointer(position, VERTICAL_POINTER_TOP, '1');
+      display_top_pointer(position, '1');
     }
   }
 
@@ -563,23 +563,38 @@ void ui_draw_pointers(void)
   }
 
   //Draw trigger position and level pointer when in normal display mode
-  if(scopesettings.xymodedisplay == 0)
+  if(scopesettings.xymodedisplay == DISPLAY_MODE_NORMAL)
   {
     //x position for the trigger position pointer
-    position = scopesettings.triggerhorizontalposition + 6;
+    position = scopesettings.triggerhorizontalposition;
 
+#if 0    
     //Limit on the right of the displayable region
     if(position > HORIZONTAL_POINTER_RIGHT)
     {
       position = HORIZONTAL_POINTER_RIGHT;
     }
-
+#endif
+    
     //Set the color for drawing the pointer
     display_set_fg_color(TRIGGER_COLOR);
 
-    //Draw the pointer
-    display_top_pointer(position, VERTICAL_POINTER_TOP, 'H');
-
+    if((position > (HORIZONTAL_POINTER_LEFT - HORIZONTAL_POINTER_WIDTH)) && (position < (HORIZONTAL_POINTER_RIGHT + HORIZONTAL_POINTER_WIDTH)))
+    {
+      //Draw the pointer
+      display_top_pointer(position - (HORIZONTAL_POINTER_WIDTH / 2), 'H');
+    }
+    else if(position < HORIZONTAL_POINTER_LEFT)
+    {
+      //When the pointer is outside the left of the window show it to the user with an arrow pointing left
+      ui_display_trigger_position_arrow(0);
+    }
+    else
+    {
+      //When the pointer is outside the right of the window show it to the user with an arrow pointing right
+      ui_display_trigger_position_arrow(1);
+    }
+    
     //y position for the trigger level pointer
     position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
 
@@ -598,12 +613,12 @@ void ui_draw_pointers(void)
     else if(position < VERTICAL_POINTER_TOP)
     {
       //When the pointer is above the top of the window show it to the user with an arrow pointing up
-      ui_display_trigger_arrow(0);
+      ui_display_trigger_level_arrow(0);
     }
     else
     {
       //When the pointer is below the bottom of the window show it to the user with an arrow pointing down
-      ui_display_trigger_arrow(1);
+      ui_display_trigger_level_arrow(1);
     }
   }
 }
@@ -1067,13 +1082,11 @@ void ui_display_trigger_vertical_position(void)
 
 void ui_display_trigger_horizontal_position(void)
 {
-  int32 delta = TRACE_HORIZONTAL_END - scopesettings.triggerhorizontalposition;
-
+  //Get the time delta based on the center of the pointers position
+  int32 delta = scopesettings.triggerhorizontalposition - TRACE_HORIZONTAL_CENTER;
+  
   //Clear the old text first by re drawing the box
   display_draw_shaded_rect(BOTTOM_TRIGGER_INFO_XPOS + 23, BOTTOM_TRIGGER_INFO_YPOS, &trigger_horizontal_pos_box, &trigger_horizontal_pos_box_text);
-
-  //Get the time delta based on the center of the pointers position
-  delta = TRACE_HORIZONTAL_CENTER - delta + 8;
       
   //Get the time calculation data for this time base setting.
   PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
@@ -2450,7 +2463,7 @@ void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void ui_display_trigger_arrow(uint32 direction)
+void ui_display_trigger_level_arrow(uint32 direction)
 {
   int32 xs = TRACE_HORIZONTAL_END - 7;
   int32 xe = xs;
@@ -2461,7 +2474,7 @@ void ui_display_trigger_arrow(uint32 direction)
   //For a down arrow the Y needs to start at the bottom and go up
   if(direction)
   {
-    y = TRACE_VERTICAL_END;
+    y = TRACE_VERTICAL_END - 1;
     step = -1;
   }
 
@@ -2474,15 +2487,48 @@ void ui_display_trigger_arrow(uint32 direction)
     y += step;
   }
 
-  xs = TRACE_HORIZONTAL_END - 8;
-
   //For the down arrow the rectangle needs to start higher up
   if(direction)
   {
     y -= 5;
   }
 
-  display_fill_rect(xs, y, 2, 5);
+  display_fill_rect(TRACE_HORIZONTAL_END - 8, y, 2, 5);
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void ui_display_trigger_position_arrow(uint32 direction)
+{
+  int32 x  = TRACE_HORIZONTAL_START;
+  int32 ys = TRACE_VERTICAL_START + 6;
+  int32 ye = ys;
+  int32 step = 1;
+  int32 i;
+
+  //For a right arrow the X needs to start at the right side and go left
+  if(direction)
+  {
+    x = TRACE_HORIZONTAL_END - 1;
+    step = -1;
+  }
+
+  for(i=0;i<5;i++)
+  {
+    display_draw_vert_line(x, ys, ye);
+
+    ys--;
+    ye++;
+    x += step;
+  }
+
+  //For the right arrow the rectangle needs to start more to the left
+  if(direction)
+  {
+    x -= 5;
+  }
+
+  display_fill_rect(x, TRACE_VERTICAL_START + 5, 5, 2);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2945,6 +2991,9 @@ void ui_restore_setup(PSCOPESETTINGS settings)
 {
   //For now just copy the settings from the given struct
   memcpy(&scopesettings, settings, sizeof(SCOPESETTINGS));
+  
+  //On a change of sample rate or time per division it is necessary to re calculate the values for determining the number of point to display
+  scope_calculate_sample_range_properties();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -3021,7 +3070,6 @@ void ui_prepare_setup_for_file(void)
   ptr[index++] = scopesettings.triggerlevel;
   ptr[index++] = scopesettings.triggerhorizontalposition;
   ptr[index++] = scopesettings.triggerverticalposition;
-  ptr[index++] = disp_have_trigger;
   ptr[index++] = disp_trigger_index;
 
   //Leave some space for trigger information changes
@@ -3140,7 +3188,6 @@ void ui_restore_setup_from_file(void)
   scopesettings.triggerlevel              = ptr[index++];
   scopesettings.triggerhorizontalposition = ptr[index++];
   scopesettings.triggerverticalposition   = ptr[index++];
-  disp_have_trigger                       = ptr[index++];
   disp_trigger_index                      = ptr[index++];
 
   //Leave some space for trigger information changes
@@ -3186,6 +3233,9 @@ void ui_restore_setup_from_file(void)
       scopesettings.measurementitems[measurement].channelsettings = &scopesettings.channel2;
     }
   }
+  
+  //On a change of sample rate or time per division it is necessary to re calculate the values for determining the number of point to display
+  scope_calculate_sample_range_properties();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

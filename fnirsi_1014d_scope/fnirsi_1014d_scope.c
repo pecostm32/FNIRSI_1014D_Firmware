@@ -147,10 +147,6 @@ int main(void)
   memset(channel1tracebuffer, 128, sizeof(channel1tracebuffer));
   memset(channel2tracebuffer, 128, sizeof(channel2tracebuffer));
   
-  //Set the number of samples in use
-  scopesettings.nofsamples  = SAMPLES_PER_ADC;
-  scopesettings.samplecount = SAMPLE_COUNT;
-  
   //Show initial trace data. When in NORMAL or SINGLE mode the display needs to be drawn because otherwise if there is no signal it remains black
   scope_display_trace_data();
 

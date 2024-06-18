@@ -1424,16 +1424,86 @@ void display_right_pointer(uint32 xpos, uint32 ypos, int8 id)
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
-void display_top_pointer(uint32 xpos, uint32 ypos, int8 id)
+void display_top_pointer(int32 xpos, int8 id)
 {
-  //Draw the pointer
-  display_copy_icon_fg_color(top_pointer_icon, xpos, ypos, HORIZONTAL_POINTER_WIDTH, HORIZONTAL_POINTER_HEIGHT);
+  register uint8  *sptr;
+  register uint16 *dptr;
+  register uint32  line;
+  register uint32  pixel;
+  register uint32  pixeldata;
+  register int32   startpixel = 0;
+  register int32   lastpixel  = HORIZONTAL_POINTER_WIDTH;
+  
+  //Limit drawing of the icon to only the visible part
+  if(xpos < HORIZONTAL_POINTER_LEFT)
+  {
+    //As soon as the first pixel is outside the visible window start skipping them by raising the start pixel
+    startpixel = HORIZONTAL_POINTER_LEFT - xpos;
+    
+    if(startpixel > HORIZONTAL_POINTER_WIDTH)
+    {
+      //No use in continuing when there is nothing to print
+      return;
+    }
+  }
+  else if(xpos > HORIZONTAL_POINTER_RIGHT)
+  {
+    //As soon as the last pixel is outside the visible window start skipping then by lowering the last pixel
+    lastpixel -= xpos - HORIZONTAL_POINTER_RIGHT;
+    
+    if(lastpixel < 0)
+    {
+      //No use in continuing when there is nothing to print
+      return;
+    }
+  }
+  
+  //Setup destination pointer
+  dptr = displaydata.screenbuffer + xpos + (VERTICAL_POINTER_TOP * displaydata.pixelsperline);
+  
+  //Copy the needed lines
+  for(line=0;line<HORIZONTAL_POINTER_HEIGHT;line++)
+  {
+    //Point to the icon start byte for this line
+    sptr = (uint8 *)&top_pointer_icon[line * ((HORIZONTAL_POINTER_WIDTH + 7) / 8)];
+    
+    //Get the data for per bit handling
+    pixeldata = *sptr++;
+    
+    //Copy a single line to the destination buffer
+    for(pixel=0;pixel<lastpixel;)
+    {
+      //Select the pixel to check
+      pixeldata <<= 1;
+      
+      //Copy one pixel at a time with a check on being on and only fill in the ones that are on
+      //Also check that pixel is on the actual visible window
+      if((pixeldata & 0x0100) && (pixel >= startpixel))
+      {
+        //When on use the foreground color
+        dptr[pixel] = displaydata.fg_color;
+      }
+      
+      //Select next pixel
+      pixel++;
+      
+      //Check if pixel on multiple of 8 for next byte select
+      if((pixel & 0x07) == 0)
+      {
+        //Get the next pixel data and point to the next
+        pixeldata = *sptr++;
+      }
+    }
+
+    //Point to the next line of pixels in the destination
+    dptr += displaydata.pixelsperline;
+  }
  
   //Set the color for drawing the id
   displaydata.fg_color = displaydata.bg_color;
   
   //Draw the id
-  display_character(xpos + 4, ypos + 2, id);
+  display_character(xpos + 4, VERTICAL_POINTER_TOP + 2, id);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

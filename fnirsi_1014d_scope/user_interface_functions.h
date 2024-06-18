@@ -95,6 +95,11 @@
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
+#define DISPLAY_MODE_NORMAL               0
+#define DISPLAY_MODE_X_Y                  1
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
 void ui_setup_display_lib(void);
 
 void ui_setup_main_screen(void);
@@ -164,7 +169,8 @@ void ui_open_on_off_setting(uint16 xpos, uint16 ypos, uint32 savebackground);
 void ui_close_on_off_setting(uint16 xpos, uint16 ypos);
 void ui_display_on_off_setting(uint16 xpos, uint16 ypos);
 
-void ui_display_trigger_arrow(uint32 direction);
+void ui_display_trigger_level_arrow(uint32 direction);
+void ui_display_trigger_position_arrow(uint32 direction);
 
 //----------------------------------------------------------------------------------------------------------------------------------
 // Functions for displaying the measurement values on the measurements slots

@@ -82,14 +82,17 @@ uint16 settingsworkbuffer[256];               //Used for loading from and writin
 
 double disp_xpos_per_sample;
 double disp_sample_step;
+double disp_xrange;
 
 int32 disp_first_sample;
 
-uint32 disp_have_trigger;
-uint32 disp_trigger_index;            //Trigger point in the sample buffers
+int32 disp_trigger_index;            //Trigger point in the sample buffers
 
 int32 disp_xstart;
 int32 disp_xend;
+
+int32 trigger_position_min;
+int32 trigger_position_max;
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Data for picture and waveform view mode

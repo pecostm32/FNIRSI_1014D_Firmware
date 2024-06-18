@@ -27,6 +27,8 @@ void scope_calculate_trigger_vertical_position(void);
 
 void scope_set_50_percent_trigger(void);
 
+void scope_calculate_sample_range_properties(void);
+
 //----------------------------------------------------------------------------------------------------------------------------------
 // Signal data display functions
 //----------------------------------------------------------------------------------------------------------------------------------

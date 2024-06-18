@@ -91,11 +91,6 @@ void scope_acquire_trace_data(void)
       data = data - 750;
     }
 
-    //Only need a single count variable for both channels, since they run on the same sample rate
-    //This can be changed to a global define
-    scopesettings.nofsamples  = SAMPLES_PER_ADC;
-    scopesettings.samplecount = SAMPLE_COUNT;
-
     //Check if channel 1 is enabled
     if(scopesettings.channel1.enable)
     {
@@ -120,7 +115,7 @@ void scope_acquire_trace_data(void)
 
     //Need to improve on this for a more stable displaying. On the low sample rate settings it seems to flip between two positions.
     //Determine the trigger position based on the selected trigger channel
-    scope_process_trigger(scopesettings.nofsamples);
+    scope_process_trigger(SAMPLES_PER_ADC);
 
   }
 }
@@ -147,7 +142,8 @@ void scope_process_trigger(uint32 count)
     buffer = (uint8 *)channel2tracebuffer;
   }
 
-  disp_have_trigger = 0;
+  //Assume it to be in the center of the sample buffer to start with
+  disp_trigger_index = SAMPLES_PER_ADC;
 
   //Set a starting point for checking on trigger
   //Count is half a sample buffer!!
@@ -167,11 +163,8 @@ void scope_process_trigger(uint32 count)
       //Set the current index as trigger point
       disp_trigger_index = index;
 
-      //Signal trigger has been found
-      disp_have_trigger = 1;
-
       //Done with checking
-      break;
+      return;
     }
 
     //Select next sample to check
@@ -188,11 +181,6 @@ uint32 scope_do_baseline_calibration(void)
 
   //Disable the trigger circuit
   scopesettings.samplemode = 0;
-
-  //Set number of samples
-  //This can be changed to a global define
-  scopesettings.samplecount = SAMPLE_COUNT;
-  scopesettings.nofsamples  = SAMPLES_PER_ADC;
 
   //Send the command for setting the trigger level to the FPGA
   fpga_write_cmd(0x17);
@@ -463,11 +451,6 @@ void scope_do_auto_setup(void)
   ui_display_run_stop_text();
   //End. 09-03-2022
 
-  //Set number of samples
-  //This can be changed to a global define
-  scopesettings.samplecount = SAMPLE_COUNT;
-  scopesettings.nofsamples  = SAMPLES_PER_ADC;
-
   //Send the command for setting the trigger level to the FPGA
   fpga_write_cmd(0x17);
   fpga_write_byte(0);
@@ -558,6 +541,9 @@ void scope_do_auto_setup(void)
     scopesettings.samplerate = time_per_div_sample_rate[12];
   }
 
+  //On a change of sample rate or time per division it is necessary to re calculate the values for determining the number of point to display
+  scope_calculate_sample_range_properties();
+  
   //Range the input sensitivity on the enabled channels
   //Check on which bottom check level needs to be used
   //When both channels are enabled and in normal display mode use separate sections of the screen for each channel.
@@ -890,38 +876,9 @@ void scope_set_50_percent_trigger(void)
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
-// Signal data display functions
-//----------------------------------------------------------------------------------------------------------------------------------
 
-void scope_display_trace_data(void)
+void scope_calculate_sample_range_properties(void)
 {
-  //See if it is possible to rework this to fixed point. A 32 bit mantissa is not accurate enough though
-
-  //On the scope the last pixel interleaving is not working properly. Don't know why.
-
-  //Check out the sin x/x interpolation downloaded from keysight (Sine wave reproduction using Sinc interpolation - v.1.0.py)
-
-  //This needs more code to skip when stopped and no changes are made. It seems to be ok without this, but what is not needed is not needed
-  //In the display trace routine the display only needs to be redrawn when certain conditions apply
-  //  The user changes the sample rate or the time per div setting. Might need to block the setting of the sample rate when stopped because that makes no change to the current sample buffer.
-  //  The user moves pointers around. Trace up and down should work, and trigger left and right. Changing the trigger level should not do anything, or even be disabled
-
-
-
-  //Need to compensate for the position being on the left side of the pointer
-  uint32 triggerposition = scopesettings.triggerhorizontalposition + 7;
-
-  //Check if a trigger position has been found
-  if(disp_have_trigger == 0)
-  {
-    //When not use the center of the sample buffer
-    disp_trigger_index = scopesettings.samplecount / 2;
-  }
-
-  //Make sure the two settings are in range of the tables!!!!
-  //SKipp displaying if not????
-
-
   //The amount of x positions needed per sample is based on the number of pixels per division, the set time per division and the sample rate.
   disp_xpos_per_sample = (50.0 * frequency_per_div[scopesettings.timeperdiv]) / sample_rate[scopesettings.samplerate];
 
@@ -930,58 +887,38 @@ void scope_display_trace_data(void)
 
   //The displayable x range is based on the number of samples and the number of x positions needed per sample
   //Halved to allow trigger position to be in the center
-  double xrange = (scopesettings.samplecount * disp_xpos_per_sample) / 2.0;
+  disp_xrange = (SAMPLE_COUNT * disp_xpos_per_sample) / 2.0;
 
   //x range needs to be at least 1 pixel
-  if(xrange < 1.0)
+  if(disp_xrange < 1.0)
   {
-    xrange = 1.0;
+    disp_xrange = 1.0;
   }
-  else if(xrange > (double)(TRACE_HORIZONTAL_END + 2))
+  
+  //Set the bounds for horizontal trigger position adjustment
+  //Limit on the ends a bit extra to avoid artifacts
+  trigger_position_min = (TRACE_HORIZONTAL_END - disp_xrange) + 5;
+  trigger_position_max = (TRACE_HORIZONTAL_START + disp_xrange) - 5;
+
+  //Limit the current pointer to the new extremes
+  if(scopesettings.triggerhorizontalposition < trigger_position_min)
   {
-    //Limit on max screen pixels to avoid disp_xend becoming 0x80000000 due to overflow
-    xrange = (double)(TRACE_HORIZONTAL_END + 2);
+    //Limit it on the minimum range if needed
+    scopesettings.triggerhorizontalposition = trigger_position_min;
   }
-
-  //Calculate the start and end x coordinates
-  disp_xstart = triggerposition - xrange;
-  disp_xend = triggerposition + xrange;
-
-  //Limit on just before the start of trace display
-  if(disp_xstart < (TRACE_HORIZONTAL_START - 2))
+  else if(scopesettings.triggerhorizontalposition > trigger_position_max)
   {
-    disp_xstart = TRACE_HORIZONTAL_START - 2;
+    //Limit it on maximum range if needed
+    scopesettings.triggerhorizontalposition = trigger_position_max;
   }
+}
 
-  //And limit slightly after the end of the trace display for better results
-  if(disp_xend > (TRACE_HORIZONTAL_END + 2))
-  {
-    disp_xend = TRACE_HORIZONTAL_END + 2;
-  }
+//----------------------------------------------------------------------------------------------------------------------------------
+// Signal data display functions
+//----------------------------------------------------------------------------------------------------------------------------------
 
-  //Determine first sample to use based on a full screen worth of samples and the trigger position in relation to the number of pixels on the screen
-  disp_first_sample = disp_trigger_index - ((((double)(TRACE_HORIZONTAL_END + 2) / disp_xpos_per_sample) * triggerposition) / (double)(TRACE_HORIZONTAL_END + 2)) - 1;
-
-  //If below the first sample limit it on the first sample
-  if(disp_first_sample < 0)
-  {
-    disp_first_sample = 0;
-  }
-
-  //This makes sure no reading outside the buffer can occur
-  if(disp_sample_step > ((scopesettings.samplecount) / 2))
-  {
-    disp_sample_step = (scopesettings.samplecount) / 2;
-  }
-
-
-
-
-  //If samplestep > 1 might be an idea to draw the in between samples on the same x position to avoid aliasing
-  //If sample step < 1 then skip drawing on x positions. The draw line function does the linear interpolation
-
-
-
+void scope_display_trace_data(void)
+{
   //Use a separate buffer to clear the screen. Also used as source to copy back to the screen
   display_set_screen_buffer(displaybuffer1);
   display_set_source_buffer(displaybuffer1);
@@ -990,18 +927,42 @@ void scope_display_trace_data(void)
   display_set_fg_color(0x00000000);
   display_fill_rect(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH - 1, TRACE_MAX_HEIGHT - 1);
 
-  //Check if not in waveform view mode with grid disabled
-  if((scopesettings.waveviewmode == 0) || scopesettings.gridenable == 0)
-  {
-    //Draw the grid lines and dots based on the grid brightness setting
-    ui_draw_grid();
-  }
+  //Draw the grid lines and dots based on the grid brightness setting
+  ui_draw_grid();
 
   //Check if scope is in normal display mode
-  if(scopesettings.xymodedisplay == 0)
+  if(scopesettings.xymodedisplay == DISPLAY_MODE_NORMAL)
   {
-    //The calculations done above need to go here??
+    //Calculate the start and end x coordinates
+    disp_xstart = scopesettings.triggerhorizontalposition - disp_xrange;
+    disp_xend = scopesettings.triggerhorizontalposition + disp_xrange;
 
+    //Limit on just before the start of trace display
+    if(disp_xstart < TRACE_HORIZONTAL_MIN)
+    {
+      disp_xstart = TRACE_HORIZONTAL_MIN;
+    }
+
+    //And limit slightly after the end of the trace display for better results
+    if(disp_xend > TRACE_HORIZONTAL_MAX)
+    {
+      disp_xend = TRACE_HORIZONTAL_MAX;
+    }
+
+    //Determine first sample to use based on a full screen worth of samples and the trigger position in relation to the number of pixels on the screen
+    disp_first_sample = disp_trigger_index - ((((double)TRACE_HORIZONTAL_MAX / disp_xpos_per_sample) * scopesettings.triggerhorizontalposition) / (double)TRACE_HORIZONTAL_MAX) - 1;
+
+    //If below the first sample limit it on the first sample
+    if(disp_first_sample < 0)
+    {
+      disp_first_sample = 0;
+    }
+
+    //This makes sure no reading outside the buffer can occur
+    if(disp_sample_step > SAMPLES_PER_ADC)
+    {
+      disp_sample_step = SAMPLES_PER_ADC;
+    }
 
     //Check if channel1 is enabled
     if(scopesettings.channel1.enable)
@@ -1311,9 +1272,11 @@ void scope_load_configuration_data(void)
   scopesettings.channel1.triggeronchannel = 1 ^ scopesettings.triggerchannel;
   scopesettings.channel2.triggeronchannel = 0 ^ scopesettings.triggerchannel;
   
-  
   //Start in running state
   scopesettings.runstate = RUN_STATE_RUNNING;
+  
+  //On a change of sample rate or time per division it is necessary to re calculate the values for determining the number of point to display
+  scope_calculate_sample_range_properties();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1357,7 +1320,7 @@ void scope_reset_config_data(void)
   scopesettings.triggermode     = 0;
   scopesettings.triggeredge     = 0;
   scopesettings.triggerchannel  = 0;
-  scopesettings.triggerhorizontalposition = 362;
+  scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
   scopesettings.triggerverticalposition   = 200;
 
   //Set move speed to fast

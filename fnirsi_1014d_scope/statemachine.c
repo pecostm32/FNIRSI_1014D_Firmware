@@ -802,7 +802,7 @@ void sm_button_dial_normal_handling(void)
 
     case UIC_BUTTON_TRIG_ORIG:
       //Reset the trigger position and level to center positions
-      scopesettings.triggerhorizontalposition = 342;
+      scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
 
       //Set the trigger vertical position position to match the new trigger level
       scope_set_50_percent_trigger();
@@ -990,7 +990,7 @@ void sm_button_dial_wave_view_handling(void)
 
     case UIC_BUTTON_TRIG_ORIG:
       //Reset the trigger position to center of the trace window
-      scopesettings.triggerhorizontalposition = 342;
+      scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
       
       //Show the new setting on the screen
       ui_display_trigger_horizontal_position();
@@ -1240,25 +1240,19 @@ void sm_set_trigger_position(void)
   //Adjust the setting based on the given value
   scopesettings.triggerhorizontalposition += speedvalue;
 
-  //This needs to change to either the screen limits when there are less samples available (depends on zoom)
-  //or on the number of samples available, so maybe there is a way of calculating the full range in screen pixels
-  //and use these as min or max. Best to use global variables for this that need to be set every time a new sample batch is read
-  //or when file view mode is entered, or the time/div setting is changed
-  
-  //Need left and right arrows for when outside the visible window
-  
   //Check if still in allowed range
-  if(scopesettings.triggerhorizontalposition < 0)
+  if(scopesettings.triggerhorizontalposition < trigger_position_min)
   {
     //Limit it on the minimum range if needed
-    scopesettings.triggerhorizontalposition = 0;
+    scopesettings.triggerhorizontalposition = trigger_position_min;
   }
-  else if(scopesettings.triggerhorizontalposition > 685)
+  else if(scopesettings.triggerhorizontalposition > trigger_position_max)
   {
     //Limit it on maximum range if needed
-    scopesettings.triggerhorizontalposition = 685;
+    scopesettings.triggerhorizontalposition = trigger_position_max;
   }
   
+  //Show the new position expressed in time on the bottom of the screen
   ui_display_trigger_horizontal_position();
 }
 
@@ -1312,6 +1306,9 @@ void sm_set_time_base(void)
     //Show he new setting on the display
     ui_display_time_per_division();
     ui_display_trigger_horizontal_position();
+  
+    //On a change of sample rate or time per division it is necessary to re calculate the values for determining the number of point to display
+    scope_calculate_sample_range_properties();
   }
 }
 

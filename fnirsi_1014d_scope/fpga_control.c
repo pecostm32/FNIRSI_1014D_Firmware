@@ -679,10 +679,10 @@ void fpga_read_sample_data(PCHANNELSETTINGS settings, uint32 triggerpoint)
   settings->adc2rawaverage = settings->rawaverage;
   
   //Calculate the overall average
-  settings->average /= scopesettings.samplecount;
+  settings->average /= SAMPLE_COUNT;
 
   //Calculate the RMS
-  settings->rms = isqrt(settings->rms / scopesettings.samplecount);
+  settings->rms = isqrt(settings->rms / SAMPLE_COUNT);
 
   //Calculate the peak to peak value
   settings->peakpeak = settings->max - settings->min;
@@ -730,7 +730,7 @@ void fpga_read_adc_data(PCHANNELSETTINGS settings)
   FPGA_DATA_READ();
   
   //Set the number of samples to read
-  count = scopesettings.nofsamples;
+  count = SAMPLES_PER_ADC;
   
   //Read the data as long as there is count
   while(count)
@@ -897,7 +897,7 @@ void fpga_read_adc_data(PCHANNELSETTINGS settings)
   }
  
   //Calculate the raw average
-  settings->rawaverage = sum / scopesettings.nofsamples;
+  settings->rawaverage = sum / SAMPLES_PER_ADC;
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
