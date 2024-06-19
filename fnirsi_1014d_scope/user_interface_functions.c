@@ -1851,6 +1851,9 @@ uint32 ui_print_decimal(uint32 xpos, uint32 ypos, int32 value, uint32 decimals)
     //House keeping for determining dot location
     i--;
 
+    //Take of the current digit
+    value /= 10;
+    
     //Check if decimal point needs to be placed
     if(i == 10 - decimals)
     {
@@ -1862,13 +1865,20 @@ uint32 ui_print_decimal(uint32 xpos, uint32 ypos, int32 value, uint32 decimals)
 
       //Create space before the dot
       x -= 2;
+      
+      //In case of 0.xx value the zero before the dot needs to be added
+      if(value == 0)
+      {
+        //Move back to the next digit location
+        x -= 13;
+        
+        //Print it on the screen
+        display_copy_icon_full_color(measurement_digit_icons[0], x, ypos, 13, 16);
+      }
     }
 
     //Move back to the next digit location
     x -= 13;
-
-    //Take of the current digit
-    value /= 10;
   }
 
   //Return the most right x position used
@@ -2946,15 +2956,21 @@ char *ui_msm_print_decimal(char *buffer, int32 value, uint32 decimals, uint32 ne
       //Set current digit to decreased index
       b[--i] = (value % 10) + '0';
 
+      //Take of the current digit
+      value /= 10;
+
       //Check if decimal point needs to be placed
       if(i == 12 - decimals)
       {
         //If so put it in
         b[--i] = '.';
-      }
 
-      //Take of the current digit
-      value /= 10;
+        //In case of 0.xx value the zero before the dot needs to be added
+        if(value == 0)
+        {
+          b[--i] = '0';
+        }
+      }
     }
   }
 

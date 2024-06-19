@@ -175,6 +175,8 @@
 #define TRACE_HORIZONTAL_MIN            (TRACE_HORIZONTAL_START - 2)
 #define TRACE_HORIZONTAL_MAX            (TRACE_HORIZONTAL_END + 2)
 
+#define TRACE_CENTER_DELTA              ((double)(TRACE_HORIZONTAL_CENTER - ((double)TRACE_MAX_WIDTH / 2.0)))
+
 #define DOT_SPACING                      5
 #define LINE_SPACING                    50
 

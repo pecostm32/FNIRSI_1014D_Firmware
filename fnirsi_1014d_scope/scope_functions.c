@@ -949,9 +949,12 @@ void scope_display_trace_data(void)
       disp_xend = TRACE_HORIZONTAL_MAX;
     }
 
+    //A problem here is the offset of the trace window that interferes with the calculation of the correct starting sample
+    //Need the absolute window size and the position adjusted for that
+    
     //Determine first sample to use based on a full screen worth of samples and the trigger position in relation to the number of pixels on the screen
-    disp_first_sample = disp_trigger_index - ((((double)TRACE_HORIZONTAL_MAX / disp_xpos_per_sample) * scopesettings.triggerhorizontalposition) / (double)TRACE_HORIZONTAL_MAX) - 1;
-
+    disp_first_sample = disp_trigger_index - ((((double)TRACE_MAX_WIDTH / disp_xpos_per_sample) * ((double)scopesettings.triggerhorizontalposition - TRACE_CENTER_DELTA)) / (double)TRACE_MAX_WIDTH);
+    
     //If below the first sample limit it on the first sample
     if(disp_first_sample < 0)
     {
@@ -1187,7 +1190,7 @@ void scope_display_channel_trace(PCHANNELSETTINGS settings)
   {
     //Calculate the scaler for the last y value based on the x distance from the last drawn position to the end of the screen
     //divided by the x distance it takes to where the next position should be drawn (Number of x steps per sample)
-    double scaler =  ((double)(TRACE_HORIZONTAL_END + 2) - lastx) / disp_xpos_per_sample;    // (1 / samplestep);
+    double scaler =  ((double)TRACE_HORIZONTAL_MAX - lastx) / disp_xpos_per_sample;    // (1 / samplestep);
 
     //Get the processed sample
     sample2 = scope_get_y_sample(settings, inputindex);
