@@ -547,7 +547,7 @@ void scope_do_auto_setup(void)
   //Range the input sensitivity on the enabled channels
   //Check on which bottom check level needs to be used
   //When both channels are enabled and in normal display mode use separate sections of the screen for each channel.
-  if(dochannel1 && dochannel2 && (scopesettings.xymodedisplay == 0))
+  if(dochannel1 && dochannel2 && (scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL))
   {
     //Both channels enabled then use a lower level. Smaller section of the display available per channel so lower value
     scopesettings.channel1.maxscreenspace = 1900;
@@ -924,14 +924,14 @@ void scope_display_trace_data(void)
   display_set_source_buffer(displaybuffer1);
 
   //Clear the trace portion of the screen
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(TRACE_HORIZONTAL_START, TRACE_VERTICAL_START, TRACE_MAX_WIDTH - 1, TRACE_MAX_HEIGHT - 1);
 
   //Draw the grid lines and dots based on the grid brightness setting
   ui_draw_grid();
 
   //Check if scope is in normal display mode
-  if(scopesettings.xymodedisplay == DISPLAY_MODE_NORMAL)
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
   {
     //Calculate the start and end x coordinates
     disp_xstart = scopesettings.triggerhorizontalposition - disp_xrange;
@@ -949,9 +949,6 @@ void scope_display_trace_data(void)
       disp_xend = TRACE_HORIZONTAL_MAX;
     }
 
-    //A problem here is the offset of the trace window that interferes with the calculation of the correct starting sample
-    //Need the absolute window size and the position adjusted for that
-    
     //Determine first sample to use based on a full screen worth of samples and the trigger position in relation to the number of pixels on the screen
     disp_first_sample = disp_trigger_index - ((((double)TRACE_MAX_WIDTH / disp_xpos_per_sample) * ((double)scopesettings.triggerhorizontalposition - TRACE_CENTER_DELTA)) / (double)TRACE_MAX_WIDTH);
     
@@ -1059,7 +1056,7 @@ int32 scope_get_x_sample(PCHANNELSETTINGS settings, int32 index)
   if(settings->displayvoltperdiv != settings->samplevoltperdiv)
   {
     //Scaling factor is based on the two volts per division settings
-    sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
+    sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / SAMPLE_DIVIDER;
   }
   
   //Offset the sample on the screen
@@ -1072,13 +1069,13 @@ int32 scope_get_x_sample(PCHANNELSETTINGS settings, int32 index)
   }
 
   //Limit the sample on max displayable
-  if(sample > 401)
+  if(sample > TRACE_WINDOW_BORDER_HEIGHT)
   {
-    sample = 401;
+    sample = TRACE_WINDOW_BORDER_HEIGHT;
   }
 
   //The x center position has an extra offset compared to the y trace position
-  return(sample + 165);
+  return(sample + TRACE_CHANNEL_XY_OFFSET);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1097,7 +1094,7 @@ int32 scope_get_y_sample(PCHANNELSETTINGS settings, int32 index)
   if(settings->displayvoltperdiv != settings->samplevoltperdiv)
   {
     //Scaling factor is based on the two volts per division settings
-    sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / 10000;
+    sample = (sample * vertical_scaling_factors[settings->displayvoltperdiv][settings->samplevoltperdiv]) / SAMPLE_DIVIDER;
   }
   
   //Offset the sample on the screen
@@ -1108,10 +1105,10 @@ int32 scope_get_y_sample(PCHANNELSETTINGS settings, int32 index)
   {
     sample = 0;
   }
-  //Limit the sample on max displayable plus one to cut it of when outside displayable range
-  else if(sample > (TRACE_MAX_HEIGHT + 1))
+  //Limit the sample on max displayable
+  else if(sample > TRACE_WINDOW_BORDER_HEIGHT)
   {
-    sample = TRACE_MAX_HEIGHT + 1;
+    sample = TRACE_WINDOW_BORDER_HEIGHT;
   }
 
   //Display y coordinates are inverted to signal orientation
@@ -1190,7 +1187,7 @@ void scope_display_channel_trace(PCHANNELSETTINGS settings)
   {
     //Calculate the scaler for the last y value based on the x distance from the last drawn position to the end of the screen
     //divided by the x distance it takes to where the next position should be drawn (Number of x steps per sample)
-    double scaler =  ((double)TRACE_HORIZONTAL_MAX - lastx) / disp_xpos_per_sample;    // (1 / samplestep);
+    double scaler =  ((double)TRACE_HORIZONTAL_MAX - lastx) / disp_xpos_per_sample;
 
     //Get the processed sample
     sample2 = scope_get_y_sample(settings, inputindex);
@@ -1377,7 +1374,7 @@ void scope_reset_config_data(void)
   scopesettings.screenbrightness = 100;
   scopesettings.gridbrightness   = 25;
   scopesettings.alwaystrigger50  = 0;
-  scopesettings.xymodedisplay    = 0;
+  scopesettings.tracedisplaymode = DISPLAY_MODE_NORMAL;
   scopesettings.confirmationmode = 1;
   
   //Set default channel calibration values
@@ -1449,7 +1446,7 @@ void scope_save_config_data(void)
   *ptr++ = scopesettings.screenbrightness;
   *ptr++ = scopesettings.gridbrightness;
   *ptr++ = scopesettings.alwaystrigger50;
-  *ptr++ = scopesettings.xymodedisplay;
+  *ptr++ = scopesettings.tracedisplaymode;
 
   //Point to the cursor settings
   ptr = &settingsworkbuffer[CURSOR_SETTING_OFFSET];
@@ -1577,7 +1574,7 @@ void scope_restore_config_data(void)
     scopesettings.screenbrightness = *ptr++;
     scopesettings.gridbrightness   = *ptr++;
     scopesettings.alwaystrigger50  = *ptr++;
-    scopesettings.xymodedisplay    = *ptr++;
+    scopesettings.tracedisplaymode = *ptr++;
     
     //Point to the cursor settings
     ptr = &settingsworkbuffer[CURSOR_SETTING_OFFSET];

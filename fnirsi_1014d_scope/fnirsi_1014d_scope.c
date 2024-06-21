@@ -89,11 +89,11 @@ int main(void)
     fpga_set_backlight_brightness(0x78);
 
     //Clear the display
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
     display_fill_rect(0, 0, 800, 480);
 
     //Display the message in red
-    display_set_fg_color(0x00FF0000);
+    display_set_fg_color(COLOR_RED);
     display_set_font(&font_2);
     display_text(30, 50, "SD ERROR");
 

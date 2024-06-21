@@ -16,9 +16,9 @@
 //Version info
 //----------------------------------------------------------------------------------------------------------------------------------
 
-#define VERSION_STRING             "V0.002"
+#define VERSION_STRING             "V A0.001"
 
-#define VERSION_STRING_XPOS             240
+#define VERSION_STRING_XPOS             233
 #define VERSION_STRING_YPOS               4
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -141,8 +141,6 @@
 #define MESSAGE_WAV_CHECKSUM_ERROR       13
 
 
-#define FILE_BORDER_COLOR                0x00CC8947
-
 //----------------------------------------------------------------------------------------------------------------------------------
 //Scope related definitions
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -176,6 +174,8 @@
 #define TRACE_HORIZONTAL_MAX            (TRACE_HORIZONTAL_END + 2)
 
 #define TRACE_CENTER_DELTA              ((double)(TRACE_HORIZONTAL_CENTER - ((double)TRACE_MAX_WIDTH / 2.0)))
+
+#define TRACE_CHANNEL_XY_OFFSET         (TRACE_HORIZONTAL_CENTER - (TRACE_WINDOW_BORDER_HEIGHT / 2))
 
 #define DOT_SPACING                      5
 #define LINE_SPACING                    50
@@ -223,6 +223,10 @@
 #define VERTICAL_POINTER_LEFT            (TRACE_HORIZONTAL_START)
 #define VERTICAL_POINTER_RIGHT           (TRACE_HORIZONTAL_END - VERTICAL_POINTER_WIDTH)
 
+#define VERTICAL_POINTER_CENTER          (TRACE_WINDOW_BORDER_HEIGHT / 2)
+
+#define VERTICAL_POINTER_XY_OFFSET       (TRACE_HORIZONTAL_CENTER - VERTICAL_POINTER_CENTER - VERTICAL_POINTER_OFFSET)
+
 #define HORIZONTAL_POINTER_WIDTH         15
 #define HORIZONTAL_POINTER_HEIGHT        21
 #define HORIZONTAL_POINTER_LEFT          TRACE_HORIZONTAL_START
@@ -241,7 +245,7 @@
 
 #define THUMBNAIL_SAMPLE_MULTIPLIER   10000
 #define THUMBNAIL_X_DIVIDER           41834
-#define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT / 
+#define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT /
 
 #define THUMBNAIL_TRACE_HEIGHT           94
 
@@ -250,6 +254,7 @@
 //----------------------------------------------------------------------------------------------------------------------------------
 
 #define VOLTAGE_SHIFTER                21
+#define SAMPLE_DIVIDER              10000
 
 //----------------------------------------------------------------------------------------------------------------------------------
 //Base position of the measurement channel box and measurement label
@@ -334,7 +339,7 @@ typedef void (*MSMITEMFUNCTION)(uint32 xpos, uint32 ypos, PCHANNELSETTINGS setti
 struct tagDisplayPoints
 {
   uint16 x;
-  uint16 y;  
+  uint16 y;
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -348,21 +353,21 @@ struct tagChannelSettings
   uint8  displayvoltperdiv;
   uint8  samplevoltperdiv;
   uint8  fftenable;
-  
+
   //Trace on screen position
   int16  traceposition;
 
   //New setting for controlling the ground level of the ADC differential input
   uint16 dcoffset;
-  
+
   //Inter ADC difference compensation
   int16  compensation;
   int16  adc1compensation;
   int16  adc2compensation;
-  
+
   //DC offset calibration for center level of the ADC's
   uint16 dc_calibration_offset[7];
-  
+
   //Measurements
   int32  min;
   int32  max;
@@ -375,7 +380,7 @@ struct tagChannelSettings
   uint32 lowtime;
   uint32 hightime;
   uint32 periodtime;
-  
+
   //Frequency determination work variables
   uint32 highlevel;
   uint32 lowlevel;
@@ -386,27 +391,27 @@ struct tagChannelSettings
   uint32 highsamplecount;
   uint32 highdivider;
   uint32 previousindex;
-  
+
   //Auto ranging space
   uint32 maxscreenspace;
-  
+
   //Calibration measurement data
   uint32 rawaverage;
   uint32 adc1rawaverage;
   uint32 adc2rawaverage;
-  
+
   //Sample data
   uint8 *tracebuffer;
   uint8 *buffer;
-  
+
   //Screen data
   PDISPLAYPOINTS tracepoints;
   uint32         noftracepoints;
-  
+
   //Sample gathering options
   uint8 checkfirstadc;
   uint8 triggeronchannel;
-  
+
   //FPGA commands
   uint8 enablecommand;            //Needs to be set to 0x02 for channel 1 and 0x03 for channel 2
   uint8 couplingcommand;          //Needs to be set to 0x34 for channel 1 and 0x37 for channel 2
@@ -414,11 +419,11 @@ struct tagChannelSettings
   uint8 offsetcommand;            //Needs to be set to 0x32 for channel 1 and 0x35 for channel 2
   uint8 adc1command;              //Needs to be set to 0x20 for channel 1 and 0x22 for channel 2
   uint8 adc2command;              //Needs to be set to 0x21 for channel 1 and 0x23 for channel 2
-  
+
   //Channel color
   uint32 color;
 
-  //Channel information data  
+  //Channel information data
   uint32 infoxpos;
   uint32 infoypos;
 
@@ -449,42 +454,42 @@ struct tagScopeSettings
   uint8 triggeredge;
   uint8 triggerchannel;
   uint8 triggerstate;
-  
+
   int16  triggerhorizontalposition;    //Position on screen of the trigger point in the signal displaying
   int16  triggerverticalposition;      //Screen position of the trigger level indicator
   uint16 triggerlevel;                 //Actual trigger level set to the FPGA
-  
+
   uint8 samplemode;                    //New for mode select in the fpga_do_conversion function
-  
+
   uint8 movespeed;
-  
+
   uint8 waveviewmode;
-  
+
   uint8 runstate;
-  
+
   uint8 menustate;
-  
+
   int8  screenbrightness;
   int8  gridbrightness;
   uint8 alwaystrigger50;
-  uint8 xymodedisplay;
+  uint8 tracedisplaymode;
   uint8 confirmationmode;
-  
+
   uint8 selectedcursor;
 
   uint8 timecursorsenable;
   uint8 voltcursorsenable;
   uint8 capturecursorsenable;
-  
+
   int16 timecursor1position;
   int16 timecursor2position;
-  
+
   int16 voltcursor1position;
   int16 voltcursor2position;
 
   int16 capturecursor1position;
   int16 capturecursor2position;
-  
+
   MEASUREMENTINFO measurementitems[6];
 };
 
@@ -499,7 +504,7 @@ struct tagThumbnailData
   uint8 channel2traceposition;
   uint8 triggerverticalposition;
   uint8 triggerhorizontalposition;
-  uint8 xydisplaymode;
+  uint8 tracedisplaymode;
   uint8 disp_xstart;
   uint8 disp_xend;
   uint8 channel1data[VIEW_ITEM_TRACE_POINTS];
@@ -538,7 +543,7 @@ struct tagFreqCalcData
   uint32 sample_rate;
   uint8  freq_scale;
 };
-        
+
 //----------------------------------------------------------------------------------------------------------------------------------
 
 struct tagTimeCalcData

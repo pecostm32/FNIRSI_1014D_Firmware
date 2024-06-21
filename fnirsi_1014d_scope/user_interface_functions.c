@@ -44,7 +44,7 @@ void ui_setup_display_lib(void)
 void ui_setup_main_screen(void)
 {
   //Set black color for background
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
 
   //Clear the screen
   display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -63,7 +63,7 @@ void ui_setup_main_screen(void)
   ui_display_measurements();
 
   //Show version information
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_2);
   display_text(VERSION_STRING_XPOS, VERSION_STRING_YPOS, VERSION_STRING);
 }
@@ -160,11 +160,11 @@ void ui_close_view_screen(void)
 void ui_setup_usb_screen(void)
 {
   //Clear the whole screen
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //Set the light color for the equipment borders
-  display_set_fg_color(0x00AAAAAA);
+  display_set_fg_color(COLOR_LIGHT_GREY_A);
 
   //Draw the computer screen
   display_fill_rounded_rect(470, 115, 250, 190, 2);
@@ -184,12 +184,12 @@ void ui_setup_usb_screen(void)
   display_fill_rect(458, 257, 12, 10);
 
   //Fill in the screens with a blue color
-  display_set_fg_color(0x00000055);
+  display_set_fg_color(COLOR_DARK_BLUE);
   display_fill_rect(477, 125, 235, 163);
   display_fill_rect(88, 210, 163, 112);
 
   //Draw a dark border around the blue screens
-  display_set_fg_color(0x00111111);
+  display_set_fg_color(COLOR_DARK_GREY_1);
   display_draw_rect(477, 125, 235, 163);
   display_draw_rect(88, 210, 163, 112);
 
@@ -255,13 +255,13 @@ void ui_draw_outline(void)
   const uint32 *color = shade_colors;
 
   //Set the color for drawing the signal display shade
-  display_set_fg_color(0x00202020);
+  display_set_fg_color(COLOR_DARK_GREY_2);
 
   //Draw the outer edge for a bit of shading effect
   display_draw_rect(TRACE_WINDOW_BORDER_XPOS - 1, TRACE_WINDOW_BORDER_YPOS - 1, TRACE_WINDOW_BORDER_WIDTH + 2, TRACE_WINDOW_BORDER_HEIGHT + 2);
 
   //Set the color for drawing the signal display outline
-  display_set_fg_color(0x00646464);
+  display_set_fg_color(COLOR_DARK_GREY_6);
 
   //Draw the inner edge, the actual brighter border of the trace window
   display_draw_rect(TRACE_WINDOW_BORDER_XPOS, TRACE_WINDOW_BORDER_YPOS, TRACE_WINDOW_BORDER_WIDTH, TRACE_WINDOW_BORDER_HEIGHT);
@@ -295,7 +295,7 @@ void ui_draw_outline(void)
   }
 
   //Create the black cutouts in the bottom shade
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
 
   //A range of cutouts with an 10 pixel interval
   for(x=BOTTOM_SHADE_CUTOUT_START;x<BOTTOM_SHADE_CUTOUT_END;x+=BOTTOM_SHADE_CUTOUT_STEP)
@@ -304,7 +304,7 @@ void ui_draw_outline(void)
   }
 
   //Draw the top and bottom edges of the measurement sections
-  display_set_fg_color(0x00303430);
+  display_set_fg_color(COLOR_DARK_GREY_3);
   display_fill_rect(711,   0, 83, 2);
   display_fill_rect(711, 477, 83, 2);
 
@@ -336,7 +336,7 @@ void ui_draw_outline(void)
   for(y=80;y<410;y+=80)
   {
     //Draw the center line with the brightest color of the set
-    display_set_fg_color(0x00303430);
+    display_set_fg_color(COLOR_DARK_GREY_3);
     display_draw_horz_line(y, 711, 794);
 
     //Next lines are shorter and shifted
@@ -389,8 +389,8 @@ void ui_display_run_stop_text(void)
   const uint8 *icon;
 
   //Set the colors for clearing the background and filling in the text
-  display_set_fg_color(0x00F8FCF8);
-  display_set_bg_color(0x00000000);
+  display_set_fg_color(COLOR_WHITE);
+  display_set_bg_color(COLOR_BLACK);
 
   //Select the icon based on the selected edge
   if(scopesettings.runstate == RUN_STATE_RUNNING)
@@ -415,8 +415,8 @@ void ui_display_waiting_triggered_text(uint32 state)
   const uint8 *icon;
 
   //Using an icon might be a simpler and faster option
-  display_set_fg_color(0x00F8FCF8);
-  display_set_bg_color(0x00000000);
+  display_set_fg_color(COLOR_WHITE);
+  display_set_bg_color(COLOR_BLACK);
 
   //Select the icon based on the trigger state
   if(state == 0)
@@ -488,7 +488,7 @@ void ui_draw_pointers(void)
   int32 position;
 
   //Text is displayed in black and with font_0
-  display_set_bg_color(0x00000000);
+  display_set_bg_color(COLOR_BLACK);
   display_set_font(&font_0);
 
   //Draw channel 1 pointer when it is enabled
@@ -498,7 +498,7 @@ void ui_draw_pointers(void)
     display_set_fg_color(CHANNEL1_COLOR);
 
     //Check if in normal or x-y display mode
-    if(scopesettings.xymodedisplay == 0)
+    if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
     {
       //y position for the channel 1 trace center pointer.
       position = TRACE_VERTICAL_END - scopesettings.channel1.traceposition;
@@ -520,7 +520,7 @@ void ui_draw_pointers(void)
     else
     {
       //y position for the channel 1 trace center pointer.
-      position = 157 + scopesettings.channel1.traceposition;
+      position = VERTICAL_POINTER_XY_OFFSET + scopesettings.channel1.traceposition;
 
       //Limit on the left of the active range
       if(position < 166)
@@ -563,18 +563,10 @@ void ui_draw_pointers(void)
   }
 
   //Draw trigger position and level pointer when in normal display mode
-  if(scopesettings.xymodedisplay == DISPLAY_MODE_NORMAL)
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
   {
     //x position for the trigger position pointer
     position = scopesettings.triggerhorizontalposition;
-
-#if 0    
-    //Limit on the right of the displayable region
-    if(position > HORIZONTAL_POINTER_RIGHT)
-    {
-      position = HORIZONTAL_POINTER_RIGHT;
-    }
-#endif
     
     //Set the color for drawing the pointer
     display_set_fg_color(TRIGGER_COLOR);
@@ -778,13 +770,13 @@ void ui_display_cursors(void)
     }
 
     //The selected text is displayed in white and with basic font
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
     display_set_font(&font_1);
     display_text(x, y, "Selected");
 
     //Fill in the information window
     //Set gray background for the cursor measurements
-    display_set_fg_color(0x00404040);
+    display_set_fg_color(COLOR_DARK_GREY_4);
 
     //Draw rectangle for the texts depending on what is enabled.
     display_fill_rect(6, 59, 101, height - 1);
@@ -796,7 +788,7 @@ void ui_display_cursors(void)
     display_draw_horz_line(height + 62, 6, 103);
 
     //Use white text and font_0
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
     display_set_font(&font_0);
 
     //Check if time cursor is enabled
@@ -873,15 +865,15 @@ SHADEDRECTDATA trigger_top_box =
 {
   20,
   14,
-  { 0x0000FC00, 0x0000A800, 0x00005400 },
-  0x00002000
+  { COLOR_GREEN, COLOR_PHOSPHOR_GREEN, COLOR_PHARMACY_GREEN },
+  COLOR_DARK_GREEN
 };
 
 TEXTDATA trigger_top_box_text =
 {
   7,
   0,
-  0x00F8FCF8,
+  COLOR_WHITE,
   &font_1,
   "T"
 };
@@ -890,15 +882,15 @@ SHADEDRECTDATA trigger_bottom_box =
 {
   21,
   14,
-  { 0x0000FC00, 0x0000A800, 0x00005400 },
-  0x00002000
+  { COLOR_GREEN, COLOR_PHOSPHOR_GREEN, COLOR_PHARMACY_GREEN },
+  COLOR_DARK_GREEN
 };
 
 TEXTDATA trigger_bottom_box_text =
 {
   7,
   0,
-  0x00FFFFFF,
+  COLOR_WHITE,
   &font_1,
   "H"
 };
@@ -907,15 +899,15 @@ SHADEDRECTDATA trigger_horizontal_pos_box =
 {
   94,
   14,
-  { 0x00404440, 0x00282828, 0x00101410 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 TEXTDATA trigger_horizontal_pos_box_text =
 {
   5,
   0,
-  0x00888888,
+  COLOR_GREY,
   &font_1,
   "POS :"
 };
@@ -928,7 +920,7 @@ void ui_display_trigger_settings(void)
   display_draw_shaded_rect(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS, &trigger_top_box, &trigger_top_box_text);
 
   //The fixed texts are drawn in a grey shade and basic font
-  display_set_fg_color(0x00888888);
+  display_set_fg_color(COLOR_GREY);
   display_set_font(&font_1);
 
   //Modified character 0x3A (:) for having it one pixel higher then normal to
@@ -960,15 +952,15 @@ SHADEDRECTDATA trigger_mode_box =
 {
   57,
   14,
-  { 0x00404440, 0x00282828, 0x00101410 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 TEXTDATA trigger_mode_texts[] =
 {
-  { 15, 0, 0x00F8FCF8, &font_1, "Auto" },
-  { 12, 0, 0x00F8FCF8, &font_1, "Single" },
-  {  9, 0, 0x00F8FCF8, &font_1, "Normal" },
+  { 15, 0, COLOR_WHITE, &font_1, "Auto" },
+  { 12, 0, COLOR_WHITE, &font_1, "Single" },
+  {  9, 0, COLOR_WHITE, &font_1, "Normal" },
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -987,14 +979,14 @@ void ui_display_trigger_mode(void)
 
 SHADEDRECTDATA trigger_channel_boxes[] =
 {
-  { 27, 12, { 0x00F8FC00, 0x00D8DC00, 0x00B8BC00 }, 0x00A8A800 },
-  { 27, 12, { 0x0000FCF8, 0x0000DCD8, 0x0000BCB8 }, 0x0000A8A8 },
+  { 27, 12, { CHANNEL1_COLOR, COLOR_CHARTREUSE_YELLOW, COLOR_RIOJA_YELLOW }, COLOR_CITRUS_YELLOW },
+  { 27, 12, { CHANNEL2_COLOR, COLOR_BRIGHT_TURQUOISE, COLOR_IRISH_BLUE }, COLOR_PERSIAN_GREEN },
 };
 
 TEXTDATA trigger_channel_texts[] =
 {
-  { 3, -1, 0x00000000, &font_1, "CH1" },
-  { 3, -1, 0x00000000, &font_1, "CH2" },
+  { 3, -1, COLOR_BLACK, &font_1, "CH1" },
+  { 3, -1, COLOR_BLACK, &font_1, "CH2" },
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1016,8 +1008,8 @@ void ui_display_trigger_edge(void)
   const uint8 *icon;
 
   //Using an icon might be a simpler and faster option
-  display_set_fg_color(0x00F8FCF8);
-  display_set_bg_color(0x00000000);
+  display_set_fg_color(COLOR_WHITE);
+  display_set_bg_color(COLOR_BLACK);
 
   //Select the icon based on the selected edge
   if(scopesettings.triggeredge == 0)
@@ -1044,65 +1036,75 @@ void ui_display_trigger_vertical_position(void)
   int32            delta;
   int32            volts;
 
-  //Select the channel based on the current trigger channel
-  if(scopesettings.triggerchannel == 0)
-  {
-    settings = &scopesettings.channel1;
-  }
-  else
-  {
-    settings = &scopesettings.channel2;
-  }
-
   //Clear the background first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(TOP_TRIGGER_INFO_XPOS + 33, TOP_TRIGGER_INFO_YPOS + 32, 49, 11);
+  
+  //Only in normal mode the position is shown
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
+  {
+    //Select the channel based on the current trigger channel
+    if(scopesettings.triggerchannel == 0)
+    {
+      settings = &scopesettings.channel1;
+    }
+    else
+    {
+      settings = &scopesettings.channel2;
+    }
 
-  //Get the voltage calculation data for the given channel
-  vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
+    //Get the voltage calculation data for the given channel
+    vcd = (PVOLTCALCDATA)&volt_calc_data[settings->magnification][settings->displayvoltperdiv];
 
-  //Calculate the delta of the trigger channel position versus the trigger level position
-  delta = scopesettings.triggerverticalposition - settings->traceposition;
+    //Calculate the delta of the trigger channel position versus the trigger level position
+    delta = scopesettings.triggerverticalposition - settings->traceposition;
 
-  //Multiply with the scaling factor for the given channel to get the level expressed in volts
-  volts = delta * vcd->mul_factor;
+    //Multiply with the scaling factor for the given channel to get the level expressed in volts
+    volts = delta * vcd->mul_factor;
 
-  //Format the voltage for displaying
-  ui_msm_print_value(globaldisplaytext, volts, vcd->volt_scale, "V");
+    //Format the voltage for displaying
+    ui_msm_print_value(globaldisplaytext, volts, vcd->volt_scale, "V");
 
-  //The text is drawn in white and basic font
-  display_set_fg_color(0x00FFFFFF);
-  display_set_font(&font_1);
+    //The text is drawn in white and basic font
+    display_set_fg_color(COLOR_WHITE);
+    display_set_font(&font_1);
 
-  //Show it in the top of the screen trigger section
-  display_right_aligned_text(TOP_TRIGGER_INFO_XPOS + 80, TOP_TRIGGER_INFO_YPOS + 31, globaldisplaytext);
+    //Show it in the top of the screen trigger section
+    display_right_aligned_text(TOP_TRIGGER_INFO_XPOS + 80, TOP_TRIGGER_INFO_YPOS + 31, globaldisplaytext);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
 
 void ui_display_trigger_horizontal_position(void)
 {
-  //Get the time delta based on the center of the pointers position
-  int32 delta = scopesettings.triggerhorizontalposition - TRACE_HORIZONTAL_CENTER;
+  int32 delta;
   
   //Clear the old text first by re drawing the box
   display_draw_shaded_rect(BOTTOM_TRIGGER_INFO_XPOS + 23, BOTTOM_TRIGGER_INFO_YPOS, &trigger_horizontal_pos_box, &trigger_horizontal_pos_box_text);
       
-  //Get the time calculation data for this time base setting.
-  PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
+  //Only in normal mode the position is shown
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
+  {
+    //Get the time delta based on the center of the pointers position
+    delta = scopesettings.triggerhorizontalposition - TRACE_HORIZONTAL_CENTER;
 
-  //For the time multiply with the scaling factor and display based on the time scale
-  delta *= tcd->mul_factor;
+    //Get the time calculation data for this time base setting.
+    PSCREENTIMECALCDATA tcd = (PSCREENTIMECALCDATA)&screen_time_calc_data[scopesettings.timeperdiv];
 
-  //Format the time for displaying
-  ui_msm_print_value(globaldisplaytext, delta, tcd->time_scale, "s");
-  
-  //The text is drawn in white with a basic font
-  display_set_font(&font_1);
-  display_set_fg_color(0x00FFFFFF);
-  
-  //Display the selected sensitivity
-  display_right_aligned_text(BOTTOM_TRIGGER_INFO_XPOS + 113, BOTTOM_TRIGGER_INFO_YPOS, globaldisplaytext);
+    //For the time multiply with the scaling factor and display based on the time scale
+    delta *= tcd->mul_factor;
+
+    //Format the time for displaying
+    ui_msm_print_value(globaldisplaytext, delta, tcd->time_scale, "s");
+
+    //The text is drawn in white with a basic font
+    display_set_font(&font_1);
+    display_set_fg_color(COLOR_WHITE);
+
+    //Display the selected sensitivity
+    display_right_aligned_text(BOTTOM_TRIGGER_INFO_XPOS + 113, BOTTOM_TRIGGER_INFO_YPOS, globaldisplaytext);
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1110,11 +1112,11 @@ void ui_display_trigger_horizontal_position(void)
 void ui_display_time_per_division(void)
 {
   //Clear the old text before printing the new text
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(BOTTOM_TRIGGER_INFO_XPOS + 148, BOTTOM_TRIGGER_INFO_YPOS, 50, 14);
 
   //Text is displayed in white and basic font
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_1);
 
   //Only display the text when in the setting is range of the text array
@@ -1132,8 +1134,8 @@ void ui_display_move_speed(void)
   const uint8 *icon;
 
   //Text is slightly off white
-  display_set_fg_color(0x00F8FCF8);
-  display_set_bg_color(0x00000000);
+  display_set_fg_color(COLOR_WHITE);
+  display_set_bg_color(COLOR_BLACK);
 
   //Draw the icon for this section
   display_copy_icon_fg_color(move_speed_icon, 330, 13, 16, 16);
@@ -1176,8 +1178,8 @@ SHADEDRECTDATA channel_disabled_box =
 {
   20,
   14,
-  { 0x00404440, 0x00282828, 0x00101410 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1186,15 +1188,15 @@ SHADEDRECTDATA channel_1_box =
 {
   20,
   14,
-  { 0x00F8FC00, 0x00888800, 0x00404400 },
-  0x00202000
+  { COLOR_YELLOW, COLOR_OLIVE, COLOR_DARK_YELLOW },
+  COLOR_LIQUORICE
 };
 
 TEXTDATA channel_1_box_text =
 {
   7,
   0,
-  0x00F8FCF8,
+  COLOR_WHITE,
   &font_1,
   "1"
 };
@@ -1205,15 +1207,15 @@ SHADEDRECTDATA channel_2_box =
 {
   20,
   14,
-  { 0x0000FCF8, 0x00008888, 0x00004440 },
-  0x00002020
+  { 0x0000FCF8, COLOR_DARK_CYAN, COLOR_SHERPA_BLUE },
+  COLOR_DARK_GREEN
 };
 
 TEXTDATA channel_2_box_text =
 {
   7,
   0,
-  0x00F8FCF8,
+  COLOR_WHITE,
   &font_1,
   "2"
 };
@@ -1245,7 +1247,7 @@ void ui_display_channel_settings(PCHANNELSETTINGS settings)
   display_draw_shaded_rect(settings->infoxpos, settings->infoypos, boxdata, settings->boxtext);
 
   //The fixed texts are drawn in a grey shade and basic font
-  display_set_fg_color(0x00888888);
+  display_set_fg_color(COLOR_GREY);
   display_set_font(&font_1);
 
   //Modified character 0x3A (:) for having it one pixel higher then normal to
@@ -1272,15 +1274,15 @@ SHADEDRECTDATA channel_probe_box =
 {
   46,
   14,
-  { 0x00404440, 0x00282828, 0x00101410 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 TEXTDATA channel_probe_texts[] =
 {
-  { 12, 0, 0x00F8FCF8, &font_1,   "1 : 1" },
-  {  8, 0, 0x00F8FCF8, &font_1,  "10 : 1" },
-  {  5, 0, 0x00F8FCF8, &font_1, "100 : 1" },
+  { 12, 0, COLOR_WHITE, &font_1,   "1 : 1" },
+  {  8, 0, COLOR_WHITE, &font_1,  "10 : 1" },
+  {  5, 0, COLOR_WHITE, &font_1, "100 : 1" },
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1311,7 +1313,7 @@ void ui_display_channel_coupling(PCHANNELSETTINGS settings)
   int32 y = settings->infoypos;
 
   //Clear the old text first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(x - 1, y + 2, 18, 10);
 
   //Colors are different when disabled or enabled
@@ -1323,7 +1325,7 @@ void ui_display_channel_coupling(PCHANNELSETTINGS settings)
   else
   {
     //When disabled the disabled color is used
-    display_set_fg_color(0x00888888);
+    display_set_fg_color(COLOR_GREY);
   }
 
   //The text is drawn a basic font
@@ -1350,7 +1352,7 @@ void ui_display_channel_sensitivity(PCHANNELSETTINGS settings)
   int32 y = settings->infoypos + 17;
 
   //Clear the old text first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(x - 1, y + 2, 57, 10);
 
   //Colors are different when disabled or enabled
@@ -1362,7 +1364,7 @@ void ui_display_channel_sensitivity(PCHANNELSETTINGS settings)
   else
   {
     //When disabled the disabled color is used
-    display_set_fg_color(0x00888888);
+    display_set_fg_color(COLOR_GREY);
   }
 
   //The text is drawn with a basic font
@@ -1383,7 +1385,7 @@ void ui_display_channel_position(PCHANNELSETTINGS settings)
   int32         y     = settings->infoypos + 30;
 
   //Clear the old text first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(x - 1, y + 2, 57, 10);
 
   //Get the voltage calculation data for the given channel
@@ -1407,7 +1409,7 @@ void ui_display_channel_position(PCHANNELSETTINGS settings)
   else
   {
     //When disabled the disabled color is used
-    display_set_fg_color(0x00888888);
+    display_set_fg_color(COLOR_GREY);
   }
 
   //The text is drawn with a basic font
@@ -1449,7 +1451,7 @@ void ui_display_measurements(void)
     dy = i * MEASUREMENT_Y_DISPLACEMENT;
 
     //Clear the background first
-    display_set_fg_color(0x000000000);
+    display_set_fg_color(COLOR_BLACK);
     display_fill_rect(707, 9 + dy, 92, 61);
 
     //Get the channel information for displaying the box in the channel color
@@ -1462,7 +1464,7 @@ void ui_display_measurements(void)
     display_draw_shaded_rect(MEASUREMENT_CHANNEL_BOX_X, y, settings->boxdata, settings->boxtext);
 
     //The fixed texts are drawn in a grey shade and basic font
-    display_set_fg_color(0x00888888);
+    display_set_fg_color(COLOR_GREY);
     display_set_font(&font_2);
 
     //Display the measurement label
@@ -1500,7 +1502,7 @@ void ui_update_measurements(void)
     y = MEASUREMENT_INFO_Y + (i * MEASUREMENT_Y_DISPLACEMENT) + 21;
 
     //Clear the display field first
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
     display_fill_rect(MEASUREMENT_VALUE_X - 2, y - 2, 83, 20);
 
     //Call the set function for displaying the actual value and
@@ -1679,7 +1681,7 @@ void ui_display_duty_cycle(uint32 ypos, PCHANNELSETTINGS settings, uint32 value)
   }
 
   //The designator text is drawn in white and small font
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_1);
 
   //Display the designator on the screen
@@ -1816,7 +1818,7 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
   strcpy(buffer, designator);
 
   //The designator text is drawn in white and small font
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_1);
 
   //Display it on the screen
@@ -1891,8 +1893,8 @@ HIGHLIGHTRECTDATA main_menu_highlight_box =
 {
   175,
   26,
-  { 0x0000FF00, 0x00009900, 0x00005500, 0x00002200 },
-  0x00000000
+  { COLOR_GREEN, COLOR_ISLAMIC_GREEN, COLOR_PHARMACY_GREEN, COLOR_DARK_GREEN },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1902,11 +1904,11 @@ void ui_display_main_menu(void)
   int i,y;
 
   //Draw the menu outline slightly lighter then the background
-  display_set_fg_color(0x00303430);
+  display_set_fg_color(COLOR_DARK_GREY_3);
   display_draw_rect(5, 114, 183, 345);
 
   //Fill the lighter background of the menu area
-  display_set_fg_color(0x00101010);
+  display_set_fg_color(COLOR_DARK_GREY_1);
   display_fill_rect(6, 115, 180, 342);
 
   //Calculate the y position for the highlight box based on the selected menu item
@@ -1916,7 +1918,7 @@ void ui_display_main_menu(void)
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //The main menu has 11 items and fixed here for now.
   for(i=0,y=122;i<11;i++)
@@ -1939,11 +1941,11 @@ void ui_unhighlight_main_menu_item(void)
   y = 118 + (menuitem * 31);
 
   //Fill the section with the lighter background of the menu area
-  display_set_fg_color(0x00101010);
+  display_set_fg_color(COLOR_DARK_GREY_1);
   display_fill_rect(9, y, 174, 25);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //Text line sits 4 pixels lower
   y += 4;
@@ -1967,7 +1969,7 @@ void ui_highlight_main_menu_item(void)
   display_draw_highlight_rect(9, y, &main_menu_highlight_box);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //Text line sits 4 pixels lower
   y += 4;
@@ -1982,8 +1984,8 @@ HIGHLIGHTRECTDATA channel_1_highlight_box =
 {
   183,
   24,
-  { 0x00FFFF00, 0x00999900, 0x00555500, 0x00222200 },
-  0x00000000
+  { COLOR_YELLOW, COLOR_PEA_SOUP, COLOR_VERDUN_GREEN, COLOR_LIQUORICE },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -1992,8 +1994,8 @@ HIGHLIGHTRECTDATA channel_2_highlight_box =
 {
   183,
   24,
-  { 0x0000FFFF, 0x00009999, 0x00005555, 0x00002222 },
-  0x00000000
+  { COLOR_CYAN, COLOR_LIGHT_BLUE, COLOR_MOSQUE, COLOR_STELLAR_EXPLORER },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2003,11 +2005,11 @@ void ui_display_channel_menu(PCHANNELSETTINGS settings)
   int i,y;
 
   //Draw the menu outline slightly lighter then the background
-  display_set_fg_color(0x00303430);
+  display_set_fg_color(COLOR_DARK_GREY_3);
   display_draw_rect(260, 213, 191, 91);
 
   //Fill the lighter background of the menu area
-  display_set_fg_color(0x00101010);
+  display_set_fg_color(COLOR_DARK_GREY_1);
   display_fill_rect(261, 214, 188, 88);
 
   //Need to calculate the y position for the highlight box
@@ -2017,7 +2019,7 @@ void ui_display_channel_menu(PCHANNELSETTINGS settings)
   display_draw_highlight_rect(264, y, settings->highlightboxdata);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //The channel menu has 3 settings and fixed here for now.
   for(i=0,y=221;i<3;i++)
@@ -2066,11 +2068,11 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
   int i;
 
   //Clear the background first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(364, 222, 79, 14);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //Display the magnification texts in a loop, but skip the selected one
   for(i=0;i<3;i++)
@@ -2089,7 +2091,7 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
   display_fill_rect(channel_menu_magnification_x_positions[settings->magnification] - 2, 222, channel_menu_magnification_widths[settings->magnification] + 3, 13);
 
   //Display the selected text in black
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_copy_icon_fg_color(channel_menu_magnification_icons[settings->magnification], channel_menu_magnification_x_positions[settings->magnification], 224, channel_menu_magnification_widths[settings->magnification], 10);
 }
 
@@ -2098,7 +2100,7 @@ void ui_display_channel_menu_probe_magnification_select(PCHANNELSETTINGS setting
 void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 {
   //Clear the background first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(364, 250, 78, 15);
 
   if(settings->coupling == 1)
@@ -2110,12 +2112,12 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_fill_rect(367, 250, 29, 15);
 
     //Display the selected text in black
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
   }
   else
   {
     //Not selected text is displayed in white
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
   }
 
   //Display the AC text
@@ -2130,12 +2132,12 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
     display_fill_rect(407, 250, 29, 15);
 
     //Display the selected text in black
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
   }
   else
   {
     //Not selected text is displayed in white
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
   }
 
   //Display the DC text
@@ -2147,7 +2149,7 @@ void ui_display_channel_menu_coupling_select(PCHANNELSETTINGS settings)
 void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
 {
   //Clear the background first
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_fill_rect(364, 279, 78, 15);
 
   if(settings->fftenable == 1)
@@ -2159,12 +2161,12 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_fill_rect(367, 279, 29, 15);
 
     //Display the selected text in black
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
   }
   else
   {
     //Not selected text is displayed in white
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
   }
 
   //Display the ON text
@@ -2179,12 +2181,12 @@ void ui_display_channel_menu_fft_on_off_select(PCHANNELSETTINGS settings)
     display_fill_rect(407, 279, 29, 15);
 
     //Display the selected text in black
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
   }
   else
   {
     //Not selected text is displayed in white
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
   }
 
   //Display the OFF text
@@ -2257,8 +2259,8 @@ SHADEDRECTDATA slider_outer_box =
 {
   SLIDER_OUTER_BOX_WIDTH,
   SLIDER_OUTER_BOX_HEIGHT,
-  { 0x00444444, 0x00282828, 0x00141414 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 SHADEDROUNDEDRECTDATA slider_rounded_box =
@@ -2266,8 +2268,8 @@ SHADEDROUNDEDRECTDATA slider_rounded_box =
   SLIDER_ROUNDED_BOX_WIDTH,
   SLIDER_ROUNDED_BOX_HEIGHT,
   SLIDER_ROUNDED_BOX_RADIUS,
-  { 0x00444444, 0x00282828, 0x00141414 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2332,7 +2334,7 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
     uint16 yt = ypos + SLIDER_TEXT_Y_OFFSET;
 
     //Clear the background first
-    display_set_fg_color(0x00000000);
+    display_set_fg_color(COLOR_BLACK);
 
     //Start with no slider
     display_fill_rect(xs, ys, SLIDER_LINE_MAX_WIDTH - 1, SLIDER_LINE_HEIGHT - 1);
@@ -2350,7 +2352,7 @@ void ui_display_slider(uint16 xpos, uint16 ypos)
     }
 
     //Display the position with wite text
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
     display_set_font(&font_2);
     display_decimal(xt, yt, *sliderdata);
   }
@@ -2362,8 +2364,8 @@ SHADEDRECTDATA on_off_setting_box =
 {
   ON_OFF_SETTING_BOX_WIDTH,
   ON_OFF_SETTING_BOX_HEIGHT,
-  { 0x00444444, 0x00282828, 0x00141414 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2372,8 +2374,8 @@ HIGHLIGHTRECTDATA on_off_select_box =
 {
   ON_OFF_SELECT_BOX_WIDTH,
   ON_OFF_SELECT_BOX_HEIGHT,
-  { 0x0000FF00, 0x00009900, 0x00005500, 0x00002200 },
-  0x00000000
+  { COLOR_GREEN, COLOR_ISLAMIC_GREEN, COLOR_PHARMACY_GREEN, COLOR_DARK_GREEN },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2382,8 +2384,8 @@ SHADEDRECTDATA on_off_check_box =
 {
   ON_OFF_CHECK_SIZE,
   ON_OFF_CHECK_SIZE,
-  { 0x0000FF00, 0x0000BB00, 0x00009900 },
-  0x00006400
+  { COLOR_GREEN, COLOR_GLIMMER_GREEN, COLOR_ISLAMIC_GREEN },
+  COLOR_PAKISTAN_GREEN
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2465,7 +2467,7 @@ void ui_display_on_off_setting(uint16 xpos, uint16 ypos)
     display_draw_shaded_rect(xpos + ON_OFF_CHECK_X_OFFSET, y, &on_off_check_box, 0);
 
     //Need to display the ON and OFF text icons
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
     display_copy_icon_fg_color(setting_menu_ON_icon, xpos + ON_OFF_TEXT_X_OFFSET, ypos + ON_OFF_TEXT_ON_Y_OFFSET, 20, 14);
     display_copy_icon_fg_color(setting_menu_OFF_icon, xpos + ON_OFF_TEXT_X_OFFSET, ypos + ON_OFF_TEXT_OFF_Y_OFFSET, 25, 14);
   }
@@ -2547,8 +2549,8 @@ HIGHLIGHTRECTDATA measurement_menu_highlight_box =
 {
   141,
   24,
-  { 0x0000FF00, 0x00009900, 0x00005500, 0x00002200 },
-  0x00000000
+  { COLOR_GREEN, COLOR_ISLAMIC_GREEN, COLOR_PHARMACY_GREEN, COLOR_DARK_GREEN },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2570,11 +2572,11 @@ void ui_display_measurements_menu(void)
   uint16 x,y;
 
   //Fill the lighter background of the menu area
-  display_set_fg_color(0x00101010);
+  display_set_fg_color(COLOR_DARK_GREY_1);
   display_fill_rect(380, 114, 313, 332);
 
   //Draw the menu outline slightly lighter then the background
-  display_set_fg_color(0x00303430);
+  display_set_fg_color(COLOR_DARK_GREY_3);
   display_draw_rect(379, 113, 316, 335);
 
   //Draw the lines to separate the header, the two channels and the current slot
@@ -2597,7 +2599,7 @@ void ui_display_measurements_menu(void)
   display_draw_highlight_rect(x, y, &measurement_menu_highlight_box);
 
   //Text is displayed in white
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //Display the channel header texts
   display_copy_icon_fg_color(channel_1_text_icon, 452, 121, 23, 13);
@@ -2633,7 +2635,7 @@ void ui_display_measurements_menu_items(uint32 xpos, PCHANNELSETTINGS settings)
   int i,x,y;
 
   //Text is displayed in white and labels are using a bigger font
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_3);
 
   //Display the labels for the measurements based on font_3
@@ -3096,7 +3098,7 @@ void ui_prepare_setup_for_file(void)
   ptr[index++] = scopesettings.screenbrightness;
   ptr[index++] = scopesettings.gridbrightness;
   ptr[index++] = scopesettings.alwaystrigger50;
-  ptr[index++] = scopesettings.xymodedisplay;
+  ptr[index++] = scopesettings.tracedisplaymode;
   ptr[index++] = scopesettings.confirmationmode;
 
   //Leave some space for other scope settings changes
@@ -3214,7 +3216,7 @@ void ui_restore_setup_from_file(void)
   scopesettings.screenbrightness = ptr[index++];
   scopesettings.gridbrightness   = ptr[index++];
   scopesettings.alwaystrigger50  = ptr[index++];
-  scopesettings.xymodedisplay    = ptr[index++];
+  scopesettings.tracedisplaymode = ptr[index++];
   scopesettings.confirmationmode = ptr[index++];
 
   //Leave some space for other scope settings changes
@@ -4140,7 +4142,7 @@ void ui_display_thumbnails(void)
   display_set_screen_buffer(displaybuffer1);
 
   //Set black color for background
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
 
   //Clear the screen
   display_fill_rect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -4190,12 +4192,12 @@ void ui_display_thumbnails(void)
       //Check on highlighted item
       if(index == viewcurrentindex)
       {
-        display_set_fg_color(0x00707070);
+        display_set_fg_color(COLOR_DARK_GREY_7);
         display_fill_rect(xpos + 3, ypos + 12, VIEW_ITEM_WIDTH - 33, VIEW_ITEM_HEIGHT - 29);
       }
 
       //Draw a grid
-      display_set_fg_color(0x00606060);
+      display_set_fg_color(COLOR_DARK_GREY_6);
 
       //Draw the center lines
       display_draw_horz_line(ypos + 60, xpos + 3, xpos + 169);
@@ -4206,7 +4208,7 @@ void ui_display_thumbnails(void)
 
       //Display the thumbnail
       //Need to make a distinction between normal display and xy display mode
-      if(thumbnaildata->xydisplaymode == 0)
+      if(thumbnaildata->tracedisplaymode == DISPLAY_MODE_NORMAL)
       {
         //Normal mode
         //To avoid errors make sure the positions are in range
@@ -4290,11 +4292,11 @@ void ui_display_thumbnails(void)
       }
 
       //Draw the grey trace border after the traces has been drawn to mask the out of the screen pixels
-      display_set_fg_color(0x00909090);
+      display_set_fg_color(COLOR_LIGHT_GREY_9);
       display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 26);
 
       //Need to make a distinction between normal display and xy display mode for displaying the pointers
-      if(thumbnaildata->xydisplaymode == 0)
+      if(thumbnaildata->tracedisplaymode == DISPLAY_MODE_NORMAL)
       {
         //Channel pointers position bases
         x = xpos + 3;
@@ -4361,8 +4363,8 @@ void ui_display_thumbnails(void)
       if(viewselectmode)
       {
         //Set the colors for displaying the selected sign. White sign on blue background
-        display_set_fg_color(0x00FFFFFF);
-        display_set_bg_color(0x000000FF);
+        display_set_fg_color(COLOR_WHITE);
+        display_set_bg_color(COLOR_BLUE);
 
         //Draw an empty box to indicate select mode
         display_draw_rect(xpos + 71, ypos + 44, 32, 32);
@@ -4383,7 +4385,7 @@ void ui_display_thumbnails(void)
       }
       else
       {
-        display_set_fg_color(0x00FFFFFF);
+        display_set_fg_color(COLOR_WHITE);
       }
 
       //Display the file name in the bottom left corner
@@ -4442,7 +4444,7 @@ void ui_display_thumbnails(void)
   else
   {
     //Show the user there are no items available
-    display_set_fg_color(0x00FFFFFF);
+    display_set_fg_color(COLOR_WHITE);
     display_set_font(&font_4);
     display_text(254, 225, "NO ITEMS AVAILABLE");
   }
@@ -4560,14 +4562,14 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
   //Set the xy display mode
-  thumbnaildata->xydisplaymode = scopesettings.xymodedisplay;
+  thumbnaildata->tracedisplaymode = scopesettings.tracedisplaymode;
 
   //Set the display start and end x positions. Conversion to thumbnail x coordinates is done by dividing since the region is smaller
   thumbnaildata->disp_xstart = (disp_xstart * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
   thumbnaildata->disp_xend   = (disp_xend * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
   //Check which display mode is active
-  if(scopesettings.xymodedisplay == 0)
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
   {
     //Normal mode so check on channel 1 being enabled
     if(scopesettings.channel1.enable)
@@ -4820,15 +4822,15 @@ void ui_display_file_status_message(int32 msgid, int32 alwayswait)
   display_copy_rect_from_screen(260, 210, 280, 60);
 
   //Draw the background in grey
-  display_set_fg_color(0x00202020);
+  display_set_fg_color(COLOR_DARK_GREY_2);
   display_fill_rect(260, 210, 279, 59);
 
   //Draw the border in a lighter grey
-  display_set_fg_color(0x00303030);
+  display_set_fg_color(COLOR_DARK_GREY_3);
   display_draw_rect(260, 210, 280, 60);
 
   //White color for text and use font_1
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
   display_set_font(&font_1);
 
   switch(msgid)
@@ -4935,15 +4937,15 @@ int32 ui_handle_confirm_delete(void)
 
   //display the confirm delete menu
   //Draw the background in some shade of red
-  display_set_fg_color(0x00A04020);
+  display_set_fg_color(CONFIRM_WINDOW_BG_COLOR);
   display_fill_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH - 1, HCD_HEIGHT - 1);
 
   //Draw the border in a lighter grey
-  display_set_fg_color(0x00404040);
+  display_set_fg_color(COLOR_DARK_GREY_4);
   display_draw_rect(HCD_XPOS, HCD_YPOS, HCD_WIDTH, HCD_HEIGHT);
 
   //Black text and a big font
-  display_set_fg_color(0x00000000);
+  display_set_fg_color(COLOR_BLACK);
   display_set_font(&font_4);
   display_text(HCD_XPOS + 8, HCD_YPOS + 5, "Confirm to delete?");
 
@@ -4977,16 +4979,16 @@ SHADEDRECTDATA calibration_start_box =
 {
   CALIBRATION_START_MSG_WIDTH,
   CALIBRATION_START_MSG_HEIGHT,
-  { 0x00404040, 0x00282828, 0x00101010 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 SHADEDRECTDATA calibration_message_box =
 {
   CALIBRATION_MSG_WIDTH,
   CALIBRATION_MSG_HEIGHT,
-  { 0x00404040, 0x00282828, 0x00101010 },
-  0x00000000
+  { COLOR_DARK_GREY_4, COLOR_DARK_GREY_2, COLOR_DARK_GREY_1 },
+  COLOR_BLACK
 };
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -5005,7 +5007,7 @@ void ui_show_calibration_message(uint32 state)
       display_draw_shaded_rect(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, &calibration_start_box, 0);
 
       //Add the text
-      display_set_fg_color(0x00FFFFFF);
+      display_set_fg_color(COLOR_WHITE);
       display_copy_icon_fg_color(calibration_start_text_icon, CALIBRATION_MSG_XPOS + 8, CALIBRATION_MSG_YPOS + 10, 159, 44);
       return;
 
@@ -5027,7 +5029,7 @@ void ui_show_calibration_message(uint32 state)
   display_draw_shaded_rect(CALIBRATION_MSG_XPOS, CALIBRATION_MSG_YPOS, &calibration_message_box, 0);
 
   //Set the color for displaying the text
-  display_set_fg_color(0x00FFFFFF);
+  display_set_fg_color(COLOR_WHITE);
 
   //Display the intended message
   switch(state)

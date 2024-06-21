@@ -801,14 +801,8 @@ void sm_button_dial_normal_handling(void)
       break;
 
     case UIC_BUTTON_TRIG_ORIG:
-      //Reset the trigger position and level to center positions
-      scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
-
-      //Set the trigger vertical position position to match the new trigger level
-      scope_set_50_percent_trigger();
-      
-      //Show the new setting on the screen
-      ui_display_trigger_horizontal_position();
+      //Also set the level to 50%
+      sm_set_trigger_origin(1);
       break;
 
     case UIC_BUTTON_TRIG_MODE:
@@ -989,11 +983,8 @@ void sm_button_dial_wave_view_handling(void)
       break;
 
     case UIC_BUTTON_TRIG_ORIG:
-      //Reset the trigger position to center of the trace window
-      scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
-      
-      //Show the new setting on the screen
-      ui_display_trigger_horizontal_position();
+      //Don't set the level to 50%
+      sm_set_trigger_origin(0);
       break;
       
     case UIC_ROTARY_CH1_POS_ADD:
@@ -1109,6 +1100,9 @@ void sm_close_menu(void)
 
   //Set the navigation state based on enabled cursors
   sm_restore_navigation_handling();
+  
+  //Handle possible switch to or from X-Y mode
+  sm_check_display_mode_change();
 
   //Redraw the outline to ensure proper screen after having menu open
   ui_draw_outline();
@@ -1128,6 +1122,32 @@ void sm_restore_navigation_handling(void)
   {
     //No cursor enabled so no navigation handling needed
     navigationstate = NAV_NO_ACTION;
+  }
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_check_display_mode_change(void)
+{
+  //Check if the X-Y mode option is selected
+  if(menuitem == MAIN_MENU_XY_MODE)
+  {
+    //Reset to avoid coming here again after another menu closing
+    menuitem = 0;
+    
+    //Based on the trace display mode the needed actions are taken
+    if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
+    {
+      //Restore the saved channel trace positions
+    }
+    else
+    {
+      //Save the channel trace positions
+    }
+    
+    //Update the trigger position information
+    ui_display_trigger_vertical_position();
+    ui_display_trigger_horizontal_position();
   }
 }
 
@@ -1277,6 +1297,36 @@ void sm_set_trigger_level(void)
   
   //Show the new value on the screen
   ui_display_trigger_vertical_position();
+}
+
+//----------------------------------------------------------------------------------------------------------------------------------
+
+void sm_set_trigger_origin(uint32 doleveltoo)
+{
+  //Action is based on the display mode
+  if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
+  {
+    //Reset the trigger position and level to center positions
+    scopesettings.triggerhorizontalposition = TRACE_HORIZONTAL_CENTER;
+
+    //Only set the level to 50% when requested
+    if(doleveltoo)
+    {
+      //Set the trigger vertical position position to match the new trigger level
+      scope_set_50_percent_trigger();
+    }
+    
+    //Show the new setting on the screen
+    ui_display_trigger_horizontal_position();
+  }
+  else
+  {
+    //In X-Y mode the channel positions need to be set to the center
+    scopesettings.channel1.traceposition = VERTICAL_POINTER_CENTER;
+    scopesettings.channel2.traceposition = VERTICAL_POINTER_CENTER;
+    
+    //Also show this in the information fields
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2362,7 +2412,7 @@ void sm_open_on_off_setting(void)
   else
   {
     //Only other option with the on off setting is the x-y mode so set that variable to be adjusted
-    onoffdata = &scopesettings.xymodedisplay;
+    onoffdata = &scopesettings.tracedisplaymode;
 
     //Set the y position for opening the on off menu next to this menu item
     y = ON_OFF_SETTING_XY_MODE_YPOS;
