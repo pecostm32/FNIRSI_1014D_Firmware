@@ -1139,11 +1139,23 @@ void sm_check_display_mode_change(void)
     if(scopesettings.tracedisplaymode == DISPLAY_MODE_NORMAL)
     {
       //Restore the saved channel trace positions
+      scopesettings.channel1.traceposition = scopesettings.channel1traceposition;
+      scopesettings.channel2.traceposition = scopesettings.channel2traceposition;
     }
     else
     {
       //Save the channel trace positions
+      scopesettings.channel1traceposition = scopesettings.channel1.traceposition;
+      scopesettings.channel2traceposition = scopesettings.channel2.traceposition;
+      
+      //Center the traces on entry of the X-Y mode
+      scopesettings.channel1.traceposition = VERTICAL_POINTER_CENTER;
+      scopesettings.channel2.traceposition = VERTICAL_POINTER_CENTER;
     }
+    
+    //Update channel position information
+    ui_display_channel_position(&scopesettings.channel1);
+    ui_display_channel_position(&scopesettings.channel2);
     
     //Update the trigger position information
     ui_display_trigger_vertical_position();
@@ -1280,19 +1292,46 @@ void sm_set_trigger_position(void)
 
 void sm_set_trigger_level(void)
 {
+  uint8 voltperdiv;
+  int32 traceposition;
+  int32 triggerposition;
+  int32 level;
+  
   //Adjust the setting based on the given value
-  scopesettings.triggerverticalposition += speedvalue;
-
-  //Check if still in allowed range
-  if(scopesettings.triggerverticalposition < VERTICAL_POINTER_POS_MIN)
+  triggerposition = scopesettings.triggerverticalposition + speedvalue;
+  
+  //Check which channel is used for triggering for the base offset
+  if(scopesettings.triggerchannel == 0)
   {
-    //Limit it on the minimum range if needed
-    scopesettings.triggerverticalposition = VERTICAL_POINTER_POS_MIN;
+    //Channel 1, so use its data
+    voltperdiv    = scopesettings.channel1.samplevoltperdiv;
+    traceposition = scopesettings.channel1.traceposition;
   }
-  else if(scopesettings.triggerverticalposition > VERTICAL_POINTER_POS_MAX)
+  else
   {
-    //Limit it on maximum range if needed
-    scopesettings.triggerverticalposition = VERTICAL_POINTER_POS_MAX;
+    //Channel 2, so use its data
+    voltperdiv    = scopesettings.channel2.samplevoltperdiv;
+    traceposition = scopesettings.channel2.traceposition;
+  }
+  
+  //The difference between the two positions determines the level offset on 128, but it needs to be scaled back first
+  level = (((triggerposition - traceposition) << VOLTAGE_SHIFTER) / signal_adjusters[voltperdiv]) + 128;
+  
+  //Limit on extremes
+  if(level < 0)
+  {
+    //Below the lower limit then use the calculated lower limit as offset
+    scopesettings.triggerverticalposition = ((-128 * signal_adjusters[voltperdiv]) >> VOLTAGE_SHIFTER) + traceposition;
+  }
+  else if(level > 255)
+  {
+    //Above the upper limit then use the calculated upper limit as offset
+    scopesettings.triggerverticalposition = ((127 * signal_adjusters[voltperdiv]) >> VOLTAGE_SHIFTER) + traceposition;
+  }
+  else
+  {
+    //As long as within the limits use the new position
+    scopesettings.triggerverticalposition = triggerposition;
   }
   
   //Show the new value on the screen
@@ -1326,6 +1365,8 @@ void sm_set_trigger_origin(uint32 doleveltoo)
     scopesettings.channel2.traceposition = VERTICAL_POINTER_CENTER;
     
     //Also show this in the information fields
+    ui_display_channel_position(&scopesettings.channel1);
+    ui_display_channel_position(&scopesettings.channel2);
   }
 }
 
@@ -2469,9 +2510,6 @@ void sm_start_usb_export(void)
 {
   //Signal open command has been processed
   toprocesscommand = 0;
-
-  //Reset menu state since it is no longer open
-  scopesettings.menustate = 0;
 
   //Open the connection
   ui_setup_usb_screen();

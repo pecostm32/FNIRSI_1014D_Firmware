@@ -96,7 +96,7 @@
 #define TRIGGER_SETTING_OFFSET           70
 #define OTHER_SETTING_OFFSET            100
 #define CURSOR_SETTING_OFFSET           130
-#define MEASUREMENT_SETTING_OFFSET      160
+#define MEASUREMENT_SETTING_OFFSET      170
 #define CALIBRATION_SETTING_OFFSET      200
 
 #define SETTING_SECTOR_ID_HIGH       0x3413
@@ -467,8 +467,6 @@ struct tagScopeSettings
 
   uint8 runstate;
 
-  uint8 menustate;
-
   int8  screenbrightness;
   int8  gridbrightness;
   uint8 alwaystrigger50;
@@ -490,6 +488,9 @@ struct tagScopeSettings
   int16 capturecursor1position;
   int16 capturecursor2position;
 
+  int16 channel1traceposition;
+  int16 channel2traceposition;
+  
   MEASUREMENTINFO measurementitems[6];
 };
 

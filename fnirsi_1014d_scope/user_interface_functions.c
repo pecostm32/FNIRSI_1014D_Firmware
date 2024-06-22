@@ -523,14 +523,14 @@ void ui_draw_pointers(void)
       position = VERTICAL_POINTER_XY_OFFSET + scopesettings.channel1.traceposition;
 
       //Limit on the left of the active range
-      if(position < 166)
+      if(position < VERTICAL_POINTER_XY_OFFSET)
       {
-        position = 166;
+        position = VERTICAL_POINTER_XY_OFFSET;
       }
       //Limit on the right of the active range
-      else if(position > 548)
+      else if(position > (VERTICAL_POINTER_XY_OFFSET + TRACE_MAX_HEIGHT))
       {
-        position = 548;
+        position = (VERTICAL_POINTER_XY_OFFSET + TRACE_MAX_HEIGHT);
       }
 
       //Draw the pointer
@@ -4561,7 +4561,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   thumbnaildata->triggerverticalposition   = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
   thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
-  //Set the xy display mode
+  //Set the trace display mode
   thumbnaildata->tracedisplaymode = scopesettings.tracedisplaymode;
 
   //Set the display start and end x positions. Conversion to thumbnail x coordinates is done by dividing since the region is smaller
@@ -4588,8 +4588,8 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   else
   {
     //Use less samples to not overwrite the second buffer
-    uint32 index = disp_trigger_index - 317;
-    uint32 last = index + 728;
+    uint32 index = disp_trigger_index - 350;
+    uint32 last = index + 700;
 
     uint8 *buffer1 = thumbnaildata->channel1data;
     uint8 *buffer2 = thumbnaildata->channel2data;

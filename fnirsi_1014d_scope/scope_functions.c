@@ -185,6 +185,10 @@ uint32 scope_do_baseline_calibration(void)
   //Send the command for setting the trigger level to the FPGA
   fpga_write_cmd(0x17);
   fpga_write_byte(0);
+  
+  //Send the command for auto trigger mode
+  fpga_write_cmd(0x1A);
+  fpga_write_byte(0);
 
   //Clear the compensation values before doing the calibration
   calibrationsettings.adc1compensation = 0;
@@ -987,7 +991,7 @@ void scope_display_trace_data(void)
     //Set x-y mode display trace color
     display_set_fg_color(XYMODE_COLOR);
 
-    uint32 index = disp_trigger_index - 315;
+    uint32 index = disp_trigger_index - 365;
     uint32 last = index + 730;
 
     //Need two samples per channel
@@ -1370,6 +1374,10 @@ void scope_reset_config_data(void)
   scopesettings.voltcursor1position = 167;
   scopesettings.voltcursor2position = 328;
 
+  //Set the backup channel trace positions to a default value
+  scopesettings.channel1traceposition = 300;
+  scopesettings.channel2traceposition = 100;
+  
   //Set screen brightness to high, grid brightness to low, always 50% trigger off, x-y display mode off and confirmation mode enabled
   scopesettings.screenbrightness = 100;
   scopesettings.gridbrightness   = 25;
@@ -1464,6 +1472,10 @@ void scope_save_config_data(void)
   *ptr++ = scopesettings.voltcursor1position;
   *ptr++ = scopesettings.voltcursor2position;
 
+  //Save the backup channel trace positions
+  *ptr++ = scopesettings.channel1traceposition;
+  *ptr++ = scopesettings.channel2traceposition;
+  
   //Point to the first measurement enable setting
   ptr = &settingsworkbuffer[MEASUREMENT_SETTING_OFFSET];
 
@@ -1592,6 +1604,10 @@ void scope_restore_config_data(void)
     scopesettings.voltcursor1position = *ptr++;
     scopesettings.voltcursor2position = *ptr++;
 
+    //Restore the backup channel trace positions
+    scopesettings.channel1traceposition = *ptr++;
+    scopesettings.channel2traceposition = *ptr++;
+    
     //Point to the first measurement enable setting
     ptr = &settingsworkbuffer[MEASUREMENT_SETTING_OFFSET];
 
