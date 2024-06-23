@@ -73,11 +73,11 @@ void sm_handle_user_input(void)
     //Check if in normal running state so real settings are active
     if(viewactive == VIEW_NOT_ACTIVE)
     {
-      //Get the settings in the working buffer and write them to the flash
+      //Get the settings in the working buffer and write them to the SD card
       scope_save_configuration_data();
     }
     
-    //Save the settings at this point and wait until power is off
+    //After saving the settings wait until power is off
     while(1);
   }
   
@@ -1085,8 +1085,9 @@ void sm_button_dial_channel_menu_handling(void)
 
 void sm_close_menu(void)
 {
-  //Clear the current channel setting to allow reopening of the same channel after close
+  //Clear the current channel setting and measurement slot to allow reopening of the same one after close
   currentsettings = 0;
+  measurementslot = -1;
   
   //Enable sampling and display tracing
   enablesampling = SAMPLING_ENABLED;
@@ -1321,7 +1322,7 @@ void sm_set_trigger_level(void)
   if(level < 0)
   {
     //Below the lower limit then use the calculated lower limit as offset
-    scopesettings.triggerverticalposition = ((-128 * signal_adjusters[voltperdiv]) >> VOLTAGE_SHIFTER) + traceposition;
+    scopesettings.triggerverticalposition = ((-127 * signal_adjusters[voltperdiv]) >> VOLTAGE_SHIFTER) + traceposition;
   }
   else if(level > 255)
   {
@@ -2274,20 +2275,29 @@ void sm_on_off_select(void)
 
 void sm_open_measurements_menu(uint32 slot)
 {
-  //Set the slot to change
-  measurementslot = slot;
-  
-  //Switch to the measurements menu handling states
-  navigationstate = NAV_MEASUREMENTS_MENU_HANDLING;
-  fileviewstate   = FILE_VIEW_MENU_CONTROL;
-  buttondialstate = BUTTON_DIAL_MEASUREMENTS_MENU_HANDLING;
+  //If the same measurement slot button is pressed again close the menu
+  if(slot != measurementslot)
+  {
+    //Set the slot to change
+    measurementslot = slot;
 
-  //Disable sampling and trace displaying
-  enablesampling = SAMPLING_NOT_ENABLED;
-  enabletracedisplay = TRACE_DISPLAY_NOT_ENABLED;
-  
-  //Open the actual menu
-  ui_display_measurements_menu();
+    //Switch to the measurements menu handling states
+    navigationstate = NAV_MEASUREMENTS_MENU_HANDLING;
+    fileviewstate   = FILE_VIEW_MENU_CONTROL;
+    buttondialstate = BUTTON_DIAL_MEASUREMENTS_MENU_HANDLING;
+
+    //Disable sampling and trace displaying
+    enablesampling = SAMPLING_NOT_ENABLED;
+    enabletracedisplay = TRACE_DISPLAY_NOT_ENABLED;
+
+    //Open the actual menu
+    ui_display_measurements_menu();
+  }
+  else
+  {
+    //Return to the normal operation
+    sm_close_menu();
+  }
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
@@ -2508,14 +2518,19 @@ void sm_do_base_calibration(void)
 
 void sm_start_usb_export(void)
 {
-  //Signal open command has been processed
-  toprocesscommand = 0;
-
   //Open the connection
   ui_setup_usb_screen();
+  
+  //Return to normal processing state
+  //Enable sampling and display tracing
+  enablesampling = SAMPLING_ENABLED;
+  enabletracedisplay = TRACE_DISPLAY_ENABLED;
 
-  //Signal cancel command has been processed
-  toprocesscommand = 0;
+  //Switch back to normal button and dial handling
+  buttondialstate = BUTTON_DIAL_NORMAL_HANDLING;
+
+  //Set the navigation state based on enabled cursors
+  sm_restore_navigation_handling();
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------

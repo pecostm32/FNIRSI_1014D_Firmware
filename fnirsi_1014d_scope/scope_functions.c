@@ -147,8 +147,8 @@ void scope_process_trigger(uint32 count)
 
   //Set a starting point for checking on trigger
   //Count is half a sample buffer!!
-  index = count - 10;
-  count = 20;
+  index = count - 20;
+  count = 40;
 
   //Need a better check here, maybe over a wider range of samples
 

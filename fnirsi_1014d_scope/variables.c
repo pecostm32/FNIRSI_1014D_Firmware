@@ -34,7 +34,7 @@ int8 *sliderdata = 0;
 uint8  onoffhighlighteditem = 0;
 uint8 *onoffdata = 0;
 
-uint8 measurementslot = 0;
+uint8 measurementslot = -1;
 
 PCHANNELSETTINGS currentsettings = 0;
 

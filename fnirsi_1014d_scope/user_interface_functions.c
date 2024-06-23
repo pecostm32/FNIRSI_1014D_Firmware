@@ -204,7 +204,6 @@ void ui_setup_usb_screen(void)
 
   //Redraw the screen
   ui_setup_main_screen();
-  scope_display_trace_data();
 
   //Re-sync the system files
   ui_sync_thumbnail_files();
@@ -929,7 +928,7 @@ void ui_display_trigger_settings(void)
   display_text(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS + 17, "CHS :");
 
   //Trigger vertical (level) position text
-  display_text(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS + 31, "POS :");
+  display_text(TOP_TRIGGER_INFO_XPOS, TOP_TRIGGER_INFO_YPOS + 31, "LVL :");
 
   //Time per division text in the bottom information section
   display_text(BOTTOM_TRIGGER_INFO_XPOS + 122, BOTTOM_TRIGGER_INFO_YPOS, "DIV :");
@@ -1511,7 +1510,7 @@ void ui_update_measurements(void)
 
     //Copy this item to the main screen
     display_set_screen_buffer((uint16 *)maindisplaybuffer);
-    display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 84, 21);
+    display_copy_rect_to_screen(MEASUREMENT_VALUE_X - 2, y - 2, 83, 20);
   }
 
   //Switch back to the separate display buffer to allow further actions on the trace display
@@ -3879,9 +3878,6 @@ int32 ui_load_trace_data(void)
     //Load the setup data to the file setup data buffer
     if((result = f_read(&viewfp, (uint8 *)viewfilesetupdata, sizeof(viewfilesetupdata), 0)) == FR_OK)
     {
-      //Copy the loaded data to the settings
-      ui_restore_setup_from_file();
-
       //Check if the version of the file is wrong
       if((viewfilesetupdata[1] != WAVEFORM_FILE_ID1) || (viewfilesetupdata[2] != WAVEFORM_FILE_ID2) || (viewfilesetupdata[3] != WAVEFORM_FILE_VERSION))
       {
@@ -3902,6 +3898,9 @@ int32 ui_load_trace_data(void)
             //Do a check on file validity
             if((result = ui_check_waveform_file()) == 0)
             {
+              //Copy the loaded data to the settings
+              ui_restore_setup_from_file();
+
               //Switch to stopped and waveform viewing mode
               scopesettings.runstate = RUN_STATE_STOPPED;
               scopesettings.waveviewmode = 1;
@@ -3911,9 +3910,6 @@ int32 ui_load_trace_data(void)
 
               //Show the normal scope screen
               ui_setup_main_screen();
-
-              //display the trace data
-              scope_display_trace_data();
             }
             else
             {
@@ -3934,7 +3930,7 @@ int32 ui_load_trace_data(void)
     //Check if one of the reads failed
     if((result != FR_OK) && (result != WAVEFORM_FILE_ERROR))
     {
-      //Signal unable to write to the file
+      //Signal unable to read from the file
       ui_display_file_status_message(MESSAGE_FILE_READ_FAILED, 0);
     }
   }
@@ -4255,13 +4251,14 @@ void ui_display_thumbnails(void)
         uint32 sample = 0;
 
         //Center the xy display
-        uint32 y = ypos + 12;
+        uint32 y = ypos + 11;
+        uint32 x = xpos + 3;
 
         //Keep the samples in registers
         register uint32 x1, x2, y1, y2;
-
+        
         //Load the first samples
-        x1 = *channel1data + xpos;
+        x1 = *channel1data + x;
         y1 = *channel2data + y;
 
         //Point to the next samples
@@ -4272,7 +4269,7 @@ void ui_display_thumbnails(void)
         while(sample < 172)
         {
           //Get second samples
-          x2 = *channel1data + xpos;
+          x2 = *channel1data + x;
           y2 = *channel2data + y;
 
           //Draw all the lines
@@ -4295,20 +4292,20 @@ void ui_display_thumbnails(void)
       display_set_fg_color(COLOR_LIGHT_GREY_9);
       display_draw_rect(xpos + 2, ypos + 11, VIEW_ITEM_WIDTH - 30, VIEW_ITEM_HEIGHT - 26);
 
+      //Channel pointers position bases
+      x = xpos + 3;
+      y = ypos + 12;
+      
       //Need to make a distinction between normal display and xy display mode for displaying the pointers
       if(thumbnaildata->tracedisplaymode == DISPLAY_MODE_NORMAL)
       {
-        //Channel pointers position bases
-        x = xpos + 3;
-        y = ypos + 12;
-
         //Check if channel 1 is enabled
         if(thumbnaildata->channel1enable)
         {
           //Limit the position to the extremes
-          if(thumbnaildata->channel1traceposition > 92)
+          if(thumbnaildata->channel1traceposition > 90)
           {
-            thumbnaildata->channel1traceposition = 92;
+            thumbnaildata->channel1traceposition = 90;
           }
 
           //If so draw its pointer
@@ -4319,9 +4316,9 @@ void ui_display_thumbnails(void)
         if(thumbnaildata->channel2enable)
         {
           //Limit the position to the extremes
-          if(thumbnaildata->channel2traceposition > 92)
+          if(thumbnaildata->channel2traceposition > 90)
           {
-            thumbnaildata->channel2traceposition = 92;
+            thumbnaildata->channel2traceposition = 90;
           }
 
           //If so draw its pointer
@@ -4329,12 +4326,12 @@ void ui_display_thumbnails(void)
         }
 
         //Trigger level position base
-        x = xpos + 170;
+        x = xpos + 171;
 
         //Limit the position to the extremes
-        if(thumbnaildata->triggerverticalposition > 92)
+        if(thumbnaildata->triggerverticalposition > 90)
         {
-          thumbnaildata->triggerverticalposition = 92;
+          thumbnaildata->triggerverticalposition = 90;
         }
 
         //Draw the trigger level pointer
@@ -4345,9 +4342,9 @@ void ui_display_thumbnails(void)
         {
           thumbnaildata->triggerhorizontalposition = 3;
         }
-        else if(thumbnaildata->triggerhorizontalposition > 165)
+        else if(thumbnaildata->triggerhorizontalposition > 169)
         {
-          thumbnaildata->triggerhorizontalposition = 165;
+          thumbnaildata->triggerhorizontalposition = 169;
         }
 
         //Draw the trigger position pointer
@@ -4355,8 +4352,31 @@ void ui_display_thumbnails(void)
       }
       else
       {
-//Draw the pointers here
+        //Check if channel 2 is enabled
+        if(thumbnaildata->channel2enable)
+        {
+          //Limit the position to the extremes
+          if(thumbnaildata->channel2traceposition > 92)
+          {
+            thumbnaildata->channel2traceposition = 92;
+          }
 
+          //If so draw its pointer
+          ui_thumbnail_draw_pointer(x, y + thumbnaildata->channel2traceposition + 1, THUMBNAIL_POINTER_RIGHT, CHANNEL2_COLOR);
+        }
+        
+        //Check if channel 1 is enabled
+        if(thumbnaildata->channel1enable)
+        {
+          //Limit the position to the extremes
+          if(thumbnaildata->channel1traceposition > 92)
+          {
+            thumbnaildata->channel1traceposition = 92;
+          }
+
+          //If so draw its pointer
+          ui_thumbnail_draw_pointer(xpos + thumbnaildata->channel1traceposition + 39, y, THUMBNAIL_POINTER_DOWN, CHANNEL1_COLOR);
+        }
       }
 
       //Check on select mode being enabled
@@ -4393,7 +4413,7 @@ void ui_display_thumbnails(void)
       display_text(xpos + 7, ypos + 105, thumbnaildata->filename);
 
       //Set a nice color for item border
-      display_set_fg_color(FILE_BORDER_COLOR);  //0x00CC8947
+      display_set_fg_color(FILE_BORDER_COLOR);
 
       //Draw the border
       display_draw_rect(xpos, ypos, VIEW_ITEM_WIDTH, VIEW_ITEM_HEIGHT);
@@ -4502,7 +4522,7 @@ void ui_display_thumbnail_data(uint32 xstart, uint32 xend, uint32 ypos, uint32 c
 
 void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 {
-  uint16 position;
+  int16 position;
 
   //Set the thumbnails filename
   strcpy(thumbnaildata->filename, viewfilename);
@@ -4523,7 +4543,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
   //Set the parameters for channel 1
   thumbnaildata->channel1enable        = scopesettings.channel1.enable;
-  thumbnaildata->channel1traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
+  thumbnaildata->channel1traceposition = ((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
 
   //Calculate and limit pointer position for channel 2
   position = TRACE_VERTICAL_END - scopesettings.channel2.traceposition;
@@ -4541,7 +4561,7 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
 
   //Set the parameters for channel 2
   thumbnaildata->channel2enable        = scopesettings.channel2.enable;
-  thumbnaildata->channel2traceposition = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
+  thumbnaildata->channel2traceposition = ((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
 
   //Calculate and limit pointer position for trigger level
   position = TRACE_VERTICAL_END - scopesettings.triggerverticalposition;
@@ -4558,8 +4578,23 @@ void ui_create_thumbnail(PTHUMBNAILDATA thumbnaildata)
   }
 
   //Set trigger information
-  thumbnaildata->triggerverticalposition   = (uint8)(((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER);
-  thumbnaildata->triggerhorizontalposition = (scopesettings.triggerhorizontalposition * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
+  thumbnaildata->triggerverticalposition = ((position - VERTICAL_POINTER_TOP) * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_Y_DIVIDER;
+  
+  //Calculate and limit pointer position for trigger position
+  position = scopesettings.triggerhorizontalposition;
+
+  //Limit on the left of the displayable region
+  if(position < TRACE_HORIZONTAL_START)
+  {
+    position = TRACE_HORIZONTAL_START;
+  }
+  //Limit on the right of the displayable region
+  else if(position > TRACE_HORIZONTAL_END)
+  {
+    position = TRACE_HORIZONTAL_END;
+  }
+  
+  thumbnaildata->triggerhorizontalposition = (position * THUMBNAIL_SAMPLE_MULTIPLIER) / THUMBNAIL_X_DIVIDER;
 
   //Set the trace display mode
   thumbnaildata->tracedisplaymode = scopesettings.tracedisplaymode;

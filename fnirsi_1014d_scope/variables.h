@@ -42,7 +42,7 @@
 
 #define VIEW_ITEM_XLAST                 790
 
-#define VIEW_THUMBNAIL_DATA_SIZE     400000
+#define VIEW_THUMBNAIL_DATA_SIZE     410000
 #define VIEW_FILE_NUMBER_DATA_SIZE     2000
 
 #define VIEW_MAX_ITEMS                 1000
@@ -245,7 +245,7 @@
 
 #define THUMBNAIL_SAMPLE_MULTIPLIER   10000
 #define THUMBNAIL_X_DIVIDER           41834
-#define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT /
+#define THUMBNAIL_Y_DIVIDER           42903        //Based on TRACE_MAX_HEIGHT
 
 #define THUMBNAIL_TRACE_HEIGHT           94
 
