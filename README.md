@@ -11,6 +11,6 @@ This repository is a result of the reverse engineering of the original FNIRSI 10
 ---------------------------------------------------------------------------------------------------------
 28 June 2024
 
-Added a boot loader to the repository
+Added a boot loader to the repository.
 This boot loader is for the 1014D and allows for starting different firmware's via a startup menu.
 The menu is accessed by holding another key when starting the scope.
