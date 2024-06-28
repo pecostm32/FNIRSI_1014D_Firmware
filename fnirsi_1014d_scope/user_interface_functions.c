@@ -1485,9 +1485,6 @@ void ui_update_measurements(void)
   PCHANNELSETTINGS settings;
   int i,y;
 
-  //Use the first display buffer as source to copy to the main screen buffer
-  display_set_source_buffer(displaybuffer1);
-
   //Process the data for the available measurement slots
   for(i=0;i<(sizeof(scopesettings.measurementitems)/sizeof(MEASUREMENTINFO));i++)
   {
@@ -1821,7 +1818,7 @@ void ui_print_value(uint32 ypos, int32 value, uint32 scale, char *designator, ui
   display_set_font(&font_1);
 
   //Display it on the screen
-  display_text(x + 2, ypos + 5, globaldisplaytext);
+  display_text(x, ypos + 5, globaldisplaytext);
 }
 
 //----------------------------------------------------------------------------------------------------------------------------------
